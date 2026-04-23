@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Historial de OPs (Carolina)</title>
+  <!-- Anti-flash -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Historial cajera — lista simple, tipografía cómoda, filtros arriba
+       ===================================================================== */
+
+    .cajera-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    .cajera-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .cajera-header .logo {
+      font-size: var(--fs-md);
+      gap: var(--sp-2);
+    }
+    .cajera-hello {
+      text-align: center;
+      font-size: var(--fs-xl);
+      font-weight: 600;
+      color: var(--text-strong);
+      line-height: 1.2;
+    }
+    .cajera-hello .local {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .cajera-hello .sep {
+      color: var(--text-subtle);
+      margin: 0 var(--sp-2);
+    }
+    .cajera-header .right {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      justify-self: end;
+    }
+    .cajera-header .avatar {
+      width: 36px; height: 36px;
+      font-size: var(--fs-md);
+    }
+    .cajera-header .btn-logout {
+      height: 36px;
+      font-size: var(--fs-md);
+    }
+
+    .cajera-topbar {
+      display: flex;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      justify-content: center;
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-6);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--t-fast);
+      text-decoration: none;
+      min-width: 180px;
+      justify-content: center;
+    }
+    .tab-btn:hover {
+      background: var(--bg-elev-2);
+      color: var(--text-strong);
+      text-decoration: none;
+    }
+    .tab-btn.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-btn svg { width: 20px; height: 20px; }
+
+    .cajera-main {
+      flex: 1;
+      padding: var(--sp-6);
+      display: flex;
+      justify-content: center;
+    }
+    .cajera-container {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .page-title {
+      font-size: var(--fs-2xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      margin-bottom: var(--sp-5);
+    }
+
+    /* Filtros */
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--sp-4);
+      align-items: center;
+    }
+    .filters-row .filter-field {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .filters-row label {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .filters-row select, .filters-row .input {
+      height: 36px;
+      font-size: var(--fs-md);
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-subtle);
+      pointer-events: none;
+    }
+    .search-wrap .input {
+      padding-left: 34px;
+      width: 100%;
+    }
+
+    /* Tabla historial */
+    .hist-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      font-size: var(--fs-md);
+    }
+    .hist-table thead th {
+      text-align: left;
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elev-2);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .hist-table tbody td {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .hist-table tbody tr:last-child td { border-bottom: none; }
+    .hist-table tbody tr {
+      cursor: pointer;
+      transition: background var(--t-fast);
+    }
+    .hist-table tbody tr:hover { background: var(--bg-elev-2); }
+
+    .hist-code {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-strong);
+      font-size: var(--fs-md);
+    }
+    .hist-date {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+    }
+    .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+    }
+    .col-est   { width: 150px; }
+    .col-prod  { width: 110px; }
+    .col-unid  { width: 110px; }
+    .col-code  { width: 120px; }
+    .col-date  { width: 140px; }
+    .col-marks { width: 110px; }
+
+    .badge-excepcion-mini {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border: 1px solid var(--warning);
+      font-size: var(--fs-xs);
+      padding: 1px var(--sp-2);
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      cursor: help;
+    }
+
+    /* Empty / paginación */
+    .empty-state {
+      padding: var(--sp-10) var(--sp-6);
+      text-align: center;
+      color: var(--text-muted);
+      background: var(--bg-elev);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+    }
+    .empty-state svg {
+      width: 48px; height: 48px;
+      color: var(--text-subtle);
+      margin: 0 auto var(--sp-3);
+    }
+    .empty-state h3 {
+      color: var(--text-strong);
+      font-size: var(--fs-lg);
+      margin-bottom: var(--sp-2);
+    }
+
+    .paginator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--sp-2);
+      margin-top: var(--sp-4);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .cajera-header {
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+      }
+      .cajera-hello {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        text-align: left;
+        font-size: var(--fs-lg);
+      }
+      .cajera-topbar {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+      .tab-btn { min-width: 140px; }
+      .cajera-main { padding: var(--sp-3); }
+      .col-code, .col-date, .col-unid { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cajera-shell">
+
+  <!-- =================== Header =================== -->
+  <header class="cajera-header">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/>
+        <circle cx="9" cy="21" r="1.5"/>
+        <circle cx="18" cy="21" r="1.5"/>
+      </svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+
+    <div class="cajera-hello">
+      Hola <span id="hello-name">Carolina</span>
+      <span class="sep">&middot;</span>
+      <span class="local" id="hello-local">Shopping del Sol</span>
+    </div>
+
+    <div class="right">
+      <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <div class="avatar" title="Carolina">CA</div>
+      <button type="button" class="btn btn-ghost btn-logout" title="Cerrar sesión">Salir</button>
+    </div>
+  </header>
+
+  <!-- =================== Topbar =================== -->
+  <nav class="cajera-topbar" aria-label="Navegación cajera">
+    <a href="dashboard.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+      Inicio
+    </a>
+    <a href="op-historial.html" class="tab-btn active" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Historial
+    </a>
+    <a href="#" class="tab-btn" onclick="return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+      Perfil
+    </a>
+  </nav>
+
+  <!-- =================== Main =================== -->
+  <main class="cajera-main">
+    <div class="cajera-container">
+
+      <h1 class="page-title">Mi historial de OPs</h1>
+
+      <!-- Filtros -->
+      <div class="filters-row">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="filter-search" class="input" placeholder="Buscar por producto (ej. cargador, cable)&hellip;" aria-label="Buscar por producto" />
+        </div>
+
+        <div class="filter-field">
+          <label for="filter-rango">Rango:</label>
+          <select id="filter-rango" class="select" style="width: 180px;">
+            <option value="mes">Último mes</option>
+            <option value="trimestre" selected>Últimos 3 meses</option>
+            <option value="todo">Todo</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="filter-estado">Estado:</label>
+          <select id="filter-estado" class="select" style="width: 160px;">
+            <option value="">Todas</option>
+            <option value="enviada">Enviadas</option>
+            <option value="cerrada">Cerradas</option>
+            <option value="devuelta">Devueltas</option>
+            <option value="anulada">Anuladas</option>
+          </select>
+        </div>
+
+        <span id="result-count" style="margin-left: auto; font-size: var(--fs-sm); color: var(--text-muted);">
+          <strong id="count-num">0</strong> OPs
+        </span>
+      </div>
+
+      <!-- Tabla -->
+      <div id="hist-wrap"></div>
+
+      <!-- Paginador (simple, decorativo) -->
+      <div class="paginator" id="paginator" style="display: none;">
+        <button class="btn btn-sm btn-secondary" disabled>&larr; Anterior</button>
+        <span>Página <strong>1</strong> de <strong>1</strong></span>
+        <button class="btn btn-sm btn-secondary" disabled>Siguiente &rarr;</button>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script type="module">
+  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+
+  // Saludo
+  document.getElementById('hello-name').textContent = cajeraActual.nombre;
+  document.getElementById('hello-local').textContent = cajeraActual.localNombre;
+  document.querySelector('.cajera-header .avatar').textContent = cajeraActual.iniciales;
+
+  // Estado de filtros
+  const state = {
+    search: '',
+    rango: 'trimestre',   // 'mes' | 'trimestre' | 'todo'
+    estado: ''
+  };
+
+  const productoById = new Map(productos.map(p => [p.id, p]));
+
+  // Fecha de referencia (hoy según mock)
+  const HOY = new Date('2026-04-22T10:00:00');
+  function diasDesde(fechaStr) {
+    const d = new Date(fechaStr.replace(' ', 'T'));
+    return Math.floor((HOY - d) / (1000 * 60 * 60 * 24));
+  }
+
+  function fmtFecha(fechaStr) {
+    const [fecha, hora] = fechaStr.split(' ');
+    const [y, m, d] = fecha.split('-');
+    return `${d}/${m}/${y.slice(2)} ${hora || ''}`.trim();
+  }
+
+  function badgeForEstado(e) {
+    const label = {
+      'borrador':  'Borrador',
+      'enviada':   'Enviada',
+      'en_oc':     'En OC',
+      'cerrada':   'Cerrada',
+      'devuelta':  'Devuelta',
+      'anulada':   'Anulada'
+    }[e] || e;
+    const cls = 'badge badge-' + e.replace('_', '-');
+    return `<span class="${cls}">${label}</span>`;
+  }
+
+  function aplicarFiltros() {
+    return historialCajera.filter(op => {
+      // Rango
+      const d = diasDesde(op.fechaEnvio);
+      if (state.rango === 'mes' && d > 30) return false;
+      if (state.rango === 'trimestre' && d > 92) return false;
+      // Estado
+      if (state.estado && op.estado !== state.estado) return false;
+      // Búsqueda por producto dentro de las líneas
+      if (state.search) {
+        const q = state.search.trim().toLowerCase();
+        if (!q) return true;
+        const hay = op.lineas.some(l => {
+          const p = productoById.get(l.productoId);
+          return p && p.nombre.toLowerCase().includes(q);
+        });
+        const hayCodigo = op.id.toLowerCase().includes(q);
+        if (!hay && !hayCodigo) return false;
+      }
+      return true;
+    });
+  }
+
+  function render() {
+    const filtradas = aplicarFiltros();
+    document.getElementById('count-num').textContent = filtradas.length;
+
+    const wrap = document.getElementById('hist-wrap');
+    if (historialCajera.length === 0) {
+      wrap.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <h3>Todavía no tenés ninguna OP cargada</h3>
+          <p>Cuando envíes tu primera Orden de Pedido va a aparecer acá.</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (filtradas.length === 0) {
+      wrap.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <h3>Sin resultados</h3>
+          <p>Probá cambiar los filtros o el rango de fechas.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const filas = filtradas.map(op => {
+      const prod = op.lineas.length;
+      const un = op.lineas.reduce((s, l) => s + l.cantidad, 0);
+      const excMarkup = op.esExcepcion
+        ? `<span class="badge-excepcion-mini" title="${(op.motivoExcepcion || '').replace(/"/g, '&quot;')}">Excepción</span>`
+        : '';
+      return `
+        <tr data-op-id="${op.id}">
+          <td class="col-code"><span class="hist-code">${op.id.toUpperCase()}</span></td>
+          <td class="col-date"><span class="hist-date">${fmtFecha(op.fechaEnvio)}</span></td>
+          <td class="col-est">${badgeForEstado(op.estado)}</td>
+          <td class="col-prod col-num">${prod}</td>
+          <td class="col-unid col-num">${un}</td>
+          <td class="col-marks">${excMarkup}</td>
+        </tr>
+      `;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th class="col-code">Código OP</th>
+            <th class="col-date">Fecha envío</th>
+            <th class="col-est">Estado</th>
+            <th class="col-prod" style="text-align: right;">Productos</th>
+            <th class="col-unid" style="text-align: right;">Unidades</th>
+            <th class="col-marks">Marcas</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    `;
+
+    // Click en una fila — por ahora placeholder al link propio (detalle no existe)
+    wrap.querySelectorAll('tr[data-op-id]').forEach(tr => {
+      tr.addEventListener('click', (e) => {
+        // Placeholder: pantalla de detalle OP no existe aún → quedamos en la misma.
+        // Cuando exista, link: /cajera/op/${tr.dataset.opId}
+        e.preventDefault();
+      });
+    });
+  }
+
+  // Eventos
+  document.getElementById('filter-search').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    render();
+  });
+  document.getElementById('filter-rango').addEventListener('change', (e) => {
+    state.rango = e.target.value;
+    render();
+  });
+  document.getElementById('filter-estado').addEventListener('change', (e) => {
+    state.estado = e.target.value;
+    render();
+  });
+
+  // Theme toggle
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+  });
+
+  render();
+</script>
+
+</body>
+</html>

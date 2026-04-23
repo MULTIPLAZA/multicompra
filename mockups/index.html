@@ -247,6 +247,14 @@
         <span class="pill">Carolina · Local</span>
       </div>
       <div class="cards">
+        <a class="link-card" href="cajera/dashboard.html">
+          <div class="card-head">
+            <span class="card-title">Inicio</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/cajera</div>
+          <div class="desc">Home de la cajera. Card grande de estado según lo que esté pasando (borrador en curso, sin OP, enviada esperando o devuelta con nota). Historial reciente abajo y tabs Inicio / Historial / Perfil.</div>
+        </a>
         <a class="link-card" href="cajera/op-nueva.html">
           <div class="card-head">
             <span class="card-title">Nueva OP</span>
@@ -255,13 +263,14 @@
           <div class="path">/cajera/op/nueva</div>
           <div class="desc">Carga simple de Orden de Pedido. Saludo, buscador prominente con autocomplete, lista con spinner de cantidad, checkbox de excepción con motivo obligatorio (mínimo 30 caracteres). Tipografía generosa.</div>
         </a>
-        <div class="link-card pending">
+        <a class="link-card" href="cajera/op-historial.html">
           <div class="card-head">
             <span class="card-title">Historial de OPs</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
           </div>
           <div class="path">/cajera/op/historial</div>
-          <div class="desc">Lista de OPs propias del local asignado, filtrable por estado (enviada, en OC, cerrada, devuelta).</div>
-        </div>
+          <div class="desc">Lista de las propias OPs del local asignado con filtros (rango de fechas, estado, búsqueda por producto). Badge de excepción con tooltip de motivo.</div>
+        </a>
         <div class="link-card pending">
           <div class="card-head">
             <span class="card-title">Perfil</span>
@@ -279,6 +288,14 @@
         <span class="pill">Shirley · Central</span>
       </div>
       <div class="cards">
+        <a class="link-card" href="supervisor/dashboard.html">
+          <div class="card-head">
+            <span class="card-title">Inicio</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor</div>
+          <div class="desc">Home del supervisor (Decisión D4): lista directa de OPs pendientes, no bandeja con contadores. Saludo, chip con cuenta total, CTA "Armar nueva OC", filtros (excepción, viejas, local), devolución por modal y panel lateral con resumen + alertas.</div>
+        </a>
         <a class="link-card" href="supervisor/oc-nueva.html">
           <div class="card-head">
             <span class="card-title">Nueva OC</span>

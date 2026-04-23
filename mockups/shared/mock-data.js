@@ -673,6 +673,137 @@ export const adminActual = {
 };
 
 // =========================================================================
+// Historial de OPs de Carolina (cajera de Shopping del Sol)
+// Variedad de estados y fechas para poblar la pantalla /cajera/op/historial.
+// Estados posibles: 'borrador' | 'enviada' | 'en_oc' | 'cerrada' | 'devuelta' | 'anulada'
+// =========================================================================
+export const historialCajera = [
+  {
+    id: 'op-1051',
+    fechaEnvio: '2026-04-20 14:05',
+    estado: 'enviada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p01', cantidad: 5  },
+      { productoId: 'p08', cantidad: 3  },
+      { productoId: 'p14', cantidad: 20 },
+      { productoId: 'p16', cantidad: 4  },
+      { productoId: 'p23', cantidad: 2  }
+    ]
+  },
+  {
+    id: 'op-1038',
+    fechaEnvio: '2026-04-13 09:42',
+    estado: 'cerrada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p02', cantidad: 10 },
+      { productoId: 'p05', cantidad: 6  },
+      { productoId: 'p09', cantidad: 3  },
+      { productoId: 'p21', cantidad: 12 }
+    ]
+  },
+  {
+    id: 'op-1031',
+    fechaEnvio: '2026-04-06 10:18',
+    estado: 'cerrada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p04', cantidad: 4  },
+      { productoId: 'p06', cantidad: 25 },
+      { productoId: 'p10', cantidad: 5  },
+      { productoId: 'p15', cantidad: 3  },
+      { productoId: 'p20', cantidad: 8  },
+      { productoId: 'p24', cantidad: 40 }
+    ]
+  },
+  {
+    id: 'op-1026',
+    fechaEnvio: '2026-04-02 16:30',
+    estado: 'devuelta',
+    esExcepcion: true,
+    motivoExcepcion: 'Se rompió la vitrina y quedamos sin muestra de cargadores, necesitamos reponer urgente.',
+    notaDevolucion: 'La cantidad de cargadores pedidos es muy alta. Revisá cuánto rotaste la semana pasada y mandame el pedido ajustado.',
+    lineas: [
+      { productoId: 'p01', cantidad: 50 },
+      { productoId: 'p15', cantidad: 20 }
+    ]
+  },
+  {
+    id: 'op-1024',
+    fechaEnvio: '2026-03-30 09:55',
+    estado: 'cerrada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p03', cantidad: 2  },
+      { productoId: 'p07', cantidad: 10 },
+      { productoId: 'p13', cantidad: 2  },
+      { productoId: 'p25', cantidad: 15 }
+    ]
+  },
+  {
+    id: 'op-1019',
+    fechaEnvio: '2026-03-23 11:02',
+    estado: 'cerrada',
+    esExcepcion: true,
+    motivoExcepcion: 'Venta grande a oficina ayer nos dejó sin stock de cables Lightning y fundas.',
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p02', cantidad: 15 },
+      { productoId: 'p05', cantidad: 8  },
+      { productoId: 'p16', cantidad: 6  }
+    ]
+  },
+  {
+    id: 'op-1014',
+    fechaEnvio: '2026-03-16 14:25',
+    estado: 'cerrada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p06', cantidad: 30 },
+      { productoId: 'p21', cantidad: 15 },
+      { productoId: 'p24', cantidad: 25 }
+    ]
+  },
+  {
+    id: 'op-1011',
+    fechaEnvio: '2026-03-12 10:40',
+    estado: 'anulada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p09', cantidad: 2 },
+      { productoId: 'p18', cantidad: 3 }
+    ]
+  },
+  {
+    id: 'op-1007',
+    fechaEnvio: '2026-03-09 08:52',
+    estado: 'cerrada',
+    esExcepcion: false,
+    motivoExcepcion: null,
+    notaDevolucion: null,
+    lineas: [
+      { productoId: 'p01', cantidad: 4  },
+      { productoId: 'p11', cantidad: 2  },
+      { productoId: 'p15', cantidad: 3  },
+      { productoId: 'p20', cantidad: 10 }
+    ]
+  }
+];
+
+// =========================================================================
 // Dashboard Admin — datos mock para la vista mobile-first
 // Números plausibles para una cadena de 10 locales + central.
 // =========================================================================

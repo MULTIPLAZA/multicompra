@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Inicio (Carolina · Shopping del Sol)</title>
+  <!-- Anti-flash -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Home cajera — simple, tipografía grande, centrada
+       Reutiliza header + topbar + main del patrón de op-nueva.html
+       ===================================================================== */
+
+    .cajera-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    .cajera-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .cajera-header .logo {
+      font-size: var(--fs-md);
+      gap: var(--sp-2);
+    }
+    .cajera-hello {
+      text-align: center;
+      font-size: var(--fs-xl);
+      font-weight: 600;
+      color: var(--text-strong);
+      line-height: 1.2;
+    }
+    .cajera-hello .local {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .cajera-hello .sep {
+      color: var(--text-subtle);
+      margin: 0 var(--sp-2);
+    }
+    .cajera-header .right {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      justify-self: end;
+    }
+    .cajera-header .avatar {
+      width: 36px; height: 36px;
+      font-size: var(--fs-md);
+    }
+    .cajera-header .btn-logout {
+      height: 36px;
+      font-size: var(--fs-md);
+    }
+
+    .cajera-topbar {
+      display: flex;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      justify-content: center;
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-6);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--t-fast);
+      text-decoration: none;
+      min-width: 180px;
+      justify-content: center;
+    }
+    .tab-btn:hover {
+      background: var(--bg-elev-2);
+      color: var(--text-strong);
+      text-decoration: none;
+    }
+    .tab-btn.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-btn svg { width: 20px; height: 20px; }
+
+    .cajera-main {
+      flex: 1;
+      padding: var(--sp-6);
+      display: flex;
+      justify-content: center;
+    }
+    .cajera-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-6);
+    }
+
+    /* Card principal de estado */
+    .state-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-8) var(--sp-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: var(--sp-4);
+    }
+    .state-card.state-borrador {
+      border-color: var(--info);
+      background: linear-gradient(180deg, var(--info-soft) 0%, var(--bg-elev) 80%);
+    }
+    [data-theme="dark"] .state-card.state-borrador {
+      background: var(--bg-elev);
+    }
+    .state-card.state-enviada {
+      border-color: var(--info);
+    }
+    .state-card.state-devuelta {
+      border-color: var(--danger);
+      background: linear-gradient(180deg, var(--danger-soft) 0%, var(--bg-elev) 80%);
+    }
+    [data-theme="dark"] .state-card.state-devuelta {
+      background: var(--bg-elev);
+    }
+    .state-card.state-empty {
+      border-style: dashed;
+      border-color: var(--border-strong);
+    }
+
+    .state-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+    }
+    .state-icon.info    { background: var(--info-soft);    color: var(--info); }
+    .state-icon.warning { background: var(--warning-soft); color: var(--warning); }
+    .state-icon.danger  { background: var(--danger-soft);  color: var(--danger); }
+    .state-icon.primary { background: var(--primary-soft); color: var(--primary); }
+
+    .state-title {
+      font-size: var(--fs-2xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      margin: 0;
+      line-height: 1.2;
+    }
+    .state-title.danger { color: var(--danger); }
+
+    .state-sub {
+      font-size: var(--fs-lg);
+      color: var(--text-muted);
+      max-width: 620px;
+      line-height: 1.5;
+    }
+    .state-sub strong { color: var(--text-strong); }
+
+    .state-note {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border: 1px solid var(--danger);
+      border-radius: var(--radius);
+      padding: var(--sp-3) var(--sp-4);
+      max-width: 620px;
+      text-align: left;
+      font-size: var(--fs-md);
+      line-height: 1.5;
+    }
+    .state-note .note-head {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: var(--fs-xs);
+      letter-spacing: 0.4px;
+      margin-bottom: var(--sp-1);
+    }
+
+    .btn-big {
+      height: 56px;
+      padding: 0 var(--sp-6);
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      min-width: 260px;
+    }
+    .btn-big.btn-primary {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+    [data-theme="dark"] .btn-big.btn-primary { color: var(--bg); }
+    .btn-big.btn-secondary {
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      border-color: var(--border-strong);
+    }
+    .btn-big.btn-danger-solid {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
+    }
+
+    /* Historial chico */
+    .historial-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-5) var(--sp-6);
+    }
+    .historial-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: var(--sp-3);
+      padding-bottom: var(--sp-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .historial-head h3 {
+      font-size: var(--fs-lg);
+      color: var(--text-strong);
+    }
+    .historial-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .historial-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 130px auto;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3);
+      background: var(--bg-elev-2);
+      border-radius: var(--radius);
+      font-size: var(--fs-md);
+    }
+    .historial-row .h-code {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .historial-row .h-date {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+    }
+    .historial-row .h-stats {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .historial-row .h-stats strong { color: var(--text-strong); }
+
+    /* Mobile */
+    @media (max-width: 900px) {
+      .cajera-header {
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+      }
+      .cajera-hello {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        text-align: left;
+        font-size: var(--fs-lg);
+      }
+      .cajera-topbar {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+      .tab-btn { min-width: 140px; }
+      .cajera-main { padding: var(--sp-3); }
+      .state-card { padding: var(--sp-5) var(--sp-4); }
+      .btn-big { width: 100%; min-width: 0; }
+      .historial-row {
+        grid-template-columns: 100px 1fr auto;
+      }
+      .historial-row .h-stats { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cajera-shell">
+
+  <!-- =================== Header =================== -->
+  <header class="cajera-header">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/>
+        <circle cx="9" cy="21" r="1.5"/>
+        <circle cx="18" cy="21" r="1.5"/>
+      </svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+
+    <div class="cajera-hello">
+      Hola <span id="hello-name">Carolina</span>
+      <span class="sep">&middot;</span>
+      <span class="local" id="hello-local">Shopping del Sol</span>
+    </div>
+
+    <div class="right">
+      <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <div class="avatar" title="Carolina">CA</div>
+      <button type="button" class="btn btn-ghost btn-logout" title="Cerrar sesión">Salir</button>
+    </div>
+  </header>
+
+  <!-- =================== Topbar =================== -->
+  <nav class="cajera-topbar" aria-label="Navegación cajera">
+    <a href="dashboard.html" class="tab-btn active" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+      Inicio
+    </a>
+    <a href="op-historial.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Historial
+    </a>
+    <a href="#" class="tab-btn" onclick="return false;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+      Perfil
+    </a>
+  </nav>
+
+  <!-- =================== Main =================== -->
+  <main class="cajera-main">
+    <div class="cajera-container">
+
+      <!-- =============================================================
+           VARIANTE ACTIVA: "BORRADOR EN CURSO"
+           Si la cajera tiene un draft en localStorage o seed, mostramos
+           resumen y CTA para continuar cargando.
+           ============================================================= -->
+      <section class="state-card state-borrador" id="state-main">
+        <div class="state-icon info" aria-hidden="true">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+            <line x1="9" y1="17" x2="15" y2="17"/>
+          </svg>
+        </div>
+        <h1 class="state-title">Tenés una OP en borrador</h1>
+        <p class="state-sub" id="draft-summary">
+          Tu pedido tiene <strong>4 productos</strong> (<strong>6 unidades</strong> totales). Todavía no se envió a Shirley.
+        </p>
+        <a href="op-nueva.html" class="btn btn-big btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+          Continuar cargando
+        </a>
+      </section>
+
+      <!-- =============================================================
+           Historial reciente (siempre visible abajo)
+           ============================================================= -->
+      <section class="historial-card">
+        <div class="historial-head">
+          <h3>Mi historial reciente</h3>
+          <a href="op-historial.html" class="text-sm" style="color: var(--primary);">Ver todo mi historial &rarr;</a>
+        </div>
+        <div class="historial-list" id="historial-list"></div>
+      </section>
+
+    </div>
+  </main>
+
+</div>
+
+<!-- =====================================================================
+     VARIANTES DE ESTADO (comentadas)
+     Descomentá una y comentá las otras para probar el estado alternativo.
+     =====================================================================
+
+<!--
+VARIANTE 1 — SIN OP ACTIVA
+
+<section class="state-card state-empty">
+  <div class="state-icon" aria-hidden="true">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  </div>
+  <h1 class="state-title">No tenés ninguna OP pendiente</h1>
+  <p class="state-sub">Arrancá una nueva Orden de Pedido cuando te haga falta reponer.</p>
+  <a href="op-nueva.html" class="btn btn-big btn-primary">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    Crear nueva OP
+  </a>
+</section>
+-->
+
+<!--
+VARIANTE 2 — OP ENVIADA ESPERANDO PROCESAMIENTO
+
+<section class="state-card state-enviada">
+  <div class="state-icon info" aria-hidden="true">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  </div>
+  <h1 class="state-title">Tu última OP está en revisión</h1>
+  <p class="state-sub">
+    Enviaste <strong>OP-1051</strong> el <strong>20 de abril</strong> a las 14:05.
+    No podés crear otra hasta que Shirley la procese.
+  </p>
+  <a href="op-nueva.html" class="btn btn-big btn-secondary">Ver detalle</a>
+</section>
+-->
+
+<!--
+VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
+
+<section class="state-card state-devuelta">
+  <div class="state-icon danger" aria-hidden="true">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 14 4 9 9 4"/>
+      <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+    </svg>
+  </div>
+  <h1 class="state-title danger">Shirley te devolvió una OP</h1>
+  <p class="state-sub">Tu pedido <strong>OP-1026</strong> necesita correcciones antes de procesarlo.</p>
+  <div class="state-note">
+    <div class="note-head">Nota de Shirley</div>
+    La cantidad de cargadores pedidos es muy alta. Revisá cuánto rotaste la semana pasada y mandame el pedido ajustado.
+  </div>
+  <a href="op-nueva.html" class="btn btn-big btn-danger-solid">
+    Corregir y reenviar
+  </a>
+</section>
+-->
+-->
+
+<!-- =====================================================================
+     Script
+     ===================================================================== -->
+<script type="module">
+  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+
+  // Saludo
+  document.getElementById('hello-name').textContent = cajeraActual.nombre;
+  document.getElementById('hello-local').textContent = cajeraActual.localNombre;
+  document.querySelector('.cajera-header .avatar').textContent = cajeraActual.iniciales;
+
+  // Draft summary: leemos localStorage o usamos seed del op-nueva.html
+  const DRAFT_KEY = 'multicompra:draft:op';
+  let draft = null;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (raw) draft = JSON.parse(raw);
+  } catch (e) {}
+  if (!draft || !Array.isArray(draft.lineas)) {
+    // Seed idéntico al de op-nueva.html
+    draft = {
+      lineas: [
+        { productoId: 'p01', cantidad: 3 },
+        { productoId: 'p02', cantidad: 1 },
+        { productoId: 'p06', cantidad: 1 },
+        { productoId: 'p09', cantidad: 1 }
+      ]
+    };
+  }
+
+  const prods = draft.lineas.length;
+  const unid = draft.lineas.reduce((s, l) => s + (l.cantidad || 0), 0);
+  document.getElementById('draft-summary').innerHTML =
+    `Tu pedido tiene <strong>${prods} producto${prods === 1 ? '' : 's'}</strong> (<strong>${unid} unidad${unid === 1 ? '' : 'es'}</strong> totales). Todavía no se envió a Shirley.`;
+
+  // Historial reciente — top 4
+  const listaHist = document.getElementById('historial-list');
+  const productoById = new Map(productos.map(p => [p.id, p]));
+
+  function badgeForEstado(e) {
+    const label = {
+      'borrador':  'Borrador',
+      'enviada':   'Enviada',
+      'en_oc':     'En OC',
+      'cerrada':   'Cerrada',
+      'devuelta':  'Devuelta',
+      'anulada':   'Anulada'
+    }[e] || e;
+    return `<span class="badge badge-${e.replace('_', '-')}">${label}</span>`;
+  }
+
+  function fmtFechaCorta(fechaStr) {
+    // '2026-04-20 14:05' → '20/04/26 14:05'
+    const [fecha] = fechaStr.split(' ');
+    const [y, m, d] = fecha.split('-');
+    return `${d}/${m}/${y.slice(2)}`;
+  }
+
+  const recientes = historialCajera.slice(0, 4);
+  listaHist.innerHTML = recientes.map(op => {
+    const prod = op.lineas.length;
+    const un = op.lineas.reduce((s, l) => s + l.cantidad, 0);
+    return `
+      <div class="historial-row">
+        <span class="h-code">${op.id.toUpperCase()}</span>
+        <span>
+          ${badgeForEstado(op.estado)}
+          <span class="h-date" style="margin-left: var(--sp-2);">${fmtFechaCorta(op.fechaEnvio)}</span>
+        </span>
+        <span class="h-stats"><strong>${prod}</strong> prod. &middot; <strong>${un}</strong> unid.</span>
+        <a href="op-historial.html" class="text-sm" style="color: var(--primary); white-space: nowrap;">Ver &rarr;</a>
+      </div>
+    `;
+  }).join('');
+
+  // Theme toggle
+  const btnTheme = document.getElementById('btn-theme');
+  btnTheme.addEventListener('click', function () {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+  });
+</script>
+
+</body>
+</html>
