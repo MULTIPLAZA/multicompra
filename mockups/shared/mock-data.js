@@ -318,7 +318,19 @@ export const productos = [
     stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 1,  'loc-04': 0,  'loc-05': 1,  'loc-06': 2,  'loc-07': 1,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 } },
 
   { id: 'p27', barras: '7840001000277', nombre: 'Lápiz stylus universal capacitivo',     stockCentral: 24,  costo:  12000, precio:  28000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 2,  'loc-08': 1,  'loc-09': 0,  'loc-10': 1 } }
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 2,  'loc-08': 1,  'loc-09': 0,  'loc-10': 1 } },
+
+  // p28 / p29 / p30 — códigos variados para demo de escaneo en op-nueva.html
+  // Uno con prefijo distinto (7790 — importado argentino), otro corto (interno de local),
+  // y uno con prefijo local Paraguay (784 pero otra secuencia).
+  { id: 'p28', barras: '7790001234567', nombre: 'Auricular con cable jack 3.5mm',         stockCentral: 60,  costo:   9000, precio:  22000,
+    stockPorLocal: { 'loc-01': 3,  'loc-02': 4,  'loc-03': 2,  'loc-04': 5,  'loc-05': 3,  'loc-06': 2,  'loc-07': 4,  'loc-08': 3,  'loc-09': 2,  'loc-10': 5 } },
+
+  { id: 'p29', barras: '7840002000015', nombre: 'Cargador USB-C PD 45W GaN',              stockCentral: 15,  costo:  85000, precio: 155000,
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 0,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 2,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 } },
+
+  { id: 'p30', barras: '7840002000022', nombre: 'Cable HDMI 1.5m',                        stockCentral: 32,  costo:  14000, precio:  32000,
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 3,  'loc-04': 2,  'loc-05': 1,  'loc-06': 2,  'loc-07': 1,  'loc-08': 3,  'loc-09': 2,  'loc-10': 1 } }
 ];
 
 // =========================================================================

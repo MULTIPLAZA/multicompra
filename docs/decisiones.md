@@ -288,6 +288,8 @@ Clases de fila: `row--decision-no`, `row--decision-central`, `row--decision-comp
 **Decisión:** `startsWith` para el **código de barra**, `includes` para la **descripción**.
 **Razón:** Los códigos de barra se tipean o escanean desde el principio; con `includes` cualquier subcadena mete ruido (por ejemplo, escribir "7840" matchearía con códigos que tienen "7840" en el medio). En descripción, `includes` sí es útil porque se busca por palabra ("cargador", "hidrogel").
 
+**Nota (2026-04-22):** Aplica al **fallback** de búsqueda por descripción. El flujo primario de la cajera en `op-nueva` es **código exacto** por escaneo + Enter (ver **Decisión 39**). El `startsWith` sigue vigente para compra-verificar y para el fallback de descripción cuando la cajera no tiene el código a mano.
+
 ## 29. 2026-04-23 — Mínimo 30 caracteres en motivo de excepción de OP
 **Contexto:** Al marcar una OP como excepción (fuera del día protocolo), hay un textarea "motivo" con un mínimo de caracteres. ¿Cuántos?
 **Opciones:** 20, 30 o 50.
@@ -339,6 +341,43 @@ Clases de fila: `row--decision-no`, `row--decision-central`, `row--decision-comp
 **Contexto:** Al confirmar Compra, las líneas donde `cantidad_recibida ≠ cantidad_esperada` (más, menos, cero), ¿requieren justificación obligatoria o solo opcional?
 **Decisión:** **Obligatoria.** Dropdown con motivo tipificado (`faltante` / `sobrante` / `producto_distinto` / `otro`) + texto opcional complementario. Si quedan líneas con diferencia sin justificar, el botón del modal final queda bloqueado y se listan cuáles faltan, con link de acción "Ir a justificar" que scrollea a esa fila.
 **Razón:** Sin justificación, el reporte de auditoría pierde valor: no se puede detectar patrones (por ejemplo, "el proveedor X siempre entrega menos"). Con motivo tipificado, el admin puede agregar por tipo y tomar decisiones comerciales. El dropdown acotado (4 opciones) evita texto libre sucio.
+
+## 39. 2026-04-22 — Carga de OP por escaneo de código de barra (keyboard-only)
+**Contexto:** El flujo anterior de carga de OP en `cajera/op-nueva.html` usaba un buscador de texto (`startsWith` por código, `includes` por descripción). Para OPs grandes (20-30 productos), ese flujo es lento: cada línea implica al menos tipear 4-5 caracteres, leer la lista de resultados, clickear el correcto y después ajustar cantidad con el spinner ± o editar el input. En los locales reales, las cajeras tienen **lectores láser** que actúan como teclado: escanean el producto y emiten los dígitos del código de barra seguidos de un Enter automático. Ese hardware ya está; aprovecharlo elimina toda la fricción del paso "buscar".
+
+**Opciones consideradas:**
+- **A. Solo buscador de texto** (status quo previo). Funciona sin lector pero es lento.
+- **B. Escaneo exclusivo con lector tipo teclado + Enter**, sin fallback de descripción. Rápido pero deja colgada a la cajera si un producto no tiene código físico visible o el lector falla.
+- **C. Ambos, con escaneo como primary y búsqueda por descripción como fallback discreto.**
+
+**Decisión: C.** Escaneo como flujo primario, búsqueda por descripción como fallback secundario (accesible por un link chico "¿No tiene código o no lo encontrás? Buscar por descripción" que expande un input secundario).
+
+Detalles del flujo primario:
+- La pantalla arranca con **autofocus en un input "Código de barra"** grande (72px de alto, monoespaciado, prominente, borde primary).
+- Cajera escanea o tipea → Enter dispara búsqueda **exacta** por `barras`.
+- **Encontrado + nuevo**: se agrega una fila con cantidad=1 y el foco salta al input de cantidad de esa fila con el "1" ya seleccionado (`.focus()` + `.select()`). Highlight verde suave por 400ms.
+- **Encontrado + ya existente**: no duplica. Foca la cantidad de la fila existente con el valor actual seleccionado (sobrescribir > sumar, porque la cajera en general sabe la cantidad total que quiere).
+- **No encontrado**: toast rojo "Producto no encontrado: [código]" + botón "Solicitar alta al supervisor" (decorativo). Foco vuelve al input de escaneo.
+- **Código < 6 dígitos**: warning "Código muy corto". Probable tipeo accidental (el lector emite Enter automático pero puede fallar con lecturas parciales). La cajera puede ignorar y re-escanear.
+- **En cantidad**: Enter con valor válido → guarda y vuelve al escaneo. Enter con vacío o 0 → mantiene cantidad=1 (no borra la fila). Escape → vuelve al escaneo sin cambios adicionales.
+- **Beep** sutil vía Web Audio API (frecuencia alta=OK, baja=error), silencioso si el browser lo bloquea.
+- **Eliminar fila**: botón tacho con confirmación inline (`confirm()` en mockup; en React será confirmación no destructiva).
+
+Fallback:
+- Link chico en el footer del bloque de escaneo expande un input secundario más chato (48px) con la búsqueda `startsWith`/`includes` de D28 intacta. Solo aparece bajo demanda.
+- Una vez agregado el producto vía fallback, el foco también salta a la cantidad (mismo patrón).
+
+**Razón:**
+- Los lectores láser son estándar en los 10 locales del cliente; desperdiciar ese hardware sería regalar velocidad.
+- Keyboard-only es el flujo más rápido (scan → cantidad → Enter → scan → ...), literalmente cero clicks y cero navegación con mouse.
+- La cajera con OP de 25 productos baja de ~5 minutos (con buscador) a <2 minutos (con escaneo).
+- El fallback de descripción cubre los casos borde (producto sin código físico visible, caja arrugada, producto nuevo sin etiqueta) sin penalizar el flujo común.
+- La búsqueda `startsWith` sigue viva en el fallback — no se rompe D28.
+
+**Supuestos y pendientes:**
+- **Supuesto**: todos los productos del catálogo central tienen `codigoBarra` cargado. **Pendiente Producto**: confirmar cuántos productos del catálogo real tienen código; si hay % significativo sin código, el fallback pasa a ser más importante que secundario.
+- **Supuesto**: los lectores de los locales emiten Enter al final del código. **Pendiente Arquitecto**: verificar modelos de lectores en uso; si alguno emite Tab en vez de Enter, hay que soportar ambas.
+- **Pendiente**: cuándo aparece un producto escaneado que sí existe en el sistema base pero aún no está en el catálogo cacheado de MultiCompra → ¿refetch on-demand? Se trata en la fase de arquitectura de caché.
 
 ---
 
