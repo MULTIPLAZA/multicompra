@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Manual MultiCompra — Cómo trabajar con los agentes</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 26pt;
+    color: #0f766e;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+  }
+  h1 + .subtitle {
+    color: #64748b;
+    font-size: 12pt;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: 16pt;
+    color: #0f766e;
+    margin-top: 32px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #14b8a6;
+    padding-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13pt;
+    color: #0f172a;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 24px; padding: 0; }
+  li { margin: 4px 0; }
+  strong { color: #0f172a; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10pt;
+    color: #0f766e;
+  }
+  .chat {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    background: #f8fafc;
+    page-break-inside: avoid;
+  }
+  .chat .label {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .chat.yo .label { color: #0f766e; }
+  .chat.claude .label { color: #9333ea; }
+  .chat .msg {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10pt;
+    white-space: pre-wrap;
+    color: #334155;
+  }
+  .box {
+    border-left: 4px solid #14b8a6;
+    background: #f0fdfa;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    page-break-inside: avoid;
+  }
+  .box.warn {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .box.danger {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+  }
+  .box .box-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 10.5pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #0f766e;
+    color: white;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+  }
+  td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .ejemplo-num {
+    display: inline-block;
+    background: #0f766e;
+    color: white;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 10pt;
+    margin-right: 6px;
+  }
+  .step {
+    background: #f0fdfa;
+    border: 1px solid #14b8a6;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 8px 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: #0f766e;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-weight: 700;
+    margin-right: 8px;
+    font-size: 10pt;
+  }
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    page-break-after: always;
+    padding-left: 4mm;
+  }
+  .cover .brand {
+    font-size: 12pt;
+    color: #64748b;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 48pt;
+    margin: 20px 0 10px 0;
+  }
+  .cover .big-subtitle {
+    font-size: 18pt;
+    color: #334155;
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    color: #64748b;
+    font-size: 11pt;
+  }
+  .toc {
+    page-break-after: always;
+  }
+  .toc ol { list-style: none; margin-left: 0; }
+  .toc li {
+    padding: 4px 0;
+    border-bottom: 1px dotted #cbd5e1;
+  }
+  .toc .n {
+    display: inline-block;
+    width: 30px;
+    color: #0f766e;
+    font-weight: 700;
+  }
+  .footer-note {
+    margin-top: 40px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 9.5pt;
+  }
+  .agent-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    page-break-inside: avoid;
+  }
+  .agent-card.producto { border-color: #0f766e; }
+  .agent-card.ux { border-color: #9333ea; }
+  .agent-card.arquitecto { border-color: #dc2626; }
+  .agent-card h3 {
+    margin-top: 0;
+    font-size: 14pt;
+  }
+  .agent-card.producto h3 { color: #0f766e; }
+  .agent-card.ux h3 { color: #9333ea; }
+  .agent-card.arquitecto h3 { color: #dc2626; }
+  .tag {
+    display: inline-block;
+    font-size: 9pt;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+    margin-top: 2px;
+  }
+  .tag.ok { background: #dcfce7; color: #166534; }
+  .tag.no { background: #fee2e2; color: #991b1b; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="cover">
+  <div class="brand">MULTICOMPRA · PWA de Órdenes de Compra</div>
+  <h1>Manual para trabajar con los agentes</h1>
+  <div class="big-subtitle">Guía práctica paso a paso, con ejemplos reales</div>
+  <div class="meta">
+    Versión 1 · Abril 2026<br>
+    Para el equipo interno (vos y tu compañero)
+  </div>
+</div>
+
+<!-- ÍNDICE -->
+<div class="toc">
+  <h2>Qué vas a encontrar en este manual</h2>
+  <ol>
+    <li><span class="n">1</span> Qué es todo esto (en cristiano)</li>
+    <li><span class="n">2</span> Los 3 ayudantes que tenés en el proyecto</li>
+    <li><span class="n">3</span> Tu primer día - ejemplo paso a paso</li>
+    <li><span class="n">4</span> 4 ejemplos reales de cómo pedirle algo a cada agente</li>
+    <li><span class="n">5</span> Cómo no pisarte con tu compañero</li>
+    <li><span class="n">6</span> Errores comunes y cómo salir de ellos</li>
+    <li><span class="n">7</span> Frases listas para copiar y pegar</li>
+    <li><span class="n">8</span> Cuándo NO usar los agentes</li>
+    <li><span class="n">9</span> Checklist antes de empezar a programar</li>
+  </ol>
+</div>
+
+<!-- 1 -->
+<h2>1. Qué es todo esto (en cristiano)</h2>
+
+<p>Estamos construyendo una aplicación web llamada <strong>MultiCompra</strong>. Sirve para que una cadena de 10 locales de accesorios de celular organice sus pedidos de reposición sin que se les llene el depósito de mercadería que no se vende.</p>
+
+<p>Para construirla, usamos una herramienta que se llama <strong>Claude Code</strong>. Es como un asistente de programación que vive en la terminal de tu computadora y te ayuda a pensar, diseñar y escribir código.</p>
+
+<p>Pero en vez de hablar con un asistente "genérico", le configuramos 3 ayudantes especializados — los <strong>agentes</strong>. Cada uno sabe de una cosa distinta y no se mete en lo que no sabe.</p>
+
+<div class="box">
+  <div class="box-title">Analogía rápida</div>
+  Pensá en una obra de construcción. Tenés al <strong>arquitecto</strong>, al <strong>decorador de interiores</strong> y al <strong>dueño del proyecto</strong> que define qué tipo de casa quiere. Si le preguntás al decorador cómo hacer la estructura del techo, te va a responder mal. Por eso cada uno está en su rol. Acá es lo mismo.
+</div>
+
+<!-- 2 -->
+<h2>2. Los 3 ayudantes que tenés en el proyecto</h2>
+
+<div class="agent-card producto">
+  <h3>MultiCompraProducto</h3>
+  <p><strong>Es como el dueño del proyecto</strong>. Define qué hace el software y bajo qué reglas.</p>
+  <p><span class="tag ok">Sirve para</span> preguntarle cosas como: "¿una cajera puede modificar una OP después de enviarla?", "¿qué pasa si llega menos mercadería que la pedida?", "¿qué estados debería tener una OC?".</p>
+  <p><span class="tag no">No sirve para</span> preguntarle cómo se ven las pantallas o qué base de datos usar.</p>
+</div>
+
+<div class="agent-card ux">
+  <h3>MultiCompraUX</h3>
+  <p><strong>Es como el diseñador de pantallas</strong>. Piensa cómo se ve y se usa la aplicación.</p>
+  <p><span class="tag ok">Sirve para</span>: "¿dónde va el botón de cerrar una OC?", "¿cómo debería verse la pantalla de cargar un pedido?", "hacé una maqueta de cómo queda la lista de órdenes".</p>
+  <p><span class="tag no">No sirve para</span> definir reglas del negocio ni decidir temas técnicos.</p>
+</div>
+
+<div class="agent-card arquitecto">
+  <h3>MultiCompraArquitecto</h3>
+  <p><strong>Es el técnico</strong>. Decide cómo se construye la aplicación por dentro.</p>
+  <p><span class="tag ok">Sirve para</span>: "¿cómo guardamos los datos?", "¿qué pasa si el sistema del proveedor se cae?", "¿cómo hacemos para que el stock no se mezcle entre dos supervisores?".</p>
+  <p><span class="tag no">No sirve para</span> diseñar pantallas ni inventar reglas del negocio.</p>
+</div>
+
+<!-- 3 -->
+<h2>3. Tu primer día - ejemplo paso a paso</h2>
+
+<p>Imaginate que es tu primer día de trabajo y abrís Claude Code por primera vez. Esto es lo que hacés:</p>
+
+<div class="step">
+  <span class="step-number">1</span><strong>Abrí la carpeta del proyecto.</strong><br>
+  En tu computadora, vas a <code>Documents/GitHub/multicompra</code>. Ahí está todo.
+</div>
+
+<div class="step">
+  <span class="step-number">2</span><strong>Abrí Claude Code.</strong><br>
+  Desde esa carpeta, ejecutás el comando <code>claude</code> en la terminal. Se abre la interfaz donde le vas a escribir.
+</div>
+
+<div class="step">
+  <span class="step-number">3</span><strong>Leé los 3 documentos clave.</strong><br>
+  Antes de escribir nada, abrí y leé (5 minutos cada uno):
+  <ul>
+    <li><code>docs/contexto.md</code> - qué estamos haciendo y por qué</li>
+    <li><code>docs/decisiones.md</code> - qué se decidió hasta ahora</li>
+    <li>Este manual (el que estás leyendo)</li>
+  </ul>
+</div>
+
+<div class="step">
+  <span class="step-number">4</span><strong>Escribí tu primera pregunta a Claude.</strong><br>
+  Algo bien llano, tipo:
+
+  <div class="chat yo">
+    <div class="label">Vos escribís</div>
+    <div class="msg">Che, ¿en qué está MultiCompra y qué sigue?</div>
+  </div>
+
+  Claude te va a resumir el estado y te va a proponer el próximo paso. Ahí ya arrancaste.
+</div>
+
+<!-- 4 -->
+<h2>4. 4 ejemplos reales de cómo pedirle algo a cada agente</h2>
+
+<h3><span class="ejemplo-num">1</span>Le preguntás a Producto sobre una regla de negocio</h3>
+
+<p><strong>Situación:</strong> estás mirando las decisiones y te nace una duda: "¿qué pasa si una cajera carga una OP pero se va a su casa sin enviarla?"</p>
+
+<div class="chat yo">
+  <div class="label">Vos escribís</div>
+  <div class="msg">Hola. Necesito que MultiCompraProducto me ayude con esto:
+Si una cajera empieza a cargar una OP y se va sin enviarla, ¿qué pasa con esa OP?
+¿Queda guardada como borrador? ¿Se borra? ¿Cuánto tiempo dura?</div>
+</div>
+
+<div class="chat claude">
+  <div class="label">Claude (con MultiCompraProducto)</div>
+  <div class="msg">Tenés 3 opciones a considerar:
+
+OPCIÓN A - Borrador sin límite: la OP queda guardada hasta que la cajera la
+termine o la anule manualmente.
+  Ventaja: no se pierde trabajo.
+  Desventaja: se llena la base de borradores fantasma.
+
+OPCIÓN B - Borrador con expiración: la OP queda como borrador 48 horas.
+Pasado ese tiempo, se marca automáticamente como "expirada".
+  Ventaja: limpia solo.
+  Desventaja: si la cajera volvió al día siguiente, perdió el trabajo.
+
+OPCIÓN C - Autoenvío al cierre del día: si queda algo cargado al cerrar el
+local, se envía automáticamente como OP pendiente del supervisor.
+  Ventaja: nada se pierde, el supervisor ve todo.
+  Desventaja: puede molestar al supervisor con OPs que la cajera no terminó.
+
+Mi recomendación: OPCIÓN B con 48hs. Es el mejor balance.
+¿Con cuál vamos?</div>
+</div>
+
+<div class="box">
+  <div class="box-title">Qué aprendiste</div>
+  Un buen agente no te da "la respuesta" - te da opciones con pros y contras y recomienda una. Vos decidís. Después le pedís: <em>"Vamos con la B. Documentala en decisiones.md."</em>
+</div>
+
+<h3><span class="ejemplo-num">2</span>Le pedís a UX que maquete una pantalla</h3>
+
+<p><strong>Situación:</strong> querés ver cómo se vería la pantalla donde la cajera carga una OP.</p>
+
+<div class="chat yo">
+  <div class="label">Vos escribís</div>
+  <div class="msg">MultiCompraUX, hacé una maqueta simple de la pantalla de cajera para
+cargar una OP. Que tenga buscador de productos y una tabla con lo que ya agregó.
+Ponela en mockups/cajera/op-nueva.html</div>
+</div>
+
+<div class="chat claude">
+  <div class="label">Claude (con MultiCompraUX)</div>
+  <div class="msg">Listo. Creé mockups/cajera/op-nueva.html con:
+- Header arriba con el nombre del local y el usuario logueado
+- Buscador grande en el centro (por código de barra o descripción)
+- Tabla debajo con: producto, cantidad, botón de eliminar
+- Botón grande abajo: "Enviar orden de pedido"
+
+Para verla: abrí la carpeta mockups/ en la terminal y corré:
+python -m http.server 8000
+Después entrás a http://localhost:8000/cajera/op-nueva.html en el navegador.
+
+Dos cosas que quiero confirmar con vos antes de seguir:
+- ¿La cajera puede agregar productos que no existen en el catálogo?
+- ¿Hay un botón para guardar como borrador o solo enviar?
+
+Las dos son reglas de producto. ¿Las paso a MultiCompraProducto?</div>
+</div>
+
+<div class="box">
+  <div class="box-title">Qué aprendiste</div>
+  El agente de UX te hace el HTML, te dice cómo verlo en el navegador, y marca lo que depende de otro agente. No se mete en lo que no le corresponde.
+</div>
+
+<h3><span class="ejemplo-num">3</span>Le consultás al Arquitecto por un problema técnico</h3>
+
+<p><strong>Situación:</strong> te preguntás cómo evitar que dos supervisores al mismo tiempo "usen" el mismo stock del depósito central.</p>
+
+<div class="chat yo">
+  <div class="label">Vos escribís</div>
+  <div class="msg">MultiCompraArquitecto, necesito entender cómo resolver esto:
+Dos supervisores abren OCs distintas al mismo tiempo. Los dos ven 10 unidades
+de un producto en el depósito central y deciden "repongo desde central" en
+sus respectivas OCs. ¿Cómo evitamos que los dos reserven las mismas 10 unidades?</div>
+</div>
+
+<div class="chat claude">
+  <div class="label">Claude (con MultiCompraArquitecto)</div>
+  <div class="msg">Problema clásico de race condition. Te tiro 3 caminos:
+
+1. RESERVAS EN BASE DE DATOS (recomendado)
+Creamos una tabla reservas_central en Supabase. Cuando un supervisor marca
+"repongo desde central" en una fila, se crea una reserva por esa cantidad.
+Los otros supervisores ven el stock como: stock_api - sum(reservas_activas).
+
+2. LOCK PESIMISTA
+Bloquear el producto mientras uno lo edita. Nadie más lo puede tocar hasta
+que confirme o cancele. Más simple pero molesto en la práctica.
+
+3. VALIDACIÓN AL CIERRE
+Dejar que los dos trabajen y al cerrar la OC, si no alcanza el stock,
+se avisa y se pide que el segundo ajuste.
+
+Recomiendo la 1. Es la más limpia, le muestra al supervisor datos reales
+siempre, y queda trazabilidad de quién reservó qué.
+
+Necesito confirmar con vos 2 cosas:
+- ¿La reserva se libera sola si la OC queda abierta 5 días?
+- ¿El dueño quiere ver reporte de reservas vencidas?
+
+Son decisiones que mezclan producto y técnico. ¿Las cerramos con Producto?</div>
+</div>
+
+<h3><span class="ejemplo-num">4</span>Encadenás agentes en una misma tarea</h3>
+
+<p><strong>Situación:</strong> querés avanzar con la pantalla completa de "editar OC" pero hay reglas no definidas.</p>
+
+<div class="chat yo">
+  <div class="label">Vos escribís</div>
+  <div class="msg">Quiero avanzar con la pantalla de editar OC del supervisor.
+Primero hablá con MultiCompraProducto para cerrar:
+- Qué puede editar el supervisor y qué no
+- Cómo se maneja agregar un producto nuevo que no venía en las OPs
+
+Cuando eso esté claro, pasale todo a MultiCompraUX para que maquete
+la pantalla. Yo reviso al final.</div>
+</div>
+
+<div class="box">
+  <div class="box-title">Qué aprendiste</div>
+  Podés encadenar agentes en un solo mensaje. Claude va a hablar primero con uno, traer la respuesta, pedirte confirmación, y después pasarle a otro agente con el contexto ya cerrado.
+</div>
+
+<!-- 5 -->
+<h2>5. Cómo no pisarte con tu compañero</h2>
+
+<p>Como los dos van a trabajar sobre el mismo proyecto, siguán estas reglas simples:</p>
+
+<div class="step">
+  <span class="step-number">1</span><strong>Antes de pedir algo a un agente, leé <code>docs/decisiones.md</code>.</strong><br>
+  Quizás tu compañero ya cerró ese tema ayer y vos no te enteraste.
+</div>
+
+<div class="step">
+  <span class="step-number">2</span><strong>Cada vez que cierran una decisión, actualicen ese archivo.</strong><br>
+  Siempre con fecha, opciones consideradas y la razón de la elegida.
+</div>
+
+<div class="step">
+  <span class="step-number">3</span><strong>Hagan commit y push del repo seguido.</strong><br>
+  Idealmente al terminar cada sesión de trabajo.
+</div>
+
+<div class="step">
+  <span class="step-number">4</span><strong>Avisen por WhatsApp qué están trabajando.</strong><br>
+  "Hoy voy a cerrar los estados de OC con Producto" - así el otro no abre el mismo tema en paralelo.
+</div>
+
+<!-- 6 -->
+<h2>6. Errores comunes y cómo salir de ellos</h2>
+
+<div class="box warn">
+  <div class="box-title">Error 1: le pedís a UX que invente reglas</div>
+  <strong>Síntoma:</strong> UX te dice "no me corresponde decidir esto".<br>
+  <strong>Solución:</strong> pasale esa pregunta a Producto. Una vez que Producto la cierra, volvés a UX con la decisión en la mano.
+</div>
+
+<div class="box warn">
+  <div class="box-title">Error 2: le pedís código a un agente cuando todavía estamos en diseño</div>
+  <strong>Síntoma:</strong> el agente te dice "estamos en fase de mockups, todavía no corresponde codear".<br>
+  <strong>Solución:</strong> revisá el checklist de la sección 9. Si todo está listo, decílo explícito: "ya está todo cerrado, ahora sí vamos al código".
+</div>
+
+<div class="box warn">
+  <div class="box-title">Error 3: le preguntás algo de otro proyecto</div>
+  <strong>Síntoma:</strong> el agente contesta confundido o dice que no sabe.<br>
+  <strong>Solución:</strong> cada agente es solo para MultiCompra. Para otros proyectos (NODO, XMLBox, etc.) hay otros agentes.
+</div>
+
+<div class="box danger">
+  <div class="box-title">Error 4: cambiás una decisión sin documentarla</div>
+  <strong>Síntoma:</strong> mañana nadie se acuerda por qué se hizo así.<br>
+  <strong>Solución:</strong> cada cambio importante va a <code>decisiones.md</code>, con fecha nueva, sin borrar la decisión anterior. Quedan las dos, así hay histórico.
+</div>
+
+<!-- 7 -->
+<h2>7. Frases listas para copiar y pegar</h2>
+
+<h3>Para empezar una sesión</h3>
+<div class="chat yo">
+  <div class="label">Copiá esto</div>
+  <div class="msg">Che, leé docs/contexto.md y docs/decisiones.md y decime en qué está
+MultiCompra y cuál es la próxima tarea pendiente más lógica.</div>
+</div>
+
+<h3>Para pedirle algo a Producto</h3>
+<div class="chat yo">
+  <div class="label">Copiá esto</div>
+  <div class="msg">MultiCompraProducto: tengo esta duda [escribí tu duda acá].
+Dame opciones con pros y contras, y recomendá una.</div>
+</div>
+
+<h3>Para pedirle un mockup a UX</h3>
+<div class="chat yo">
+  <div class="label">Copiá esto</div>
+  <div class="msg">MultiCompraUX: maquetá la pantalla de [nombre de pantalla] para el
+perfil [cajera o supervisor]. HTML y CSS vanilla, en mockups/[subcarpeta].
+Datos mock inline. Sin React todavía.</div>
+</div>
+
+<h3>Para pedirle algo al Arquitecto</h3>
+<div class="chat yo">
+  <div class="label">Copiá esto</div>
+  <div class="msg">MultiCompraArquitecto: ¿cómo deberíamos resolver [problema técnico]?
+Dame opciones con trade-offs y recomendación.</div>
+</div>
+
+<h3>Para cerrar una decisión</h3>
+<div class="chat yo">
+  <div class="label">Copiá esto</div>
+  <div class="msg">Ok, vamos con la opción [A/B/C]. Agregala a docs/decisiones.md con fecha
+de hoy, opciones que consideramos y razón del elegido. Si cambia algo del
+contexto del proyecto, actualizá también la memoria.</div>
+</div>
+
+<!-- 8 -->
+<h2>8. Cuándo NO usar los agentes</h2>
+
+<table>
+  <thead>
+    <tr><th>Situación</th><th>Qué hacer</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Tenés una duda personal/existencial</td><td>Los agentes no son psicólogos. Hablá con un humano.</td></tr>
+    <tr><td>Es algo de otro proyecto</td><td>Usá los agentes de ese proyecto (cada uno tiene los suyos).</td></tr>
+    <tr><td>Querés opiniones sobre el producto sin contexto</td><td>Primero documentá el contexto en el repo, después preguntá.</td></tr>
+    <tr><td>Solo querés conversar</td><td>Claude normal te alcanza. Los agentes son para tareas específicas.</td></tr>
+  </tbody>
+</table>
+
+<!-- 9 -->
+<h2>9. Checklist antes de empezar a programar</h2>
+
+<p>Antes de escribir la primera línea de código React o SQL, confirmá punto por punto:</p>
+
+<ul>
+  <li>☐ <strong>Producto</strong> fijó los estados de OP, OC y Compra</li>
+  <li>☐ <strong>Producto</strong> fijó los roles y permisos (quién puede qué)</li>
+  <li>☐ <strong>UX</strong> tiene el mockup de la pantalla aprobado por vos</li>
+  <li>☐ <strong>Arquitecto</strong> definió el schema de la base de datos</li>
+  <li>☐ <strong>Arquitecto</strong> definió cómo se integra con el SP del proveedor</li>
+  <li>☐ Las decisiones importantes están en <code>docs/decisiones.md</code></li>
+  <li>☐ Vos (humano) entendés el flujo completo - si algo te genera dudas, frenás</li>
+</ul>
+
+<p>Si algún punto no está listo, volvé al agente que corresponda antes de codear. Programar sobre dudas = horas perdidas.</p>
+
+<div class="box">
+  <div class="box-title">Regla final</div>
+  <strong>Mejor 1 hora pensando con los agentes, que 1 día rehaciendo código.</strong> El software que no se diseñó antes de escribirse termina siendo el que se reescribe 3 veces.
+</div>
+
+<div class="footer-note">
+  Manual versión 1 · Proyecto MultiCompra · Abril 2026<br>
+  Si encontrás algo confuso, agregalo a docs/decisiones.md con la mejora propuesta.
+</div>
+
+</body>
+</html>

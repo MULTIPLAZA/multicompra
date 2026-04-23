@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Editar OC-0042 (V3)</title>
+  <!-- Anti-flash: setear data-theme antes del CSS para evitar parpadeo -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Overrides locales — modelo V3: fila por pedido + encabezado agrupador
+       ===================================================================== */
+
+    .table-area {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    /* Thead: sticky top 0 */
+    .table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--bg-elev-2);
+    }
+    .table thead .sticky-col { z-index: 6; }
+
+    /* Group-row: sticky top = alto del thead */
+    tr.group-row > td {
+      position: sticky;
+      top: 36px;
+      z-index: 3;
+    }
+
+    /* Sticky backgrounds por tipo de fila */
+    .table .sticky-col-1 { background: var(--bg-elev); }
+    .table .sticky-col-2 { background: var(--bg-elev); }
+    .table thead .sticky-col-1,
+    .table thead .sticky-col-2 { background: var(--bg-elev-2); }
+
+    /* Ajuste columnas sticky para V3 (checkbox + local) */
+    .table .sticky-col-1 { left: 0; width: 36px; }
+    .table .sticky-col-2 { left: 36px; width: 200px; box-shadow: 2px 0 0 var(--border); }
+
+    .btn-circle {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+
+    .filter-count {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-2) var(--sp-4);
+      background: var(--primary-soft);
+      border-bottom: 1px solid var(--primary);
+      font-size: var(--fs-sm);
+      color: var(--text);
+    }
+    .bulk-bar.visible { display: flex; }
+
+    /* =====================================================================
+       Encabezado agrupador fino (una fila por producto)
+       ===================================================================== */
+    tr.group-row > td {
+      background: var(--bg-elev-3);
+      border-top: 2px solid var(--border-strong);
+      border-bottom: 1px solid var(--border);
+      padding: var(--sp-1) var(--sp-3);
+      font-size: var(--fs-sm);
+      color: var(--text);
+    }
+    tr.group-row .sticky-col {
+      background: var(--bg-elev-3);
+      border-top: 2px solid var(--border-strong);
+    }
+    .group-inner {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .group-name { font-weight: 600; color: var(--text-strong); }
+    .group-code {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .group-field {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      color: var(--text-muted);
+    }
+    .group-field strong {
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .group-field.total-comprar strong { color: var(--primary); }
+    .group-field.total-comprar { margin-left: auto; }
+
+    .group-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px var(--sp-2);
+      background: var(--decision-pendiente-bg);
+      color: var(--decision-pendiente-text);
+      border: 1px solid var(--decision-pendiente-border);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+    }
+
+    /* =====================================================================
+       Filas pedido — una por (local × producto)
+       Decisión 23: fondo = decisión, borde izq = edición manual
+       (los fondos vienen desde styles.css vía .row--decision-*)
+       ===================================================================== */
+    tr.pedido-row > td {
+      padding: var(--sp-2) var(--sp-3);
+      vertical-align: middle;
+    }
+
+    /* Local: ícono + nombre */
+    .local-cell {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .local-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+    .local-name { font-size: var(--fs-sm); color: var(--text); }
+    .local-op   { font-size: var(--fs-xs); color: var(--text-muted); font-family: var(--font-mono); }
+
+    /* Excedente */
+    .excedente-pos { color: var(--success); font-weight: 600; }
+    .excedente-neg { color: var(--text-muted); }
+
+    /* =====================================================================
+       Columna "Decisión": 3 botones-radio compactos con íconos
+       ===================================================================== */
+    .decision-group {
+      display: inline-flex;
+      gap: 2px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      padding: 2px;
+    }
+    .decision-btn {
+      position: relative;
+      border: 0;
+      background: transparent;
+      padding: 4px 8px;
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      line-height: 1.2;
+      transition: background var(--t-fast), color var(--t-fast);
+    }
+    .decision-btn:hover:not(:disabled) { background: var(--bg-elev-2); }
+    .decision-btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 1px;
+    }
+    .decision-btn[aria-checked="true"].dec-no {
+      background: var(--decision-no-border);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .decision-btn[aria-checked="true"].dec-central {
+      background: var(--decision-central-border);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .decision-btn[aria-checked="true"].dec-comprar {
+      background: var(--primary);
+      color: var(--primary-on);
+      font-weight: 600;
+    }
+    .decision-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .decision-btn svg { width: 11px; height: 11px; }
+
+    .dec-central-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 4px;
+      background: rgba(255,255,255,0.25);
+      border-radius: var(--radius-sm);
+      margin-left: 2px;
+    }
+    .decision-btn[aria-checked="false"] .dec-central-chip {
+      background: var(--decision-central-bg);
+      color: var(--decision-central-text);
+    }
+
+    .input-comprar {
+      width: 48px;
+      height: 18px;
+      padding: 0 4px;
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      border: 1px solid var(--border-strong);
+      border-radius: 3px;
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      margin-left: 2px;
+    }
+    .input-comprar:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .decision-btn[aria-checked="true"] .input-comprar {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.12);
+      color: #ffffff;
+    }
+
+    .btn-audit {
+      width: 24px; height: 24px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+    }
+    .btn-audit:hover { background: var(--bg-elev-2); color: var(--text-strong); }
+
+    /* =====================================================================
+       Popover de auditoría por fila (Decisión 26)
+       ===================================================================== */
+    .audit-popover {
+      position: absolute;
+      z-index: 50;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: var(--sp-3);
+      min-width: 280px;
+      max-width: 340px;
+      font-size: var(--fs-sm);
+      color: var(--text);
+    }
+    .audit-popover-title {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+    .audit-popover dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px var(--sp-3);
+      margin: 0;
+    }
+    .audit-popover dt {
+      color: var(--text-muted);
+      font-size: var(--fs-xs);
+    }
+    .audit-popover dd {
+      margin: 0;
+      color: var(--text-strong);
+      font-weight: 500;
+    }
+    .audit-popover .pop-op-code,
+    .audit-popover .pop-qty {
+      font-family: var(--font-mono);
+    }
+    .audit-popover-close {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px; height: 20px;
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .audit-popover-close:hover { background: var(--bg-elev-2); color: var(--text-strong); }
+
+    .table th.col-pidio,
+    .table td.col-pidio { width: 70px; }
+    .table th.col-stocklocal,
+    .table td.col-stocklocal { width: 90px; }
+    .table th.col-exc,
+    .table td.col-exc { width: 78px; }
+    .table th.col-decision,
+    .table td.col-decision { min-width: 340px; }
+    .table th.col-audit,
+    .table td.col-audit { width: 48px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="app page-dense" id="app">
+
+  <!-- =================================================================
+       Header
+       ================================================================= -->
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="#">OC</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="#">#OC-0042</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">Editar</span>
+    </nav>
+
+    <div class="grow"></div>
+
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app…  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+
+    <!-- Toggle light/dark -->
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <!-- =================================================================
+       Sidebar
+       ================================================================= -->
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="#" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        </span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="#" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </span>
+        <span class="nav-item-label">OPs pendientes</span>
+        <span class="nav-item-count">7</span>
+      </a>
+      <a class="nav-item active" href="#" data-label="OCs" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
+        </span>
+        <span class="nav-item-label">OCs</span>
+        <span class="nav-item-count">3</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </span>
+        <span class="nav-item-label">Compras</span>
+        <span class="nav-item-count">2</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- =================================================================
+       Main
+       ================================================================= -->
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <h1 class="screen-title">
+        <span class="screen-title-mono">OC-0042</span>
+      </h1>
+      <span class="badge badge-abierta">Abierta</span>
+
+      <span class="meta-item"><strong>Proveedor:</strong>&nbsp;Distribuidora Celular Plus S.A.</span>
+      <span class="divider-v" aria-hidden="true"></span>
+      <span class="meta-item"><strong>Creada:</strong>&nbsp;<span id="meta-fecha-creacion" class="text-mono">22/04 13:55</span></span>
+      <span class="divider-v" aria-hidden="true"></span>
+      <span class="chip chip-timestamp" title="Timestamp del snapshot de stock (central + locales)">
+        Stock al <span id="meta-stock-ts">22/04 14:32</span>
+      </span>
+      <button class="btn btn-ghost btn-circle" aria-label="Refrescar stock" title="Refrescar snapshot de stock">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+      </button>
+
+      <div class="grow"></div>
+
+      <button class="btn btn-ghost" id="btn-toggle-panel" aria-label="Abrir panel de auditoría" title="Abrir auditoría">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Auditoría
+      </button>
+    </div>
+
+    <div class="filter-bar" role="region" aria-label="Filtros de tabla">
+      <div style="position: relative;">
+        <input type="search" id="filter-search" class="input input-search input-sm" placeholder="Buscar producto o local…" aria-label="Buscar" style="padding-left: 28px; width: 240px;" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <button class="chip" id="chip-only-edited" aria-pressed="false" title="Solo pedidos con decisión cambiada del default">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Solo editados
+      </button>
+
+      <button class="chip" id="chip-only-exc" aria-pressed="false" title="Solo pedidos donde el local ya tiene suficiente">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Solo con excedente
+      </button>
+
+      <button class="chip" id="chip-only-buy" aria-pressed="false" title="Solo pedidos con decisión &quot;Comprar&quot; > 0">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Solo a comprar
+      </button>
+
+      <button class="chip" id="chip-alert-central" aria-pressed="false" title="Solo productos donde el total a reponer supera el stock central">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Central insuficiente
+      </button>
+
+      <span class="filter-count" id="filter-count">
+        <strong id="count-visible">0</strong> pedidos visibles
+      </span>
+    </div>
+
+    <div class="bulk-bar" id="bulk-bar" role="region" aria-label="Acciones en lote">
+      <span><strong id="bulk-count">0</strong> pedidos seleccionados</span>
+      <button class="btn btn-sm btn-secondary" data-bulk="no_necesita">Marcar "No necesita"</button>
+      <button class="btn btn-sm btn-secondary" data-bulk="comprar_todo">Comprar todo lo pedido</button>
+      <button class="btn btn-sm btn-secondary" data-bulk="repone_si_alcanza">Repone central (si alcanza)</button>
+      <button class="btn btn-sm btn-ghost" id="bulk-clear">Limpiar selección</button>
+    </div>
+
+    <div class="table-area">
+      <div class="table-wrap">
+        <table class="table" id="tabla-oc" role="grid" aria-label="Pedidos de la orden de compra agrupados por producto">
+          <thead>
+            <tr>
+              <th class="sticky-col sticky-col-1 cell-center">
+                <input type="checkbox" id="chk-all" aria-label="Seleccionar todos los pedidos" />
+              </th>
+              <th class="sticky-col sticky-col-2">Local · OP</th>
+              <th class="col-num col-pidio">Pidió</th>
+              <th class="col-num col-stocklocal">Stock local</th>
+              <th class="col-num col-exc">Excedente</th>
+              <th class="col-decision">Decisión</th>
+              <th class="col-audit">Audit.</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer class="screen-footer" role="contentinfo">
+      <div class="footer-counter">
+        <strong id="foot-nonec">0</strong> no necesita ·
+        <strong id="foot-central">0</strong> repone central ·
+        <strong id="foot-comprar">0</strong> a comprar
+      </div>
+      <div class="grow"></div>
+      <div class="meta-item">
+        Total OC:&nbsp;
+        <span class="footer-total">Gs. <span id="foot-total">0</span></span>
+      </div>
+      <span class="divider-v" aria-hidden="true"></span>
+      <button class="btn btn-ghost" id="btn-discard">Descartar cambios</button>
+      <button class="btn btn-secondary" id="btn-save-draft">Guardar borrador</button>
+      <button class="btn btn-primary" id="btn-close-oc" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Cerrar OC
+      </button>
+    </footer>
+
+  </main>
+
+  <aside class="app-panel" aria-label="Auditoría de la OC">
+    <div class="panel-header">
+      <h3>Auditoría</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" id="btn-close-panel" aria-label="Cerrar panel">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <section class="panel-section">
+      <h4>OPs origen</h4>
+      <div class="stack-2" id="panel-ops"></div>
+    </section>
+
+    <section class="panel-section">
+      <h4>Creada por</h4>
+      <div class="row-2">
+        <span class="avatar" aria-hidden="true" style="width: 24px; height: 24px; font-size: 10px;">SH</span>
+        <span>Shirley</span>
+        <span class="text-xs text-muted" style="margin-left: auto;">22/04 13:55</span>
+      </div>
+    </section>
+
+    <section class="panel-section">
+      <h4>Historial de ediciones</h4>
+      <ul class="stack-2" id="panel-history" style="font-size: var(--fs-sm);">
+        <li><span class="text-xs text-muted">22/04 14:05</span> Shirley marcó "No necesita" en <strong>Mica hidrogel</strong> (Villa Morra)</li>
+        <li><span class="text-xs text-muted">22/04 14:11</span> Shirley cambió cantidad de compra en <strong>Cable USB-C 2m</strong></li>
+      </ul>
+    </section>
+  </aside>
+
+</div>
+
+<!-- =================================================================
+     Scripts — lógica V3
+     ================================================================= -->
+<script type="module">
+  import { oc, fmtGs } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  const tbody = document.getElementById('tabla-body');
+
+  // ==================================================================
+  // Íconos SVG inline para refuerzo por daltonismo (Decisión 23)
+  // ==================================================================
+  const ICON_NO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+  const ICON_CENTRAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="3 21 3 16 8 16"/></svg>';
+  const ICON_COMPRAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
+
+  function excedenteHTML(exc) {
+    const cls = exc >= 0 ? 'excedente-pos' : 'excedente-neg';
+    const txt = (exc > 0 ? '+' : '') + exc;
+    return `<span class="${cls}">${txt}</span>`;
+  }
+
+  function totalAComprar(grupo) {
+    return grupo.pedidos.reduce((s, p) => s + (p.decision === 'comprar' ? p.cantidadComprar : 0), 0);
+  }
+
+  function totalAReponer(grupo) {
+    return grupo.pedidos.reduce((s, p) => {
+      if (p.decision !== 'repone_central') return s;
+      return s + Math.max(0, p.pidio - p.stockLocal);
+    }, 0);
+  }
+
+  // Mapea decisión a clase de fila (Decisión 23)
+  function decisionRowClass(p) {
+    if (!p.decision || p.decision === 'pendiente') return 'row--decision-pendiente';
+    if (p.decision === 'no_necesita')   return 'row--decision-no';
+    if (p.decision === 'repone_central') return 'row--decision-central';
+    if (p.decision === 'comprar')       return 'row--decision-comprar';
+    return '';
+  }
+
+  function esEditado(p) {
+    if (p.decision !== p.decisionDefault) return true;
+    if (p.decision === 'comprar' && p.cantidadComprar !== p.cantidadComprarDefault) return true;
+    return false;
+  }
+
+  // ==================================================================
+  // Render
+  // ==================================================================
+  function groupRowHTML(grupo) {
+    const totalComprar = totalAComprar(grupo);
+    const reponer = totalAReponer(grupo);
+    const alerta = reponer > grupo.stockCentral;
+    const alertaHTML = alerta
+      ? `<span class="group-alert" title="Se quiere reponer ${reponer} desde central pero solo hay ${grupo.stockCentral}">
+           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+           Central insuficiente
+         </span>` : '';
+
+    const stockCritStyle = grupo.stockCentral <= 0 ? ' style="color: var(--danger);"' : '';
+
+    return `
+      <tr class="group-row" data-product-id="${grupo.productoId}" data-alert="${alerta}">
+        <td colspan="7">
+          <div class="group-inner">
+            <span class="group-name">${grupo.nombre}</span>
+            <span class="group-code">· cód. ${grupo.barras}</span>
+            <span class="group-field">Stock central: <strong${stockCritStyle}>${grupo.stockCentral}</strong></span>
+            <span class="group-field">Costo unit.: <strong>${fmtGs(grupo.costoEstimado)}</strong></span>
+            ${alertaHTML}
+            <span class="group-field total-comprar">Total a comprar: <strong data-total-comprar="${grupo.productoId}">${totalComprar}</strong></span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function pedidoRowHTML(p, grupo) {
+    const edited = esEditado(p);
+    const faltante = Math.max(0, p.pidio - p.stockLocal);
+    const centralHab = grupo.stockCentral > 0;
+    const centralDisabled = centralHab ? '' : 'disabled';
+    const rowClass = decisionRowClass(p);
+    const editedClass = edited ? ' row--edited' : '';
+
+    return `
+      <tr class="pedido-row ${rowClass}${editedClass}" role="row"
+          data-product-id="${grupo.productoId}"
+          data-op-id="${p.opId}"
+          data-local-id="${p.localId}"
+          data-decision="${p.decision}"
+          data-edited="${edited}">
+        <td class="sticky-col sticky-col-1 cell-center">
+          <input type="checkbox" class="chk-row" aria-label="Seleccionar pedido de ${p.localNombre} para ${grupo.nombre}" />
+        </td>
+        <td class="sticky-col sticky-col-2">
+          <div class="local-cell">
+            <span class="local-icon" aria-hidden="true">${p.localCodigo}</span>
+            <div>
+              <div class="local-name">${p.localNombre}</div>
+              <div class="local-op">${p.opId}</div>
+            </div>
+          </div>
+        </td>
+        <td class="col-num col-pidio">${p.pidio}</td>
+        <td class="col-num col-stocklocal">${p.stockLocal}</td>
+        <td class="col-num col-exc">${excedenteHTML(p.excedente)}</td>
+        <td class="col-decision">
+          <div class="decision-group" role="radiogroup" aria-label="Decisión del pedido">
+            <button type="button" class="decision-btn dec-no"
+                    role="radio"
+                    aria-checked="${p.decision === 'no_necesita'}"
+                    data-action="set-decision" data-value="no_necesita"
+                    title="No necesita (el local ya tiene suficiente)">
+              <span class="decision-icon">${ICON_NO}</span>
+              No necesita
+            </button>
+            <button type="button" class="decision-btn dec-central"
+                    role="radio"
+                    aria-checked="${p.decision === 'repone_central'}"
+                    data-action="set-decision" data-value="repone_central"
+                    ${centralDisabled}
+                    title="${centralHab ? 'Reponer desde depósito central' : 'Sin stock central disponible'}">
+              <span class="decision-icon">${ICON_CENTRAL}</span>
+              Repone central
+              ${centralHab ? `<span class="dec-central-chip">disp: ${grupo.stockCentral}</span>` : ''}
+            </button>
+            <button type="button" class="decision-btn dec-comprar"
+                    role="radio"
+                    aria-checked="${p.decision === 'comprar'}"
+                    data-action="set-decision" data-value="comprar"
+                    title="Comprar al proveedor">
+              <span class="decision-icon">${ICON_COMPRAR}</span>
+              Comprar
+              <input type="number"
+                     class="input-comprar"
+                     min="0" step="1"
+                     value="${p.decision === 'comprar' ? p.cantidadComprar : faltante || p.pidio}"
+                     data-action="edit-qty"
+                     aria-label="Cantidad a comprar"
+                     ${p.decision !== 'comprar' ? 'tabindex="-1"' : ''} />
+            </button>
+          </div>
+        </td>
+        <td class="col-audit">
+          <button class="btn-audit" aria-label="Auditoría del pedido" title="Ver auditoría">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderTabla() {
+    const chunks = [];
+    oc.grupos.forEach(g => {
+      chunks.push(groupRowHTML(g));
+      g.pedidos.forEach(p => chunks.push(pedidoRowHTML(p, g)));
+    });
+    tbody.innerHTML = chunks.join('');
+  }
+
+  renderTabla();
+
+  // ==================================================================
+  // Panel auditoría: OPs origen
+  // ==================================================================
+  const panelOps = document.getElementById('panel-ops');
+  panelOps.innerHTML = oc.opsOrigen.map(op => `
+    <div class="audit-row">
+      <div>
+        <div class="audit-local">${op.localNombre}</div>
+        <div class="text-xs text-muted">${op.cajera} · ${op.fecha.slice(5)}</div>
+      </div>
+      <a href="#" class="text-xs" title="Ver OP ${op.id}">${op.id}</a>
+    </div>
+  `).join('');
+
+  // ==================================================================
+  // Recomputar totales, contadores y alertas
+  // ==================================================================
+  function recomputar() {
+    let total = 0, nonec = 0, central = 0, comprar = 0;
+
+    oc.grupos.forEach(g => {
+      let grupoCompra = 0;
+      let grupoRepone = 0;
+      g.pedidos.forEach(p => {
+        if (p.decision === 'no_necesita') nonec++;
+        else if (p.decision === 'repone_central') {
+          central++;
+          grupoRepone += Math.max(0, p.pidio - p.stockLocal);
+        }
+        else if (p.decision === 'comprar') {
+          comprar++;
+          grupoCompra += p.cantidadComprar;
+        }
+      });
+      total += grupoCompra * g.costoEstimado;
+
+      const groupTr = tbody.querySelector(`tr.group-row[data-product-id="${g.productoId}"]`);
+      if (groupTr) {
+        const strong = groupTr.querySelector(`[data-total-comprar="${g.productoId}"]`);
+        if (strong) strong.textContent = grupoCompra;
+        const alerta = grupoRepone > g.stockCentral;
+        groupTr.dataset.alert = alerta;
+        const existing = groupTr.querySelector('.group-alert');
+        if (alerta && !existing) {
+          const totalField = groupTr.querySelector('.group-field.total-comprar');
+          const alertEl = document.createElement('span');
+          alertEl.className = 'group-alert';
+          alertEl.title = `Se quiere reponer ${grupoRepone} desde central pero solo hay ${g.stockCentral}`;
+          alertEl.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Central insuficiente`;
+          totalField.parentNode.insertBefore(alertEl, totalField);
+        } else if (!alerta && existing) {
+          existing.remove();
+        }
+      }
+    });
+
+    document.getElementById('foot-total').textContent = fmtGs(total);
+    document.getElementById('foot-nonec').textContent = nonec;
+    document.getElementById('foot-central').textContent = central;
+    document.getElementById('foot-comprar').textContent = comprar;
+
+    document.getElementById('btn-close-oc').disabled = total <= 0;
+  }
+
+  // ==================================================================
+  // Cambiar decisión de un pedido
+  // ==================================================================
+  function setDecision(tr, value) {
+    const pid = tr.dataset.productId;
+    const opId = tr.dataset.opId;
+    const grupo = oc.grupos.find(g => g.productoId === pid);
+    const p = grupo.pedidos.find(x => x.opId === opId && x.localId === tr.dataset.localId);
+
+    if (value === 'repone_central' && grupo.stockCentral <= 0) return;
+
+    const prevDecision = p.decision;
+    p.decision = value;
+
+    if (value === 'comprar') {
+      // Decisión 27: si venía de "repone_central" y el local tenía excedente
+      // (excedente >= 0, o sea stock_local >= pidio), el default es 0.
+      // Obliga a Shirley a subir manualmente si quiere comprar.
+      if (prevDecision === 'repone_central' && p.excedente >= 0) {
+        p.cantidadComprar = 0;
+      } else if (!p.cantidadComprar || p.cantidadComprar <= 0) {
+        p.cantidadComprar = Math.max(p.pidio - p.stockLocal, 0) || p.pidio;
+      }
+    }
+
+    const nueva = nuevoTr(pedidoRowHTML(p, grupo));
+    tr.replaceWith(nueva);
+    recomputar();
+    toggleBulk();
+  }
+
+  function nuevoTr(html) {
+    const t = document.createElement('tbody');
+    t.innerHTML = html;
+    return t.querySelector('tr');
+  }
+
+  // ==================================================================
+  // Eventos de tabla
+  // ==================================================================
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const tr = btn.closest('tr.pedido-row');
+    if (!tr) return;
+
+    if (action === 'set-decision') {
+      setDecision(tr, btn.dataset.value);
+    }
+  });
+
+  tbody.addEventListener('click', (e) => {
+    if (e.target.matches('.input-comprar')) {
+      e.stopPropagation();
+      const tr = e.target.closest('tr.pedido-row');
+      if (tr && tr.dataset.decision !== 'comprar') {
+        setDecision(tr, 'comprar');
+      }
+    }
+  }, true);
+
+  tbody.addEventListener('input', (e) => {
+    if (!e.target.matches('.input-comprar')) return;
+    const tr = e.target.closest('tr.pedido-row');
+    if (!tr) return;
+    const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
+    const p = grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+    const val = Math.max(0, parseInt(e.target.value || 0, 10));
+    p.cantidadComprar = val;
+    if (p.decision !== 'comprar') p.decision = 'comprar';
+    tr.dataset.decision = p.decision;
+    const edited = esEditado(p);
+    tr.dataset.edited = edited;
+    // actualizar clases row--decision-* y row--edited sin re-render total
+    tr.classList.remove('row--decision-no', 'row--decision-central', 'row--decision-comprar', 'row--decision-pendiente');
+    tr.classList.add(decisionRowClass(p));
+    tr.classList.toggle('row--edited', edited);
+    recomputar();
+  });
+
+  tbody.addEventListener('change', (e) => {
+    if (e.target.matches('.chk-row')) toggleBulk();
+  });
+
+  // ==================================================================
+  // Popover de auditoría por fila (Decisión 26)
+  // ==================================================================
+  let auditPopoverEl = null;
+
+  function closeAuditPopover() {
+    if (auditPopoverEl) {
+      auditPopoverEl.remove();
+      auditPopoverEl = null;
+    }
+  }
+
+  function openAuditPopover(btn, p, grupo) {
+    closeAuditPopover();
+    // Resolver la cajera desde las OPs origen
+    const opInfo = (oc.opsOrigen || []).find(o => o.id === p.opId);
+    const cajeraNombre = opInfo ? opInfo.cajera : '—';
+
+    const pop = document.createElement('div');
+    pop.className = 'audit-popover';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', `Auditoría del pedido de ${p.localNombre}`);
+    pop.innerHTML = `
+      <button class="audit-popover-close" type="button" aria-label="Cerrar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="audit-popover-title">Auditoría del pedido</div>
+      <dl>
+        <dt>OP origen</dt>
+        <dd class="pop-op-code">${p.opId}</dd>
+        <dt>Local</dt>
+        <dd>${p.localNombre}</dd>
+        <dt>Cantidad pedida</dt>
+        <dd class="pop-qty">${p.pidio}</dd>
+        <dt>Cajera</dt>
+        <dd>${cajeraNombre}</dd>
+        <dt>Producto</dt>
+        <dd>${grupo.nombre}</dd>
+      </dl>
+    `;
+    // Posicionar cerca del botón
+    const rect = btn.getBoundingClientRect();
+    pop.style.top = (window.scrollY + rect.bottom + 6) + 'px';
+    // Preferir abrir a la izquierda del botón para no caer fuera de la pantalla
+    pop.style.left = Math.max(8, window.scrollX + rect.right - 300) + 'px';
+    document.body.appendChild(pop);
+    auditPopoverEl = pop;
+
+    pop.querySelector('.audit-popover-close').addEventListener('click', closeAuditPopover);
+  }
+
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-audit');
+    if (!btn) return;
+    e.stopPropagation();
+    const tr = btn.closest('tr.pedido-row');
+    if (!tr) return;
+    const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
+    const p = grupo && grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+    if (!grupo || !p) return;
+    openAuditPopover(btn, p, grupo);
+  });
+
+  // Cerrar popover al click fuera o con Esc
+  document.addEventListener('click', (e) => {
+    if (!auditPopoverEl) return;
+    if (auditPopoverEl.contains(e.target)) return;
+    if (e.target.closest('.btn-audit')) return;
+    closeAuditPopover();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAuditPopover();
+  });
+
+  tbody.addEventListener('keydown', (e) => {
+    if (!e.target.matches('.decision-btn')) return;
+    const group = e.target.closest('.decision-group');
+    if (!group) return;
+    const btns = [...group.querySelectorAll('.decision-btn:not(:disabled)')];
+    const idx = btns.indexOf(e.target);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = btns[(idx + 1) % btns.length];
+      next.focus();
+      next.click();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = btns[(idx - 1 + btns.length) % btns.length];
+      prev.focus();
+      prev.click();
+    }
+  });
+
+  // ==================================================================
+  // Filtros
+  // ==================================================================
+  const filterSearch = document.getElementById('filter-search');
+  const chipOnlyEdited = document.getElementById('chip-only-edited');
+  const chipOnlyExc = document.getElementById('chip-only-exc');
+  const chipOnlyBuy = document.getElementById('chip-only-buy');
+  const chipAlertCentral = document.getElementById('chip-alert-central');
+
+  function aplicarFiltros() {
+    const q = filterSearch.value.trim().toLowerCase();
+    const onlyEdited = chipOnlyEdited.classList.contains('chip-active');
+    const onlyExc = chipOnlyExc.classList.contains('chip-active');
+    const onlyBuy = chipOnlyBuy.classList.contains('chip-active');
+    const alertCentral = chipAlertCentral.classList.contains('chip-active');
+
+    let visibles = 0;
+    oc.grupos.forEach(g => {
+      const groupTr = tbody.querySelector(`tr.group-row[data-product-id="${g.productoId}"]`);
+      const alertaGrupo = groupTr.dataset.alert === 'true';
+      let hayVisible = false;
+
+      g.pedidos.forEach(p => {
+        const tr = tbody.querySelector(`tr.pedido-row[data-product-id="${g.productoId}"][data-op-id="${p.opId}"][data-local-id="${p.localId}"]`);
+        if (!tr) return;
+        const txtMatch = !q ||
+          g.nombre.toLowerCase().includes(q) ||
+          g.barras.includes(q) ||
+          p.localNombre.toLowerCase().includes(q) ||
+          p.localCodigo.toLowerCase().includes(q);
+        const editedMatch = !onlyEdited || esEditado(p);
+        const excMatch = !onlyExc || p.excedente >= 0;
+        const buyMatch = !onlyBuy || (p.decision === 'comprar' && p.cantidadComprar > 0);
+        const alertMatch = !alertCentral || alertaGrupo;
+        const visible = txtMatch && editedMatch && excMatch && buyMatch && alertMatch;
+        tr.style.display = visible ? '' : 'none';
+        if (visible) { hayVisible = true; visibles++; }
+      });
+
+      groupTr.style.display = hayVisible ? '' : 'none';
+    });
+
+    document.getElementById('count-visible').textContent = visibles;
+  }
+
+  filterSearch.addEventListener('input', aplicarFiltros);
+  function toggleChip(chip) {
+    chip.classList.toggle('chip-active');
+    chip.setAttribute('aria-pressed', chip.classList.contains('chip-active'));
+  }
+  [chipOnlyEdited, chipOnlyExc, chipOnlyBuy, chipAlertCentral].forEach(c => {
+    c.addEventListener('click', () => { toggleChip(c); aplicarFiltros(); });
+  });
+
+  // ==================================================================
+  // Bulk actions
+  // ==================================================================
+  const chkAll = document.getElementById('chk-all');
+  chkAll.addEventListener('change', () => {
+    tbody.querySelectorAll('tr.pedido-row').forEach(tr => {
+      if (tr.style.display !== 'none') {
+        const c = tr.querySelector('.chk-row');
+        if (c) c.checked = chkAll.checked;
+      }
+    });
+    toggleBulk();
+  });
+
+  function toggleBulk() {
+    const sel = tbody.querySelectorAll('.chk-row:checked').length;
+    const bar = document.getElementById('bulk-bar');
+    bar.classList.toggle('visible', sel > 0);
+    document.getElementById('bulk-count').textContent = sel;
+  }
+
+  document.getElementById('bulk-clear').addEventListener('click', () => {
+    tbody.querySelectorAll('.chk-row').forEach(c => c.checked = false);
+    chkAll.checked = false;
+    toggleBulk();
+  });
+
+  document.querySelectorAll('[data-bulk]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.bulk;
+      const seleccionadas = [...tbody.querySelectorAll('.chk-row:checked')];
+      seleccionadas.forEach(chk => {
+        const tr = chk.closest('tr.pedido-row');
+        const pid = tr.dataset.productId;
+        const grupo = oc.grupos.find(g => g.productoId === pid);
+        const p = grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+
+        if (action === 'no_necesita') {
+          p.decision = 'no_necesita';
+        } else if (action === 'comprar_todo') {
+          p.decision = 'comprar';
+          p.cantidadComprar = p.pidio;
+        } else if (action === 'repone_si_alcanza') {
+          if (grupo.stockCentral > 0) {
+            p.decision = 'repone_central';
+          }
+        }
+        const nueva = nuevoTr(pedidoRowHTML(p, grupo));
+        tr.replaceWith(nueva);
+      });
+      recomputar();
+      toggleBulk();
+      aplicarFiltros();
+    });
+  });
+
+  // ==================================================================
+  // App shell: sidebar colapsado + preferencia persistida
+  // ==================================================================
+  const app = document.getElementById('app');
+  const STORAGE_KEY_SIDEBAR = 'multicompra.sidebar.forceOpen';
+
+  function applySidebarPref() {
+    const forced = localStorage.getItem(STORAGE_KEY_SIDEBAR);
+    if (forced === 'true') app.classList.add('sidebar-forced-open');
+    else app.classList.remove('sidebar-forced-open');
+  }
+  applySidebarPref();
+
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    const isOpen = app.classList.toggle('sidebar-forced-open');
+    localStorage.setItem(STORAGE_KEY_SIDEBAR, isOpen ? 'true' : 'false');
+  });
+
+  // Decisión 25: click fuera del sidebar lo colapsa
+  initSidebarClickOutside();
+
+  // Panel auditoría
+  document.getElementById('btn-toggle-panel').addEventListener('click', () => {
+    app.classList.toggle('panel-open');
+  });
+  document.getElementById('btn-close-panel').addEventListener('click', () => {
+    app.classList.remove('panel-open');
+  });
+
+  // Footer
+  document.getElementById('btn-close-oc').addEventListener('click', () => {
+    window.location.href = 'oc-cerrar.html';
+  });
+  document.getElementById('btn-save-draft').addEventListener('click', () => {
+    alert('Guardar borrador: guardaría los cambios actuales sin cerrar la OC.');
+  });
+  document.getElementById('btn-discard').addEventListener('click', () => {
+    if (confirm('¿Descartar todos los cambios sin guardar?')) location.reload();
+  });
+
+  // ==================================================================
+  // Theme toggle (Decisión 24)
+  // ==================================================================
+  const THEME_KEY = 'multicompra:theme';
+  const btnTheme = document.getElementById('btn-theme');
+  btnTheme.addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  // Inicial
+  recomputar();
+  aplicarFiltros();
+</script>
+
+</body>
+</html>

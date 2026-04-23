@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Nueva OC</title>
+  <!-- Anti-flash: setear data-theme antes del CSS para evitar parpadeo -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Layout 2 columnas: izquierda = OPs pendientes, derecha = resumen
+       ===================================================================== */
+    .oc-nueva-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: var(--sp-4);
+      padding: var(--sp-4);
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    @media (max-width: 1200px) {
+      .oc-nueva-layout { grid-template-columns: minmax(0, 1fr) 340px; }
+    }
+
+    /* Columna izquierda */
+    .ops-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .ops-panel-header {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+    }
+    .ops-panel-header h2 {
+      font-size: var(--fs-md);
+      margin: 0;
+    }
+    .ops-panel-filters {
+      padding: var(--sp-2) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+    .ops-panel-filters .input-search { width: 220px; }
+    .ops-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-3) var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+    }
+
+    /* Card de cada OP */
+    .op-card {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: var(--sp-3);
+      padding: var(--sp-3);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+      align-items: start;
+    }
+    .op-card:hover { border-color: var(--border-strong); }
+    .op-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+      background: var(--primary-soft);
+    }
+    [data-theme="dark"] .op-card.selected {
+      background: var(--bg-elev-2);
+    }
+    .op-card input[type="checkbox"] {
+      margin-top: 2px;
+      width: 16px; height: 16px;
+      cursor: pointer;
+    }
+
+    .op-main { display: flex; flex-direction: column; gap: var(--sp-2); }
+    .op-row-top {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+    .op-code {
+      font-family: var(--font-mono);
+      font-size: var(--fs-base);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .op-local {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      font-size: var(--fs-sm);
+      color: var(--text);
+    }
+    .op-local-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .op-meta {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .op-meta strong { color: var(--text); font-weight: 600; }
+    .op-row-bottom {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+    }
+    .op-stats {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-3);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .op-stats strong {
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+    }
+
+    .op-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+      align-items: flex-end;
+    }
+    .op-actions .btn { height: 26px; padding: 0 var(--sp-2); font-size: var(--fs-xs); }
+
+    .badge-excepcion {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+    }
+    .badge-vieja {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+    }
+
+    /* Tooltip simple para el motivo de excepción */
+    .badge[data-tooltip] {
+      position: relative;
+      cursor: help;
+    }
+    .badge[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      background: var(--text-strong);
+      color: var(--bg);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-xs);
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+      white-space: normal;
+      width: 240px;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: var(--shadow);
+      line-height: 1.35;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: var(--sp-8) var(--sp-4);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      width: 48px; height: 48px;
+      margin: 0 auto var(--sp-3);
+      color: var(--text-subtle);
+    }
+
+    /* Chip contador con badge rojo */
+    .chip .chip-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px; height: 16px;
+      padding: 0 5px;
+      background: var(--danger);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+    }
+
+    /* =====================================================================
+       Panel derecho: Resumen (sticky)
+       ===================================================================== */
+    .summary-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: sticky;
+      top: var(--sp-4);
+      align-self: start;
+      max-height: calc(100vh - var(--header-h) - var(--sp-8));
+    }
+    .summary-header {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+    }
+    .summary-header h2 {
+      font-size: var(--fs-md);
+      margin: 0 0 var(--sp-1);
+    }
+    .summary-counter {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .summary-counter strong {
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .summary-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+    }
+    .field-label {
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      color: var(--text);
+    }
+    .field-label .required {
+      color: var(--danger);
+      margin-left: 2px;
+    }
+    .field-hint {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .proveedor-info {
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: none;
+    }
+    .proveedor-info.visible { display: block; }
+    .proveedor-info strong { color: var(--text); font-weight: 600; }
+
+    .preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+    }
+    .preview-item {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--sp-3);
+      padding: var(--sp-1) 0;
+      font-size: var(--fs-sm);
+      border-bottom: 1px dashed var(--border);
+    }
+    .preview-item:last-child { border-bottom: 0; }
+    .preview-item-name {
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .preview-item-qty {
+      font-family: var(--font-mono);
+      color: var(--text-strong);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .preview-toggle {
+      background: transparent;
+      border: 0;
+      color: var(--primary);
+      font-size: var(--fs-xs);
+      cursor: pointer;
+      padding: var(--sp-1) 0;
+      text-align: left;
+    }
+    .preview-toggle:hover { text-decoration: underline; }
+
+    .alert-info {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-2);
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--info-soft);
+      border: 1px solid var(--info);
+      border-radius: var(--radius-sm);
+      color: var(--info-text);
+      font-size: var(--fs-xs);
+      line-height: 1.4;
+    }
+    .alert-info svg { flex-shrink: 0; margin-top: 1px; }
+
+    .summary-footer {
+      padding: var(--sp-3) var(--sp-4);
+      border-top: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .btn-primary-lg {
+      height: 40px;
+      font-size: var(--fs-md);
+      font-weight: 600;
+    }
+    .btn-primary-lg:disabled {
+      position: relative;
+    }
+    .btn-primary-lg:disabled::after {
+      content: attr(data-disabled-msg);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      background: var(--text-strong);
+      color: var(--bg);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-xs);
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--t-fast);
+    }
+    .btn-primary-lg:disabled:hover::after { opacity: 1; }
+    .link-cancel {
+      text-align: center;
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: var(--sp-1);
+    }
+    .link-cancel:hover { color: var(--text); text-decoration: underline; }
+
+    /* Cabecera de selección bulk */
+    .bulk-select {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .bulk-select label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      cursor: pointer;
+    }
+
+    /* Panel lateral "Ver detalle" */
+    .detail-drawer {
+      position: fixed;
+      top: var(--header-h);
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      background: var(--bg-elev);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      transform: translateX(100%);
+      transition: transform var(--t-base);
+    }
+    .detail-drawer.open { transform: translateX(0); }
+    .detail-header {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-2);
+      background: var(--bg-elev-2);
+    }
+    .detail-header h3 {
+      font-size: var(--fs-md);
+      margin: 0;
+      font-family: var(--font-mono);
+    }
+    .detail-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-4);
+    }
+    .detail-meta {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      margin-bottom: var(--sp-3);
+      line-height: 1.5;
+    }
+    .detail-meta strong { color: var(--text); }
+    .detail-motivo {
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-xs);
+      margin-bottom: var(--sp-3);
+      line-height: 1.4;
+    }
+    .detail-motivo strong { display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    .detail-table thead th {
+      text-align: left;
+      padding: var(--sp-1) var(--sp-2);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-table tbody td {
+      padding: var(--sp-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-table .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+
+    /* Overlay detrás del drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.3);
+      z-index: 29;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t-base);
+    }
+    .drawer-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    [data-theme="dark"] .drawer-backdrop { background: rgba(0, 0, 0, 0.55); }
+
+    /* =====================================================================
+       Modal devolución de OP (Decisión 32)
+       ===================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-width: 520px;
+      width: 92%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+    .modal-head h3 { font-size: var(--fs-lg); margin: 0; flex: 1; }
+    .modal-body { padding: var(--sp-4); }
+    .modal-foot {
+      padding: var(--sp-3) var(--sp-4);
+      border-top: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      justify-content: flex-end;
+    }
+    .modal-body label.form-label {
+      display: block;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      margin-bottom: var(--sp-1);
+    }
+    .modal-body textarea {
+      width: 100%;
+      min-height: 96px;
+      padding: var(--sp-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      font-family: inherit;
+      font-size: var(--fs-base);
+      resize: vertical;
+    }
+    .modal-body textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .modal-counter {
+      margin-top: var(--sp-1);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-align: right;
+    }
+    .modal-counter.ok { color: var(--success); }
+    .modal-counter.err { color: var(--danger); }
+    .modal-body .modal-context {
+      margin-bottom: var(--sp-3);
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .modal-body .modal-context strong { color: var(--text); }
+
+    /* Toast simple */
+    .toast {
+      position: fixed;
+      bottom: var(--sp-5);
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: var(--text-strong);
+      color: var(--bg);
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--radius);
+      font-size: var(--fs-sm);
+      z-index: 60;
+      opacity: 0;
+      transition: opacity var(--t-base), transform var(--t-base);
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app page-dense" id="app">
+
+  <!-- =================================================================
+       Header
+       ================================================================= -->
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="#">OCs</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">Nueva</span>
+    </nav>
+
+    <div class="grow"></div>
+
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app…  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <!-- =================================================================
+       Sidebar
+       ================================================================= -->
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="#" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        </span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="#" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </span>
+        <span class="nav-item-label">OPs pendientes</span>
+        <span class="nav-item-count">8</span>
+      </a>
+      <a class="nav-item active" href="#" data-label="OCs" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
+        </span>
+        <span class="nav-item-label">OCs</span>
+        <span class="nav-item-count">3</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </span>
+        <span class="nav-item-label">Compras</span>
+        <span class="nav-item-count">2</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- =================================================================
+       Main
+       ================================================================= -->
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <div>
+        <h1 class="screen-title">Nueva Orden de Compra</h1>
+        <p class="text-sm text-muted" style="margin-top: 4px; max-width: 720px;">
+          Agrupá las OPs pendientes que quieras incluir y asigná el proveedor. Al confirmar se abre la planilla de edición.
+        </p>
+      </div>
+      <div class="grow"></div>
+      <span class="chip chip-timestamp" title="Fecha en que se arma la OC">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        22/04/2026
+      </span>
+    </div>
+
+    <div class="oc-nueva-layout">
+
+      <!-- =============================================================
+           Columna izquierda: OPs pendientes
+           ============================================================= -->
+      <section class="ops-panel" aria-label="OPs pendientes">
+        <div class="ops-panel-header">
+          <h2>OPs pendientes</h2>
+          <span class="text-sm text-muted" id="ops-count-total">
+            <strong id="ops-count-filtered">0</strong> de <strong id="ops-count-all">0</strong> visibles
+          </span>
+        </div>
+
+        <div class="ops-panel-filters" role="region" aria-label="Filtros">
+          <div style="position: relative;">
+            <input type="search" id="filter-search" class="input input-search input-sm"
+                   placeholder="Buscar local, cajera o producto…"
+                   aria-label="Buscar OPs" style="padding-left: 28px; width: 240px;" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle);"
+                 aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+
+          <select class="select input-sm" id="filter-local" aria-label="Filtrar por local" style="width: auto; min-width: 140px;">
+            <option value="">Todos los locales</option>
+          </select>
+
+          <select class="select input-sm" id="filter-fecha" aria-label="Filtrar por fecha" style="width: auto; min-width: 130px;">
+            <option value="">Todas las fechas</option>
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta semana</option>
+            <option value="vieja">Más vieja</option>
+          </select>
+
+          <button class="chip" id="chip-excepcion" aria-pressed="false" title="Solo OPs marcadas como excepción">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Solo excepción
+          </button>
+
+          <button class="chip" id="chip-vieja" aria-pressed="false" title="Solo OPs con más de 7 días sin procesar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Solo viejas <span class="chip-badge" id="chip-vieja-count">0</span>
+          </button>
+
+          <div class="grow"></div>
+
+          <div class="bulk-select">
+            <label>
+              <input type="checkbox" id="chk-all" aria-label="Marcar todas las OPs filtradas" />
+              Marcar todas filtradas
+            </label>
+          </div>
+        </div>
+
+        <div class="ops-panel-body" id="ops-body">
+          <!-- renderizado por JS -->
+        </div>
+      </section>
+
+      <!-- =============================================================
+           Columna derecha: Resumen de la nueva OC
+           ============================================================= -->
+      <aside class="summary-panel" aria-label="Resumen de la nueva OC">
+        <div class="summary-header">
+          <h2>Resumen</h2>
+          <p class="summary-counter">
+            <strong id="sum-ops">0</strong> OPs seleccionadas ·
+            <strong id="sum-productos">0</strong> productos únicos ·
+            <strong id="sum-unidades">0</strong> unidades totales
+          </p>
+        </div>
+
+        <div class="summary-body">
+
+          <div class="field">
+            <label for="select-proveedor" class="field-label">
+              Proveedor<span class="required" aria-hidden="true">*</span>
+            </label>
+            <select class="select" id="select-proveedor" required>
+              <option value="">Elegí un proveedor…</option>
+            </select>
+            <span class="field-hint">Obligatorio para abrir la OC. 1 OC = 1 proveedor.</span>
+            <div class="proveedor-info" id="proveedor-info"></div>
+          </div>
+
+          <div class="alert-info" id="alert-locales" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="alert-locales-text"></span>
+          </div>
+
+          <div class="field">
+            <span class="field-label">Productos en la OC</span>
+            <div class="preview-list" id="preview-list">
+              <span class="text-sm text-muted">Todavía no seleccionaste OPs.</span>
+            </div>
+            <button type="button" class="preview-toggle" id="preview-toggle" style="display: none;">
+              Ver todos
+            </button>
+          </div>
+
+        </div>
+
+        <div class="summary-footer">
+          <a class="btn btn-primary btn-primary-lg" id="btn-armar" href="#"
+             aria-disabled="true"
+             data-disabled-msg="Elegí al menos 1 OP y un proveedor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Armar OC y abrir planilla
+          </a>
+          <button type="button" class="btn btn-secondary" id="btn-draft">
+            Guardar selección como borrador
+          </button>
+          <a href="#" class="link-cancel" id="link-cancel">Cancelar y volver a OCs</a>
+        </div>
+      </aside>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- Modal de devolución de OP (Decisión 32) -->
+<div class="modal-backdrop" id="modal-return" role="dialog" aria-modal="true" aria-labelledby="modal-return-title">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-return-title">Devolver OP</h3>
+      <button class="btn btn-ghost btn-icon btn-sm" id="btn-close-return" aria-label="Cerrar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-context" id="return-context">—</div>
+      <label class="form-label" for="return-nota">Nota para la cajera</label>
+      <textarea id="return-nota" placeholder="Ej: la cantidad de cargadores es muy alta para la rotación actual del local. Revisá y mandame el pedido corregido."></textarea>
+      <div class="modal-counter" id="return-counter">0 / 20 caracteres mínimos</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btn-return-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="btn-return-confirm" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Devolver a cajera
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Drawer de detalle de OP -->
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<aside class="detail-drawer" id="detail-drawer" aria-label="Detalle de la OP">
+  <div class="detail-header">
+    <h3 id="detail-title">OP</h3>
+    <button class="btn btn-ghost btn-icon btn-sm" id="btn-close-detail" aria-label="Cerrar detalle">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</aside>
+
+<!-- =================================================================
+     Scripts
+     ================================================================= -->
+<script type="module">
+  import { opsPendientes, proveedores, locales, productos } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  // =====================================================================
+  // Estado de UI
+  // =====================================================================
+  const state = {
+    selectedOps: new Set(),
+    selectedProveedor: null,
+    filter: {
+      search: '',
+      local: '',
+      fecha: '',
+      excepcion: false,
+      vieja: false
+    },
+    previewExpanded: false
+  };
+
+  // =====================================================================
+  // Helpers
+  // =====================================================================
+  const productoById = new Map(productos.map(p => [p.id, p]));
+  const proveedorById = new Map(proveedores.map(p => [p.id, p]));
+
+  function countUniqueProductos(opIds) {
+    const set = new Set();
+    opIds.forEach(id => {
+      const op = opsPendientes.find(o => o.id === id);
+      if (!op) return;
+      op.lineas.forEach(l => set.add(l.productoId));
+    });
+    return set.size;
+  }
+
+  function totalUnidades(opIds) {
+    let total = 0;
+    opIds.forEach(id => {
+      const op = opsPendientes.find(o => o.id === id);
+      if (!op) return;
+      op.lineas.forEach(l => total += l.cantidad);
+    });
+    return total;
+  }
+
+  function unidadesOp(op) {
+    return op.lineas.reduce((s, l) => s + l.cantidad, 0);
+  }
+
+  // Productos agregados (suma de cantidades por productoId) entre las OPs seleccionadas
+  function getAggregatedProductos(opIds) {
+    const map = new Map();
+    opIds.forEach(id => {
+      const op = opsPendientes.find(o => o.id === id);
+      if (!op) return;
+      op.lineas.forEach(l => {
+        map.set(l.productoId, (map.get(l.productoId) || 0) + l.cantidad);
+      });
+    });
+    return [...map.entries()]
+      .map(([pid, qty]) => ({
+        productoId: pid,
+        nombre: productoById.get(pid)?.nombre || pid,
+        unidades: qty
+      }))
+      .sort((a, b) => b.unidades - a.unidades);
+  }
+
+  function localesDistintos(opIds) {
+    const set = new Set();
+    opIds.forEach(id => {
+      const op = opsPendientes.find(o => o.id === id);
+      if (op) set.add(op.localId);
+    });
+    return set.size;
+  }
+
+  // =====================================================================
+  // Render: filtros (poblar selects)
+  // =====================================================================
+  const filterLocal = document.getElementById('filter-local');
+  locales.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.nombre;
+    filterLocal.appendChild(opt);
+  });
+
+  const selectProveedor = document.getElementById('select-proveedor');
+  proveedores.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    selectProveedor.appendChild(opt);
+  });
+
+  // =====================================================================
+  // Render OPs
+  // =====================================================================
+  const opsBody = document.getElementById('ops-body');
+
+  function opCardHTML(op) {
+    const selected = state.selectedOps.has(op.id);
+    const badgesArr = [];
+    if (op.esExcepcion) {
+      const motivo = (op.motivoExcepcion || '').replace(/"/g, '&quot;');
+      badgesArr.push(`<span class="badge badge-excepcion" data-tooltip="${motivo}" title="OP de excepción">Excepción</span>`);
+    }
+    if (op.esVieja) {
+      badgesArr.push(`<span class="badge badge-vieja" title="OP con más de 7 días sin procesar">Vieja</span>`);
+    }
+
+    const codigoLocal = (locales.find(l => l.id === op.localId) || {}).codigo || '??';
+    const unidades = unidadesOp(op);
+    const productosUnicos = op.lineas.length;
+
+    return `
+      <div class="op-card ${selected ? 'selected' : ''}" data-op-id="${op.id}">
+        <input type="checkbox" class="chk-op" aria-label="Incluir ${op.id} en la OC" ${selected ? 'checked' : ''} />
+        <div class="op-main">
+          <div class="op-row-top">
+            <span class="op-code">${op.id.toUpperCase()}</span>
+            <span class="op-local">
+              <span class="op-local-icon" aria-hidden="true">${codigoLocal}</span>
+              ${op.localNombre}
+            </span>
+            ${badgesArr.join('')}
+          </div>
+          <div class="op-row-bottom">
+            <span class="op-meta">Cajera: <strong>${op.cajera}</strong></span>
+            <span class="op-meta">Enviada: <strong>${op.enviadaHace}</strong></span>
+            <span class="op-stats">
+              <span><strong>${productosUnicos}</strong> productos</span>
+              <span>·</span>
+              <span><strong>${unidades}</strong> unidades</span>
+            </span>
+          </div>
+        </div>
+        <div class="op-actions">
+          <button type="button" class="btn btn-ghost" data-action="detail" data-op-id="${op.id}">
+            Ver detalle
+          </button>
+          <button type="button" class="btn btn-ghost" data-action="return" data-op-id="${op.id}"
+                  title="Se devolverá a la cajera con una nota">
+            Devolver
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function emptyStateHTML() {
+    return `
+      <div class="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+        </svg>
+        <p><strong>Sin OPs pendientes con los filtros actuales.</strong></p>
+        <p class="text-sm">Probá quitar filtros o esperá a que las cajeras envíen su pedido.</p>
+      </div>
+    `;
+  }
+
+  function emptyAllHTML() {
+    return `
+      <div class="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <p><strong>Sin OPs pendientes.</strong></p>
+        <p class="text-sm">Las cajeras todavía no enviaron su pedido.</p>
+      </div>
+    `;
+  }
+
+  function aplicarFiltros() {
+    const q = state.filter.search.trim().toLowerCase();
+    return opsPendientes.filter(op => {
+      if (state.filter.local && op.localId !== state.filter.local) return false;
+      if (state.filter.excepcion && !op.esExcepcion) return false;
+      if (state.filter.vieja && !op.esVieja) return false;
+      if (state.filter.fecha === 'hoy' && op.enviadaHace !== 'hoy') return false;
+      if (state.filter.fecha === 'semana' && op.esVieja) return false;
+      if (state.filter.fecha === 'vieja' && !op.esVieja) return false;
+
+      if (q) {
+        const hayEnLocal = op.localNombre.toLowerCase().includes(q);
+        const hayEnCajera = op.cajera.toLowerCase().includes(q);
+        const hayEnProd = op.lineas.some(l => {
+          const prod = productoById.get(l.productoId);
+          return prod && prod.nombre.toLowerCase().includes(q);
+        });
+        const hayEnCodigo = op.id.toLowerCase().includes(q);
+        if (!hayEnLocal && !hayEnCajera && !hayEnProd && !hayEnCodigo) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderOps() {
+    if (opsPendientes.length === 0) {
+      opsBody.innerHTML = emptyAllHTML();
+    } else {
+      const filtradas = aplicarFiltros();
+      if (filtradas.length === 0) {
+        opsBody.innerHTML = emptyStateHTML();
+      } else {
+        opsBody.innerHTML = filtradas.map(opCardHTML).join('');
+      }
+      document.getElementById('ops-count-filtered').textContent = filtradas.length;
+    }
+    document.getElementById('ops-count-all').textContent = opsPendientes.length;
+
+    // Badge "viejas" en el chip
+    const cntViejas = opsPendientes.filter(o => o.esVieja).length;
+    document.getElementById('chip-vieja-count').textContent = cntViejas;
+
+    // Estado del checkbox "todas filtradas"
+    const chkAll = document.getElementById('chk-all');
+    const filtradas = aplicarFiltros();
+    const todasSel = filtradas.length > 0 && filtradas.every(op => state.selectedOps.has(op.id));
+    chkAll.checked = todasSel;
+    chkAll.indeterminate = !todasSel && filtradas.some(op => state.selectedOps.has(op.id));
+  }
+
+  // =====================================================================
+  // Render Resumen
+  // =====================================================================
+  function renderResumen() {
+    const opIds = [...state.selectedOps];
+    const sumOps = opIds.length;
+    const sumProductos = countUniqueProductos(opIds);
+    const sumUnidades = totalUnidades(opIds);
+
+    document.getElementById('sum-ops').textContent = sumOps;
+    document.getElementById('sum-productos').textContent = sumProductos;
+    document.getElementById('sum-unidades').textContent = sumUnidades;
+
+    // Preview productos
+    const preview = document.getElementById('preview-list');
+    const previewToggle = document.getElementById('preview-toggle');
+    if (sumOps === 0) {
+      preview.innerHTML = '<span class="text-sm text-muted">Todavía no seleccionaste OPs.</span>';
+      previewToggle.style.display = 'none';
+    } else {
+      const agg = getAggregatedProductos(opIds);
+      const top = state.previewExpanded ? agg : agg.slice(0, 5);
+      preview.innerHTML = top.map(item => `
+        <div class="preview-item">
+          <span class="preview-item-name" title="${item.nombre}">${item.nombre}</span>
+          <span class="preview-item-qty">${item.unidades}</span>
+        </div>
+      `).join('');
+      if (agg.length > 5) {
+        previewToggle.style.display = '';
+        previewToggle.textContent = state.previewExpanded
+          ? 'Ver menos'
+          : `Ver todos (${agg.length})`;
+      } else {
+        previewToggle.style.display = 'none';
+      }
+    }
+
+    // Alerta de locales distintos
+    const alertEl = document.getElementById('alert-locales');
+    const alertTxt = document.getElementById('alert-locales-text');
+    const nLocales = localesDistintos(opIds);
+    if (nLocales >= 5) {
+      alertEl.style.display = '';
+      alertTxt.textContent = `Estas OPs vienen de ${nLocales} locales distintos. Asegurate de que el proveedor pueda surtir todo.`;
+    } else {
+      alertEl.style.display = 'none';
+    }
+
+    // Botón primario
+    const btn = document.getElementById('btn-armar');
+    const puede = sumOps > 0 && !!state.selectedProveedor;
+    if (puede) {
+      btn.classList.remove('disabled');
+      btn.removeAttribute('aria-disabled');
+      btn.href = 'oc-editar.html';
+      btn.removeAttribute('data-disabled-msg');
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    } else {
+      btn.setAttribute('aria-disabled', 'true');
+      btn.removeAttribute('href');
+      btn.style.opacity = '0.5';
+      btn.style.pointerEvents = 'none';
+      const faltan = [];
+      if (sumOps === 0) faltan.push('al menos 1 OP');
+      if (!state.selectedProveedor) faltan.push('un proveedor');
+      btn.setAttribute('data-disabled-msg', 'Falta: ' + faltan.join(' y '));
+    }
+  }
+
+  function renderProveedorInfo() {
+    const info = document.getElementById('proveedor-info');
+    if (!state.selectedProveedor) {
+      info.classList.remove('visible');
+      info.innerHTML = '';
+      return;
+    }
+    const prov = proveedorById.get(state.selectedProveedor);
+    if (!prov) return;
+    info.classList.add('visible');
+    info.innerHTML = `
+      <strong>RUC:</strong> ${prov.ruc}<br/>
+      <strong>Contacto:</strong> ${prov.contacto} · ${prov.telefono}<br/>
+      ${prov.especialidad ? `<strong>Especialidad:</strong> ${prov.especialidad}` : ''}
+    `;
+  }
+
+  // =====================================================================
+  // Eventos
+  // =====================================================================
+  opsBody.addEventListener('change', (e) => {
+    if (!e.target.matches('.chk-op')) return;
+    const card = e.target.closest('.op-card');
+    const opId = card.dataset.opId;
+    if (e.target.checked) state.selectedOps.add(opId);
+    else state.selectedOps.delete(opId);
+    card.classList.toggle('selected', e.target.checked);
+    renderResumen();
+    // actualizar chk-all
+    const filtradas = aplicarFiltros();
+    const chkAll = document.getElementById('chk-all');
+    const todasSel = filtradas.length > 0 && filtradas.every(op => state.selectedOps.has(op.id));
+    chkAll.checked = todasSel;
+    chkAll.indeterminate = !todasSel && filtradas.some(op => state.selectedOps.has(op.id));
+  });
+
+  opsBody.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const opId = btn.dataset.opId;
+    const op = opsPendientes.find(o => o.id === opId);
+    if (!op) return;
+
+    if (btn.dataset.action === 'detail') {
+      abrirDetalle(op);
+    } else if (btn.dataset.action === 'return') {
+      abrirModalDevolucion(op);
+    }
+  });
+
+  // Click sobre la card (fuera de botones) también marca el checkbox
+  opsBody.addEventListener('click', (e) => {
+    if (e.target.closest('[data-action]')) return;
+    if (e.target.matches('.chk-op')) return;
+    if (e.target.closest('.badge[data-tooltip]')) return;
+    const card = e.target.closest('.op-card');
+    if (!card) return;
+    const chk = card.querySelector('.chk-op');
+    if (chk) {
+      chk.checked = !chk.checked;
+      chk.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  document.getElementById('filter-search').addEventListener('input', (e) => {
+    state.filter.search = e.target.value;
+    renderOps();
+  });
+  document.getElementById('filter-local').addEventListener('change', (e) => {
+    state.filter.local = e.target.value;
+    renderOps();
+  });
+  document.getElementById('filter-fecha').addEventListener('change', (e) => {
+    state.filter.fecha = e.target.value;
+    renderOps();
+  });
+
+  function toggleChip(chip, key) {
+    const active = !chip.classList.contains('chip-active');
+    chip.classList.toggle('chip-active', active);
+    chip.setAttribute('aria-pressed', active);
+    state.filter[key] = active;
+    renderOps();
+  }
+  document.getElementById('chip-excepcion').addEventListener('click', (e) => toggleChip(e.currentTarget, 'excepcion'));
+  document.getElementById('chip-vieja').addEventListener('click', (e) => toggleChip(e.currentTarget, 'vieja'));
+
+  document.getElementById('chk-all').addEventListener('change', (e) => {
+    const filtradas = aplicarFiltros();
+    if (e.target.checked) {
+      filtradas.forEach(op => state.selectedOps.add(op.id));
+    } else {
+      filtradas.forEach(op => state.selectedOps.delete(op.id));
+    }
+    renderOps();
+    renderResumen();
+  });
+
+  selectProveedor.addEventListener('change', (e) => {
+    state.selectedProveedor = e.target.value || null;
+    renderProveedorInfo();
+    renderResumen();
+  });
+
+  document.getElementById('preview-toggle').addEventListener('click', () => {
+    state.previewExpanded = !state.previewExpanded;
+    renderResumen();
+  });
+
+  document.getElementById('btn-draft').addEventListener('click', () => {
+    alert('Guardar selección como borrador: se conservaría la selección actual para retomar después. (Mockup: acción decorativa.)');
+  });
+
+  document.getElementById('link-cancel').addEventListener('click', (e) => {
+    e.preventDefault();
+    if (state.selectedOps.size > 0) {
+      if (!confirm('Tenés OPs seleccionadas. ¿Volver a OCs y descartar la selección?')) return;
+    }
+    window.location.href = '../index.html';
+  });
+
+  // =====================================================================
+  // Drawer: detalle de OP
+  // =====================================================================
+  const drawer = document.getElementById('detail-drawer');
+  const backdrop = document.getElementById('drawer-backdrop');
+
+  function abrirDetalle(op) {
+    document.getElementById('detail-title').textContent = op.id.toUpperCase();
+    const body = document.getElementById('detail-body');
+    const motivoHTML = op.esExcepcion && op.motivoExcepcion
+      ? `<div class="detail-motivo"><strong>Motivo de excepción</strong>${op.motivoExcepcion}</div>`
+      : '';
+
+    const rows = op.lineas.map(l => {
+      const p = productoById.get(l.productoId);
+      return `
+        <tr>
+          <td>
+            <div style="font-size: var(--fs-sm); color: var(--text);">${p ? p.nombre : l.productoId}</div>
+            <div style="font-size: var(--fs-xs); color: var(--text-muted); font-family: var(--font-mono);">${p ? p.barras : ''}</div>
+          </td>
+          <td class="col-num">${l.cantidad}</td>
+        </tr>
+      `;
+    }).join('');
+
+    body.innerHTML = `
+      <div class="detail-meta">
+        <strong>Local:</strong> ${op.localNombre}<br/>
+        <strong>Cajera:</strong> ${op.cajera}<br/>
+        <strong>Enviada:</strong> ${op.fecha} (${op.enviadaHace})<br/>
+        <strong>Productos:</strong> ${op.lineas.length} · <strong>Unidades:</strong> ${unidadesOp(op)}
+      </div>
+      ${motivoHTML}
+      <table class="detail-table">
+        <thead>
+          <tr><th>Producto</th><th style="text-align: right;">Pidió</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+
+    drawer.classList.add('open');
+    backdrop.classList.add('visible');
+  }
+
+  function cerrarDetalle() {
+    drawer.classList.remove('open');
+    backdrop.classList.remove('visible');
+  }
+  document.getElementById('btn-close-detail').addEventListener('click', cerrarDetalle);
+  backdrop.addEventListener('click', cerrarDetalle);
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (drawer.classList.contains('open')) cerrarDetalle();
+    const mr = document.getElementById('modal-return');
+    if (mr && mr.classList.contains('show')) {
+      mr.classList.remove('show');
+    }
+  });
+
+  // =====================================================================
+  // Modal devolución de OP (Decisión 32)
+  // =====================================================================
+  const RETURN_MIN = 20;
+  const modalReturn = document.getElementById('modal-return');
+  const returnContext = document.getElementById('return-context');
+  const returnNota = document.getElementById('return-nota');
+  const returnCounter = document.getElementById('return-counter');
+  const btnReturnConfirm = document.getElementById('btn-return-confirm');
+  let returnOpId = null;
+
+  function abrirModalDevolucion(op) {
+    returnOpId = op.id;
+    returnContext.innerHTML = `<strong>${op.id.toUpperCase()}</strong> · ${op.localNombre} · Cajera: <strong>${op.cajera}</strong>`;
+    returnNota.value = '';
+    refreshReturnCounter();
+    modalReturn.classList.add('show');
+    setTimeout(() => returnNota.focus(), 50);
+  }
+  function cerrarModalDevolucion() {
+    modalReturn.classList.remove('show');
+    returnOpId = null;
+  }
+  function refreshReturnCounter() {
+    const len = returnNota.value.trim().length;
+    if (len === 0) {
+      returnCounter.textContent = `0 / ${RETURN_MIN} caracteres mínimos`;
+      returnCounter.classList.remove('ok', 'err');
+    } else if (len < RETURN_MIN) {
+      returnCounter.textContent = `${len} / ${RETURN_MIN} caracteres mínimos · faltan ${RETURN_MIN - len}`;
+      returnCounter.classList.add('err');
+      returnCounter.classList.remove('ok');
+    } else {
+      returnCounter.textContent = `${len} caracteres · OK`;
+      returnCounter.classList.add('ok');
+      returnCounter.classList.remove('err');
+    }
+    btnReturnConfirm.disabled = len < RETURN_MIN;
+  }
+  returnNota.addEventListener('input', refreshReturnCounter);
+  document.getElementById('btn-close-return').addEventListener('click', cerrarModalDevolucion);
+  document.getElementById('btn-return-cancel').addEventListener('click', cerrarModalDevolucion);
+  modalReturn.addEventListener('click', (e) => { if (e.target === modalReturn) cerrarModalDevolucion(); });
+
+  document.getElementById('btn-return-confirm').addEventListener('click', () => {
+    if (!returnOpId) return;
+    const op = opsPendientes.find(o => o.id === returnOpId);
+    const opLabel = op ? op.id.toUpperCase() : 'OP';
+    // Sacar la OP de la lista (simulación)
+    const idx = opsPendientes.findIndex(o => o.id === returnOpId);
+    if (idx >= 0) opsPendientes.splice(idx, 1);
+    state.selectedOps.delete(returnOpId);
+    cerrarModalDevolucion();
+    renderOps();
+    renderResumen();
+    showToast(`${opLabel} devuelta a la cajera con tu nota.`);
+  });
+
+  // Toast helper
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  // =====================================================================
+  // App shell: sidebar colapsado + preferencia persistida
+  // =====================================================================
+  const app = document.getElementById('app');
+  const STORAGE_KEY_SIDEBAR = 'multicompra.sidebar.forceOpen';
+
+  function applySidebarPref() {
+    const forced = localStorage.getItem(STORAGE_KEY_SIDEBAR);
+    if (forced === 'true') app.classList.add('sidebar-forced-open');
+    else app.classList.remove('sidebar-forced-open');
+  }
+  applySidebarPref();
+
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    const isOpen = app.classList.toggle('sidebar-forced-open');
+    localStorage.setItem(STORAGE_KEY_SIDEBAR, isOpen ? 'true' : 'false');
+  });
+
+  // Decisión 25: click fuera del sidebar lo colapsa
+  initSidebarClickOutside();
+
+  // =====================================================================
+  // Theme toggle (Decisión 24)
+  // =====================================================================
+  const THEME_KEY = 'multicompra:theme';
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  // =====================================================================
+  // Inicial
+  // =====================================================================
+  renderOps();
+  renderResumen();
+</script>
+
+</body>
+</html>

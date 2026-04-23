@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Nueva OP (Carolina · Shopping del Sol)</title>
+  <!-- Anti-flash: setear data-theme antes del CSS para evitar parpadeo -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Overrides locales — experiencia cajera (simple, tipografía grande,
+       sin sidebar, topbar con 3 botones, inputs con padding generoso)
+       ===================================================================== */
+
+    /* Layout sin sidebar: header + topbar + main en columna */
+    .cajera-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    /* ---------- Header ---------- */
+    .cajera-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .cajera-header .logo {
+      font-size: var(--fs-md);
+      gap: var(--sp-2);
+    }
+    .cajera-hello {
+      text-align: center;
+      font-size: var(--fs-xl);
+      font-weight: 600;
+      color: var(--text-strong);
+      line-height: 1.2;
+    }
+    .cajera-hello .local {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .cajera-hello .sep {
+      color: var(--text-subtle);
+      margin: 0 var(--sp-2);
+    }
+    .cajera-header .right {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      justify-self: end;
+    }
+    .cajera-header .avatar {
+      width: 36px; height: 36px;
+      font-size: var(--fs-md);
+    }
+    .cajera-header .btn-logout {
+      height: 36px;
+      font-size: var(--fs-md);
+    }
+
+    /* ---------- Topbar con 3 botones grandes ---------- */
+    .cajera-topbar {
+      display: flex;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      justify-content: center;
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-6);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--t-fast);
+      text-decoration: none;
+      min-width: 180px;
+      justify-content: center;
+    }
+    .tab-btn:hover {
+      background: var(--bg-elev-2);
+      color: var(--text-strong);
+      text-decoration: none;
+    }
+    .tab-btn.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-btn svg { width: 20px; height: 20px; }
+
+    /* ---------- Main ---------- */
+    .cajera-main {
+      flex: 1;
+      padding: var(--sp-6);
+      display: flex;
+      justify-content: center;
+    }
+    .cajera-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-6);
+    }
+
+    /* Bloques / tarjetas */
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-6);
+      transition: background-color var(--t-theme), border-color var(--t-theme);
+    }
+    .card-title {
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      color: var(--text-strong);
+      margin-bottom: var(--sp-4);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .card-title .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: var(--fs-base);
+      font-weight: 700;
+    }
+
+    /* ---------- Buscador grande ---------- */
+    .search-wrap {
+      position: relative;
+    }
+    .input-big {
+      width: 100%;
+      height: 56px;
+      padding: 0 var(--sp-4) 0 52px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      font-size: var(--fs-xl);
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .input-big:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .input-big::placeholder { color: var(--text-subtle); }
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-clear {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-clear.visible { display: inline-flex; }
+    .search-clear:hover { background: var(--border); color: var(--text-strong); }
+
+    /* Dropdown de resultados */
+    .search-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      max-height: 380px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+    }
+    .search-results.visible { display: block; }
+    .search-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--t-fast);
+    }
+    .search-result:last-child { border-bottom: none; }
+    .search-result:hover,
+    .search-result.highlighted {
+      background: var(--primary-soft);
+    }
+    .search-result-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .search-result-name {
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      color: var(--text-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .search-result-code {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .search-result-add {
+      color: var(--primary);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .search-empty {
+      padding: var(--sp-4);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .search-empty .empty-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      margin-top: var(--sp-2);
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border: 1px dashed var(--warning);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-sm);
+      cursor: pointer;
+    }
+
+    /* ---------- Lista de productos agregados ---------- */
+    .lista-counter {
+      font-size: var(--fs-md);
+      color: var(--text-muted);
+      margin-bottom: var(--sp-3);
+    }
+    .lista-counter strong { color: var(--text-strong); }
+
+    .lista-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--fs-md);
+    }
+    .lista-table thead th {
+      text-align: left;
+      padding: var(--sp-3);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      background: var(--bg-elev-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .lista-table tbody td {
+      padding: var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text);
+    }
+    .lista-table tbody tr:last-child td { border-bottom: none; }
+    .lista-col-cod { width: 180px; }
+    .lista-col-qty { width: 180px; text-align: center; }
+    .lista-col-act { width: 72px; text-align: right; }
+    .lista-cod-mono {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .lista-desc {
+      font-size: var(--fs-lg);
+      color: var(--text-strong);
+      font-weight: 500;
+    }
+
+    /* Spinner de cantidad tap-friendly */
+    .qty-spinner {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--bg-elev);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .qty-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--bg-elev-2);
+      color: var(--text-strong);
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background var(--t-fast);
+    }
+    .qty-btn:hover { background: var(--border); }
+    .qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .qty-input {
+      width: 68px;
+      height: 40px;
+      border: none;
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+      font-size: var(--fs-xl);
+      font-weight: 600;
+      text-align: center;
+    }
+    .qty-input:focus {
+      outline: none;
+      background: var(--primary-soft);
+    }
+    /* Evitar spinners nativos del browser */
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .qty-input[type=number] { -moz-appearance: textfield; }
+
+    .btn-delete {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-lg);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--t-fast);
+    }
+    .btn-delete:hover {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+    }
+
+    /* Placeholder vacío */
+    .lista-empty {
+      padding: var(--sp-10) var(--sp-6);
+      text-align: center;
+      color: var(--text-muted);
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--bg-elev-2);
+    }
+    .lista-empty-title {
+      font-size: var(--fs-xl);
+      color: var(--text-strong);
+      margin-bottom: var(--sp-2);
+      font-weight: 500;
+    }
+    .lista-empty-sub {
+      font-size: var(--fs-md);
+      color: var(--text-muted);
+    }
+    .lista-empty .arrow-up {
+      font-size: 32px;
+      display: block;
+      margin-bottom: var(--sp-2);
+      color: var(--primary);
+    }
+
+    /* ---------- Checkbox grande + textarea excepción ---------- */
+    .exc-row {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-3);
+      cursor: pointer;
+      user-select: none;
+    }
+    .exc-check {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    .exc-label {
+      font-size: var(--fs-lg);
+      color: var(--text-strong);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .exc-label .hint {
+      display: block;
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .exc-motivo {
+      margin-top: var(--sp-4);
+      display: none;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .exc-motivo.visible { display: flex; }
+    .exc-motivo label {
+      font-size: var(--fs-md);
+      font-weight: 500;
+      color: var(--text-strong);
+    }
+    .exc-motivo textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: var(--sp-3);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      font-size: var(--fs-md);
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .exc-motivo textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .exc-counter {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .exc-counter.ok { color: var(--success); }
+    .exc-counter.err { color: var(--danger); }
+
+    /* ---------- Acciones finales ---------- */
+    .actions-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+    }
+    .actions-row {
+      display: flex;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .btn-big {
+      height: 56px;
+      padding: 0 var(--sp-6);
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      min-width: 220px;
+    }
+    .btn-big.btn-primary {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+    [data-theme="dark"] .btn-big.btn-primary {
+      color: var(--bg);
+    }
+    .btn-big.btn-secondary {
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      border-color: var(--border-strong);
+    }
+    .btn-big:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .validation-msg {
+      font-size: var(--fs-sm);
+      color: var(--danger);
+      text-align: right;
+      min-height: 18px;
+    }
+    .validation-msg.ok { color: var(--success); }
+    .validation-msg.hidden { visibility: hidden; }
+
+    /* ---------- Bloqueo: OP ya enviada ---------- */
+    .block-screen {
+      max-width: 720px;
+      margin: var(--sp-10) auto;
+      text-align: center;
+      padding: var(--sp-10) var(--sp-6);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .block-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: var(--warning-soft);
+      color: var(--warning);
+      margin-bottom: var(--sp-4);
+    }
+    .block-title {
+      font-size: var(--fs-2xl);
+      color: var(--text-strong);
+      margin-bottom: var(--sp-3);
+    }
+    .block-msg {
+      font-size: var(--fs-lg);
+      color: var(--text-muted);
+      margin-bottom: var(--sp-6);
+      line-height: 1.5;
+    }
+
+    /* Estado primera vez: placeholder de lista más chato */
+    .card.card-minimal {
+      padding: var(--sp-3);
+      background: transparent;
+      border: none;
+    }
+
+    /* Mobile — degradado básico (no optimizado, decisión 27 del brief) */
+    @media (max-width: 900px) {
+      .cajera-header {
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+      }
+      .cajera-hello {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        text-align: left;
+        font-size: var(--fs-lg);
+      }
+      .cajera-topbar {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+      .tab-btn { min-width: 140px; }
+      .cajera-main { padding: var(--sp-3); }
+      .card { padding: var(--sp-4); }
+      .actions-row { justify-content: stretch; }
+      .btn-big { width: 100%; min-width: 0; }
+      .lista-col-cod { display: none; }
+      .lista-table thead tr th:first-child { display: none; }
+      .lista-table tbody td:first-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cajera-shell" id="app-shell">
+
+    <!-- ===================== Header ===================== -->
+    <header class="cajera-header">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/>
+          <circle cx="9" cy="21" r="1.5"/>
+          <circle cx="18" cy="21" r="1.5"/>
+        </svg>
+        <span class="logo-text">MultiCompra</span>
+      </div>
+
+      <div class="cajera-hello">
+        Hola <span id="hello-name">Carolina</span>
+        <span class="sep">·</span>
+        <span class="local" id="hello-local">Shopping del Sol</span>
+      </div>
+
+      <div class="right">
+        <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+          <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
+        <div class="avatar" title="Carolina">CA</div>
+        <button type="button" class="btn btn-ghost btn-logout" title="Cerrar sesión">Salir</button>
+      </div>
+    </header>
+
+    <!-- ===================== Topbar (3 botones grandes) ===================== -->
+    <nav class="cajera-topbar" aria-label="Navegación cajera">
+      <button type="button" class="tab-btn active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva OP
+      </button>
+      <a href="#" class="tab-btn" onclick="return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        Historial
+      </a>
+      <a href="#" class="tab-btn" onclick="return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+        Perfil
+      </a>
+    </nav>
+
+    <!-- ===================== Main ===================== -->
+    <main class="cajera-main">
+      <div class="cajera-container" id="view-editor">
+
+        <!-- Bloque 1: Buscador -->
+        <section class="card">
+          <h2 class="card-title">
+            <span class="step-num">1</span>
+            Buscá productos
+          </h2>
+          <div class="search-wrap">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input
+              type="text"
+              id="search-input"
+              class="input-big"
+              placeholder="Buscar por código de barra o descripción..."
+              autocomplete="off"
+              aria-label="Buscar producto por código o descripción"
+            />
+            <button type="button" id="search-clear" class="search-clear" aria-label="Limpiar búsqueda">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+
+            <div id="search-results" class="search-results" role="listbox"></div>
+          </div>
+        </section>
+
+        <!-- Bloque 2: Lista -->
+        <section class="card">
+          <h2 class="card-title">
+            <span class="step-num">2</span>
+            Productos en tu pedido
+          </h2>
+          <div class="lista-counter" id="lista-counter">
+            <strong>0</strong> productos · <strong>0</strong> unidades totales
+          </div>
+
+          <div id="lista-wrap">
+            <!-- Se rellena con JS -->
+          </div>
+        </section>
+
+        <!-- Bloque 3: Excepción -->
+        <section class="card">
+          <h2 class="card-title">
+            <span class="step-num">3</span>
+            ¿Es una OP de excepción?
+          </h2>
+          <label class="exc-row" for="chk-excepcion">
+            <input type="checkbox" id="chk-excepcion" class="exc-check" />
+            <span class="exc-label">
+              Esta OP es por una situación fuera del día protocolo
+              <span class="hint">Marcá solo si tenés una urgencia (venta grande, faltante crítico, etc.). Vas a tener que contar qué pasó.</span>
+            </span>
+          </label>
+
+          <div class="exc-motivo" id="exc-motivo-wrap">
+            <label for="txt-motivo">Contame qué pasó (motivo)</label>
+            <textarea
+              id="txt-motivo"
+              placeholder="Ej: se agotaron los cargadores USB-C porque vendimos un pedido grande a una oficina esta mañana..."
+              minlength="30"
+            ></textarea>
+            <div class="exc-counter" id="exc-counter">0 / 30 caracteres mínimos</div>
+          </div>
+        </section>
+
+        <!-- Bloque 4: Acciones -->
+        <section class="card actions-card">
+          <div class="actions-row">
+            <button type="button" id="btn-borrador" class="btn btn-big btn-secondary">
+              Guardar borrador
+            </button>
+            <button type="button" id="btn-enviar" class="btn btn-big btn-primary" disabled>
+              Enviar Orden de Pedido
+            </button>
+          </div>
+          <div class="validation-msg" id="validation-msg">
+            Agregá al menos un producto para poder enviar.
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================== Script ===================== -->
+  <script type="module">
+    import { productos, cajeraActual } from '../shared/mock-data.js';
+
+    // --------- Bootstrap: tema (mismo patrón que oc-editar) ---------
+    (function () {
+      var KEY = 'multicompra:theme';
+      var btn = document.getElementById('btn-theme');
+      btn.addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+      });
+    })();
+
+    // --------- Saludo ---------
+    document.getElementById('hello-name').textContent = cajeraActual.nombre;
+    document.getElementById('hello-local').textContent = cajeraActual.localNombre;
+    document.querySelector('.cajera-header .avatar').textContent = cajeraActual.iniciales;
+
+    // --------- Estado de la OP (borrador en memoria + localStorage) ---------
+    const DRAFT_KEY = 'multicompra:draft:op';
+
+    // Seed inicial: demostrar "borrador editable" con 3-4 productos, 1 con cantidad > 1
+    const seedLineas = [
+      { productoId: 'p01', cantidad: 3 },  // Cargador USB-C 20W Premium — cantidad > 1
+      { productoId: 'p02', cantidad: 1 },  // Cable Lightning 1m
+      { productoId: 'p06', cantidad: 1 },  // Vidrio templado iPhone
+      { productoId: 'p09', cantidad: 1 }   // Power Bank 10000mAh
+    ];
+
+    function cargarDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.lineas)) return parsed;
+        }
+      } catch (e) {}
+      return { lineas: seedLineas.slice(), excepcion: false, motivo: '' };
+    }
+    function guardarDraft() {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    const state = cargarDraft();
+
+    // --------- Render: lista de productos ---------
+    const listaWrap = document.getElementById('lista-wrap');
+    const listaCounter = document.getElementById('lista-counter');
+
+    function renderLista() {
+      if (!state.lineas.length) {
+        listaWrap.innerHTML = `
+          <div class="lista-empty">
+            <span class="arrow-up" aria-hidden="true">&uarr;</span>
+            <div class="lista-empty-title">Agregá productos con el buscador de arriba</div>
+            <div class="lista-empty-sub">Escribí el nombre o pasá el lector de código de barras</div>
+          </div>
+        `;
+      } else {
+        const filas = state.lineas.map(ln => {
+          const p = productos.find(x => x.id === ln.productoId);
+          if (!p) return '';
+          return `
+            <tr data-pid="${p.id}">
+              <td class="lista-col-cod"><span class="lista-cod-mono">${p.barras}</span></td>
+              <td><span class="lista-desc">${p.nombre}</span></td>
+              <td class="lista-col-qty">
+                <div class="qty-spinner" role="group" aria-label="Cantidad de ${p.nombre}">
+                  <button type="button" class="qty-btn qty-minus" aria-label="Restar 1" ${ln.cantidad <= 1 ? 'disabled' : ''}>&minus;</button>
+                  <input type="number" class="qty-input" min="1" value="${ln.cantidad}" aria-label="Cantidad" />
+                  <button type="button" class="qty-btn qty-plus" aria-label="Sumar 1">+</button>
+                </div>
+              </td>
+              <td class="lista-col-act">
+                <button type="button" class="btn-delete" title="Quitar producto" aria-label="Quitar ${p.nombre}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        listaWrap.innerHTML = `
+          <table class="lista-table">
+            <thead>
+              <tr>
+                <th class="lista-col-cod">Código</th>
+                <th>Descripción</th>
+                <th class="lista-col-qty">Cantidad</th>
+                <th class="lista-col-act"></th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        `;
+      }
+
+      // Contador
+      const cantProd = state.lineas.length;
+      const cantUnid = state.lineas.reduce((s, ln) => s + ln.cantidad, 0);
+      listaCounter.innerHTML = `<strong>${cantProd}</strong> producto${cantProd === 1 ? '' : 's'} · <strong>${cantUnid}</strong> unidad${cantUnid === 1 ? '' : 'es'} total${cantUnid === 1 ? '' : 'es'}`;
+
+      actualizarValidacion();
+    }
+
+    // --------- Mutaciones sobre state.lineas ---------
+    function agregarProducto(productoId) {
+      const existe = state.lineas.find(ln => ln.productoId === productoId);
+      if (existe) {
+        existe.cantidad += 1;
+      } else {
+        state.lineas.push({ productoId, cantidad: 1 });
+      }
+      guardarDraft();
+      renderLista();
+    }
+
+    function cambiarCantidad(productoId, nuevaCantidad) {
+      const ln = state.lineas.find(x => x.productoId === productoId);
+      if (!ln) return;
+      ln.cantidad = Math.max(1, Math.floor(nuevaCantidad) || 1);
+      guardarDraft();
+      renderLista();
+    }
+
+    function quitarProducto(productoId) {
+      state.lineas = state.lineas.filter(ln => ln.productoId !== productoId);
+      guardarDraft();
+      renderLista();
+    }
+
+    // Delegación de eventos en la lista
+    listaWrap.addEventListener('click', (e) => {
+      const tr = e.target.closest('tr[data-pid]');
+      if (!tr) return;
+      const pid = tr.dataset.pid;
+      if (e.target.closest('.qty-plus')) {
+        const ln = state.lineas.find(x => x.productoId === pid);
+        if (ln) cambiarCantidad(pid, ln.cantidad + 1);
+      } else if (e.target.closest('.qty-minus')) {
+        const ln = state.lineas.find(x => x.productoId === pid);
+        if (ln && ln.cantidad > 1) cambiarCantidad(pid, ln.cantidad - 1);
+      } else if (e.target.closest('.btn-delete')) {
+        quitarProducto(pid);
+      }
+    });
+
+    listaWrap.addEventListener('change', (e) => {
+      if (!e.target.matches('.qty-input')) return;
+      const tr = e.target.closest('tr[data-pid]');
+      if (!tr) return;
+      cambiarCantidad(tr.dataset.pid, parseInt(e.target.value, 10));
+    });
+
+    // --------- Buscador ---------
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchClear = document.getElementById('search-clear');
+
+    function filtrar(q) {
+      const term = q.trim().toLowerCase();
+      if (!term) return [];
+      // Decisión 28: startsWith para código de barra, includes para descripción
+      return productos.filter(p =>
+        p.nombre.toLowerCase().includes(term) ||
+        p.barras.startsWith(term)
+      ).slice(0, 8);
+    }
+
+    function renderResultados(items, term) {
+      if (!term) {
+        searchResults.classList.remove('visible');
+        searchResults.innerHTML = '';
+        return;
+      }
+      if (!items.length) {
+        searchResults.innerHTML = `
+          <div class="search-empty">
+            No encontré productos que coincidan con <strong>"${term}"</strong>
+            <br>
+            <span class="empty-cta" role="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Solicitar alta de producto al supervisor
+            </span>
+          </div>
+        `;
+      } else {
+        searchResults.innerHTML = items.map(p => {
+          const yaEsta = state.lineas.some(ln => ln.productoId === p.id);
+          return `
+            <div class="search-result" data-pid="${p.id}" role="option">
+              <div class="search-result-main">
+                <div class="search-result-name">${p.nombre}</div>
+                <div class="search-result-code">${p.barras}</div>
+              </div>
+              <div class="search-result-add">${yaEsta ? '+1 más' : '+ Agregar'}</div>
+            </div>
+          `;
+        }).join('');
+      }
+      searchResults.classList.add('visible');
+    }
+
+    searchInput.addEventListener('input', () => {
+      const v = searchInput.value;
+      searchClear.classList.toggle('visible', !!v);
+      renderResultados(filtrar(v), v);
+    });
+
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value) {
+        renderResultados(filtrar(searchInput.value), searchInput.value);
+      }
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      searchResults.classList.remove('visible');
+      searchInput.focus();
+    });
+
+    searchResults.addEventListener('click', (e) => {
+      const item = e.target.closest('.search-result[data-pid]');
+      if (!item) return;
+      agregarProducto(item.dataset.pid);
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      searchResults.classList.remove('visible');
+      searchInput.focus();
+    });
+
+    // Cerrar dropdown al clickear afuera
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-wrap')) {
+        searchResults.classList.remove('visible');
+      }
+    });
+
+    // Enter: agregar el primero de la lista
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = searchResults.querySelector('.search-result[data-pid]');
+        if (first) {
+          e.preventDefault();
+          agregarProducto(first.dataset.pid);
+          searchInput.value = '';
+          searchClear.classList.remove('visible');
+          searchResults.classList.remove('visible');
+        }
+      } else if (e.key === 'Escape') {
+        searchInput.value = '';
+        searchClear.classList.remove('visible');
+        searchResults.classList.remove('visible');
+      }
+    });
+
+    // --------- Excepción + motivo ---------
+    const chkExc = document.getElementById('chk-excepcion');
+    const wrapMotivo = document.getElementById('exc-motivo-wrap');
+    const txtMotivo = document.getElementById('txt-motivo');
+    const excCounter = document.getElementById('exc-counter');
+
+    chkExc.checked = !!state.excepcion;
+    txtMotivo.value = state.motivo || '';
+    wrapMotivo.classList.toggle('visible', chkExc.checked);
+
+    // Decisión 29: mínimo 30 caracteres en motivo de excepción
+    const MOTIVO_MIN = 30;
+    function refreshExcCounter() {
+      const len = txtMotivo.value.trim().length;
+      const min = MOTIVO_MIN;
+      if (len === 0) {
+        excCounter.textContent = `0 / ${min} caracteres mínimos`;
+        excCounter.classList.remove('ok', 'err');
+      } else if (len < min) {
+        excCounter.textContent = `${len} / ${min} caracteres mínimos · faltan ${min - len}`;
+        excCounter.classList.add('err');
+        excCounter.classList.remove('ok');
+      } else {
+        excCounter.textContent = `${len} caracteres · OK`;
+        excCounter.classList.add('ok');
+        excCounter.classList.remove('err');
+      }
+    }
+
+    chkExc.addEventListener('change', () => {
+      state.excepcion = chkExc.checked;
+      wrapMotivo.classList.toggle('visible', chkExc.checked);
+      if (!chkExc.checked) {
+        state.motivo = '';
+        txtMotivo.value = '';
+      }
+      refreshExcCounter();
+      guardarDraft();
+      actualizarValidacion();
+    });
+
+    txtMotivo.addEventListener('input', () => {
+      state.motivo = txtMotivo.value;
+      refreshExcCounter();
+      guardarDraft();
+      actualizarValidacion();
+    });
+
+    refreshExcCounter();
+
+    // --------- Validación + botones ---------
+    const btnEnviar = document.getElementById('btn-enviar');
+    const btnBorrador = document.getElementById('btn-borrador');
+    const validationMsg = document.getElementById('validation-msg');
+
+    function actualizarValidacion() {
+      const sinProductos = state.lineas.length === 0;
+      const excSinMotivo = state.excepcion && (state.motivo || '').trim().length < MOTIVO_MIN;
+
+      if (sinProductos) {
+        btnEnviar.disabled = true;
+        validationMsg.textContent = 'Agregá al menos un producto para poder enviar.';
+        validationMsg.classList.remove('ok', 'hidden');
+      } else if (excSinMotivo) {
+        btnEnviar.disabled = true;
+        validationMsg.textContent = `Contá qué pasó: el motivo necesita al menos ${MOTIVO_MIN} caracteres.`;
+        validationMsg.classList.remove('ok', 'hidden');
+      } else {
+        btnEnviar.disabled = false;
+        validationMsg.textContent = 'Listo para enviar.';
+        validationMsg.classList.add('ok');
+        validationMsg.classList.remove('hidden');
+      }
+    }
+
+    btnBorrador.addEventListener('click', () => {
+      guardarDraft();
+      alert('Borrador guardado. Podés volver después a terminarla.');
+    });
+
+    btnEnviar.addEventListener('click', () => {
+      alert('OP enviada a supervisor (mock). Ahora esta cajera queda bloqueada hasta que la procesen.');
+    });
+
+    // Render inicial
+    renderLista();
+  </script>
+
+</body>
+
+<!-- =====================================================================
+     VARIANTES DE ESTADO (comentadas) — para revisar con el humano.
+     Para ver cada una, reemplazá el <main> de arriba por uno de estos
+     bloques o descomentá y copiá el contenido dentro de .cajera-main.
+     ===================================================================== -->
+
+<!--
+VARIANTE 1 — OP RECIÉN ENVIADA: DETALLE READ-ONLY (Decisión 30)
+Al terminar de enviar la OP, la cajera ve su pedido en modo solo lectura
+con el badge "enviada" y un CTA chiquito que aclara que no puede crear
+otra hasta que se procese. NO es una pantalla de bloqueo: cierra el ciclo
+mostrando lo que acaba de mandar.
+
+Reemplazá el <main class="cajera-main">...</main> por:
+
+<main class="cajera-main">
+  <div class="cajera-container">
+
+    <section class="card" style="display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-1);">
+          <h2 class="card-title" style="margin: 0;">Tu pedido enviado</h2>
+          <span class="badge badge-enviada">Enviada</span>
+        </div>
+        <div class="text-sm text-muted">
+          <strong>OP-1047</strong> · enviada hace unos segundos · esperando que Shirley la procese.
+        </div>
+      </div>
+      <div class="text-sm text-muted" style="max-width: 320px; text-align: right;">
+        No podés crear otra OP hasta que Shirley procese esta.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Productos pedidos</h2>
+      <table class="lista-table">
+        <thead>
+          <tr>
+            <th class="lista-col-cod">Código</th>
+            <th>Descripción</th>
+            <th class="lista-col-qty">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lista-col-cod"><span class="lista-cod-mono">7840001001234</span></td>
+            <td><span class="lista-desc">Cargador USB-C 20W Premium</span></td>
+            <td class="lista-col-qty text-mono" style="text-align: center;">3</td>
+          </tr>
+          <tr>
+            <td class="lista-col-cod"><span class="lista-cod-mono">7840001001241</span></td>
+            <td><span class="lista-desc">Cable Lightning 1m</span></td>
+            <td class="lista-col-qty text-mono" style="text-align: center;">1</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+</main>
+-->
+
+<!--
+VARIANTE 2 — INTENTO DE CREAR 2DA OP: BLOQUEO
+Se muestra cuando la cajera intenta crear una nueva OP pero ya tiene una
+enviada sin procesar. Esta sí es una pantalla de bloqueo completa, porque
+la acción está prohibida (Decisión 11 + Decisión 30).
+
+Reemplazá el <main class="cajera-main">...</main> por:
+
+<main class="cajera-main">
+  <div class="block-screen">
+    <div class="block-icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4M12 16h.01"/>
+      </svg>
+    </div>
+    <div class="block-title">Ya tenés una OP sin procesar</div>
+    <p class="block-msg">
+      Tu pedido <strong>OP-1047</strong> todavía está esperando que Shirley lo procese.
+      No podés cargar otra hasta entonces. Si necesitás algo urgente, hablá directo con ella.
+    </p>
+    <button type="button" class="btn btn-big btn-secondary">Ver mi OP enviada</button>
+  </div>
+</main>
+-->
+
+<!--
+VARIANTE 3 — ESTADO VACÍO PRIMERA VEZ
+Al abrir la página, limpiá localStorage y comentá el seedLineas en el JS
+(o en consola: localStorage.removeItem('multicompra:draft:op') y recargar).
+La lista muestra el placeholder "Agregá productos con el buscador de arriba".
+-->
+
+</html>

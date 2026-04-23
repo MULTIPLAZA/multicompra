@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Cerrar OC-0042</title>
+  <!-- Anti-flash: setear data-theme antes del CSS -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    /* =====================================================================
+       Layout de pantalla de cierre — formulario centrado, ~900px
+       ===================================================================== */
+    .close-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-5) var(--sp-4) var(--sp-8);
+    }
+    .close-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .back-link {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: var(--sp-1);
+      width: fit-content;
+    }
+    .back-link:hover { color: var(--primary); text-decoration: underline; }
+
+    /* =====================================================================
+       Card genérica
+       ===================================================================== */
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .card-head h2 {
+      font-size: var(--fs-md);
+      margin: 0;
+      flex: 1;
+    }
+    .card-body {
+      padding: var(--sp-4);
+    }
+    .card-body.compact { padding: var(--sp-3) var(--sp-4); }
+
+    /* =====================================================================
+       Banner de éxito post-cierre
+       ===================================================================== */
+    .banner-success {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--success-soft);
+      border: 1px solid var(--success);
+      color: var(--success-text);
+      border-radius: var(--radius);
+      font-size: var(--fs-base);
+    }
+    .banner-success strong { color: var(--success-text); }
+    .banner-success svg {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* =====================================================================
+       Checklist de validación
+       ===================================================================== */
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-2) 0;
+    }
+    .check-item + .check-item { border-top: 1px dashed var(--border); padding-top: var(--sp-3); }
+    .check-icon {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .check-ok {
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid var(--success);
+    }
+    .check-warn {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border: 1px solid var(--warning);
+    }
+    .check-fail {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+      border: 1px solid var(--danger);
+    }
+    .check-label {
+      font-size: var(--fs-base);
+      color: var(--text);
+    }
+    .check-label strong { color: var(--text-strong); }
+    .check-hint {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .check-action { margin-left: auto; }
+
+    /* =====================================================================
+       Resumen — grid de pares label/value
+       ===================================================================== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--sp-3) var(--sp-6);
+    }
+    .summary-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .summary-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+    }
+    .summary-value {
+      font-size: var(--fs-md);
+      color: var(--text-strong);
+      font-weight: 500;
+    }
+    .summary-value.mono {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-sub {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    .totals-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-3);
+      margin-top: var(--sp-4);
+      padding-top: var(--sp-4);
+      border-top: 1px solid var(--border);
+    }
+    .total-box {
+      padding: var(--sp-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elev-2);
+    }
+    .total-box.hl {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+    }
+    .total-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      margin-bottom: var(--sp-1);
+    }
+    .total-box.hl .total-label { color: var(--primary); }
+    .total-value {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+    .total-box.hl .total-value { color: var(--primary); }
+    .total-sub {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* =====================================================================
+       Lista de OPs expandible
+       ===================================================================== */
+    details.ops-list {
+      margin-top: var(--sp-3);
+      border-top: 1px dashed var(--border);
+      padding-top: var(--sp-3);
+    }
+    details.ops-list > summary {
+      cursor: pointer;
+      font-size: var(--fs-sm);
+      color: var(--primary);
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+    details.ops-list > summary::-webkit-details-marker { display: none; }
+    details.ops-list > summary::before {
+      content: "▶";
+      font-size: 8px;
+      transition: transform var(--t-fast);
+    }
+    details.ops-list[open] > summary::before { transform: rotate(90deg); }
+    .ops-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      margin-top: var(--sp-2);
+    }
+    .op-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: 2px var(--sp-2);
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
+      color: var(--text);
+    }
+    .op-chip .op-code {
+      font-family: var(--font-mono);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* =====================================================================
+       Desglose por producto (tabla colapsable)
+       ===================================================================== */
+    .breakdown-head {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      cursor: pointer;
+      user-select: none;
+    }
+    .breakdown-head h2 {
+      font-size: var(--fs-md);
+      margin: 0;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .breakdown-head h2::before {
+      content: "▶";
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform var(--t-fast);
+    }
+    .card.breakdown.open .breakdown-head h2::before { transform: rotate(90deg); }
+    .breakdown-body { display: none; }
+    .card.breakdown.open .breakdown-body { display: block; }
+
+    .table-breakdown {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--fs-base);
+    }
+    .table-breakdown thead th {
+      position: sticky; top: 0;
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      text-align: left;
+      font-weight: 600;
+      font-size: var(--fs-sm);
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .table-breakdown tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .table-breakdown tbody tr:last-child td { border-bottom: 0; }
+    .table-breakdown .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .table-breakdown tfoot td {
+      padding: var(--sp-3);
+      border-top: 2px solid var(--border-strong);
+      background: var(--bg-elev-2);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+
+    .prod-code { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-muted); }
+    .qty-zero { color: var(--text-subtle); }
+
+    /* =====================================================================
+       Acciones post-cierre
+       ===================================================================== */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-3);
+    }
+    .action-box {
+      padding: var(--sp-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+      position: relative;
+    }
+    .action-box.disabled {
+      opacity: 0.55;
+      background: var(--bg-elev-2);
+    }
+    .action-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius);
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .action-title {
+      font-size: var(--fs-md);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .action-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .action-cta {
+      width: 100%;
+      justify-content: center;
+    }
+    .action-locked {
+      position: absolute;
+      top: var(--sp-2);
+      right: var(--sp-2);
+      font-size: var(--fs-xs);
+      padding: 2px var(--sp-2);
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+    }
+
+    /* Preview del mensaje WhatsApp */
+    .wa-preview {
+      margin-top: var(--sp-2);
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    /* =====================================================================
+       Confirmación final
+       ===================================================================== */
+    .confirm-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--warning);
+      background: var(--warning-soft);
+      border-radius: var(--radius);
+      padding: var(--sp-4);
+      color: var(--warning-text);
+    }
+    [data-theme="dark"] .confirm-card {
+      background: var(--bg-elev);
+      color: var(--text);
+    }
+    .confirm-card p {
+      font-size: var(--fs-sm);
+      margin-bottom: var(--sp-3);
+      color: inherit;
+    }
+    .confirm-check {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-2);
+      padding: var(--sp-3);
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--text);
+    }
+    .confirm-check input { margin-top: 3px; }
+    .confirm-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      margin-top: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .btn-big {
+      height: 40px;
+      padding: 0 var(--sp-5);
+      font-size: var(--fs-md);
+    }
+    .btn-link {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      text-decoration: underline;
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .btn-link:hover { color: var(--danger); }
+
+    /* =====================================================================
+       Toast simple
+       ===================================================================== */
+    .toast {
+      position: fixed;
+      bottom: var(--sp-5);
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: var(--text-strong);
+      color: var(--bg);
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--radius);
+      font-size: var(--fs-sm);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity var(--t-base), transform var(--t-base);
+      box-shadow: var(--shadow-lg);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* =====================================================================
+       Responsive básico: en pantallas chicas, apilar
+       ===================================================================== */
+    @media (max-width: 760px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .totals-row { grid-template-columns: 1fr; }
+      .actions-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app page-dense" id="app">
+
+  <!-- =================================================================
+       Header (idéntico a oc-editar.html)
+       ================================================================= -->
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="#">OCs</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="oc-editar.html">#OC-0042</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">Cerrar</span>
+    </nav>
+
+    <div class="grow"></div>
+
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app…  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <!-- =================================================================
+       Sidebar (idéntico a oc-editar.html)
+       ================================================================= -->
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="#" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        </span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="#" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </span>
+        <span class="nav-item-label">OPs pendientes</span>
+        <span class="nav-item-count">7</span>
+      </a>
+      <a class="nav-item active" href="#" data-label="OCs" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
+        </span>
+        <span class="nav-item-label">OCs</span>
+        <span class="nav-item-count">3</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </span>
+        <span class="nav-item-label">Compras</span>
+        <span class="nav-item-count">2</span>
+      </a>
+      <a class="nav-item" href="#" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- =================================================================
+       Main
+       ================================================================= -->
+  <main class="app-main">
+
+    <!-- Sub-header -->
+    <div class="screen-subheader">
+      <h1 class="screen-title">
+        Cerrar Orden de Compra
+        <span class="screen-title-mono">#OC-0042</span>
+      </h1>
+      <span class="badge badge-abierta" id="oc-badge">Abierta</span>
+      <span class="meta-item"><strong>Proveedor:</strong>&nbsp;<span id="meta-proveedor">Distribuidora Celular Plus S.A.</span></span>
+    </div>
+
+    <div class="close-scroll">
+      <div class="close-wrap" id="close-wrap">
+
+        <a href="oc-editar.html" class="back-link" title="Volver al editor de la OC">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Volver a editar
+        </a>
+
+        <!-- =========================================================
+             Banner de éxito (solo aparece post-cierre)
+             ========================================================= -->
+        <div class="banner-success" id="banner-success" style="display: none;" role="status">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          <div>
+            <strong>OC cerrada con éxito.</strong>
+            <span id="banner-ops-count">5</span> OPs quedaron cerradas. Ya podés descargar PDF/Excel o abrir el link de WhatsApp.
+          </div>
+        </div>
+
+        <!-- =========================================================
+             1. Checklist de validación
+             ========================================================= -->
+        <div class="card">
+          <div class="card-head">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            <h2>Validaciones previas al cierre</h2>
+          </div>
+          <div class="card-body compact">
+            <div class="checklist" id="checklist">
+              <!-- render por JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             2. Resumen de la OC
+             ========================================================= -->
+        <div class="card">
+          <div class="card-head">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <h2>Resumen de la OC</h2>
+          </div>
+          <div class="card-body">
+            <div class="summary-grid">
+              <div class="summary-row">
+                <span class="summary-label">Proveedor</span>
+                <span class="summary-value" id="res-prov-nombre">—</span>
+                <span class="summary-sub">RUC <span id="res-prov-ruc">—</span> · Contacto: <span id="res-prov-contacto">—</span></span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Fechas</span>
+                <span class="summary-value">Creada <span class="mono" id="res-fecha-creacion">22/04/2026</span></span>
+                <span class="summary-sub">Cierre previsto: <span class="mono" id="res-fecha-cierre">hoy, 22/04/2026</span></span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">OPs incluidas</span>
+                <span class="summary-value mono"><span id="res-ops-count">0</span> órdenes de pedido</span>
+                <span class="summary-sub">de <span id="res-locales-count">0</span> locales distintos</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Productos únicos</span>
+                <span class="summary-value mono" id="res-productos-count">0</span>
+                <span class="summary-sub">en el desglose completo</span>
+              </div>
+            </div>
+
+            <!-- Lista expandible de OPs -->
+            <details class="ops-list">
+              <summary>Ver códigos de OP incluidos</summary>
+              <div class="ops-chips" id="ops-chips"></div>
+            </details>
+
+            <!-- Totales económicos -->
+            <div class="totals-row">
+              <div class="total-box hl">
+                <div class="total-label">Total a comprar</div>
+                <div class="total-value">Gs. <span id="tot-comprar-gs">0</span></div>
+                <div class="total-sub"><span id="tot-comprar-uds">0</span> unidades</div>
+              </div>
+              <div class="total-box">
+                <div class="total-label">Repone desde central</div>
+                <div class="total-value mono"><span id="tot-central-uds">0</span></div>
+                <div class="total-sub">unidades (gestionadas afuera)</div>
+              </div>
+              <div class="total-box">
+                <div class="total-label">Descartados</div>
+                <div class="total-value mono"><span id="tot-nonec-uds">0</span></div>
+                <div class="total-sub">unidades "no necesita"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             3. Desglose por producto (colapsable)
+             ========================================================= -->
+        <div class="card breakdown" id="breakdown-card">
+          <div class="breakdown-head" id="breakdown-toggle" role="button" tabindex="0" aria-expanded="false">
+            <h2>Desglose por producto</h2>
+            <span class="text-sm text-muted" id="breakdown-count">0 productos</span>
+          </div>
+          <div class="breakdown-body">
+            <div style="max-height: 420px; overflow-y: auto;">
+              <table class="table-breakdown" aria-label="Desglose por producto">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th class="col-num">A comprar</th>
+                    <th class="col-num">Repone central</th>
+                    <th class="col-num">Descartado</th>
+                    <th class="col-num">Subtotal Gs</th>
+                  </tr>
+                </thead>
+                <tbody id="breakdown-body"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2">Total OC</td>
+                    <td class="col-num" id="bd-tot-comprar">0</td>
+                    <td class="col-num" id="bd-tot-central">0</td>
+                    <td class="col-num" id="bd-tot-nonec">0</td>
+                    <td class="col-num" id="bd-tot-gs">0</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             4. Acciones post-cierre
+             ========================================================= -->
+        <div class="card">
+          <div class="card-head">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <h2>Acciones post-cierre</h2>
+            <span class="text-sm text-muted" id="actions-state-hint">Disponibles al cerrar la OC</span>
+          </div>
+          <div class="card-body">
+            <div class="actions-grid">
+
+              <!-- PDF -->
+              <div class="action-box disabled" id="action-pdf">
+                <span class="action-locked" id="lock-pdf">Al cerrar</span>
+                <div class="row-3">
+                  <span class="action-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </span>
+                  <div class="action-title">PDF</div>
+                </div>
+                <div class="action-desc">Orden formal para imprimir o adjuntar al WhatsApp del proveedor.</div>
+                <button class="btn btn-secondary action-cta" id="btn-pdf" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Descargar PDF
+                </button>
+              </div>
+
+              <!-- Excel -->
+              <div class="action-box disabled" id="action-excel">
+                <span class="action-locked" id="lock-excel">Al cerrar</span>
+                <div class="row-3">
+                  <span class="action-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                  </span>
+                  <div class="action-title">Excel</div>
+                </div>
+                <div class="action-desc">Planilla editable para mandar a proveedores que prefieren planilla.</div>
+                <button class="btn btn-secondary action-cta" id="btn-excel" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Descargar Excel
+                </button>
+              </div>
+
+              <!-- WhatsApp -->
+              <div class="action-box disabled" id="action-wa">
+                <span class="action-locked" id="lock-wa">Al cerrar</span>
+                <div class="row-3">
+                  <span class="action-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  </span>
+                  <div class="action-title">WhatsApp</div>
+                </div>
+                <div class="action-desc">Abre wa.me con el mensaje prellenado. El PDF lo adjuntás vos.</div>
+                <a class="btn btn-secondary action-cta" id="btn-wa" href="#" target="_blank" rel="noopener" aria-disabled="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Abrir link WhatsApp
+                </a>
+                <div class="wa-preview" id="wa-preview" aria-label="Preview del mensaje"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             5. Bloque de confirmación final (pre-cierre)
+             ========================================================= -->
+        <div class="confirm-card" id="confirm-block">
+          <p>
+            Al confirmar, las OPs incluidas quedan <strong>cerradas</strong> y no se pueden editar.
+            La OC pasa a estado <strong>"cerrada"</strong> y se puede proceder a la carga de Compra
+            cuando llegue la mercadería.
+          </p>
+
+          <label class="confirm-check" for="chk-confirm">
+            <input type="checkbox" id="chk-confirm" />
+            <span>Confirmo que revisé todo: proveedor, productos, cantidades y totales.</span>
+          </label>
+
+          <div class="confirm-actions">
+            <button class="btn btn-primary btn-big" id="btn-cerrar-oc" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Cerrar OC
+            </button>
+            <a href="oc-editar.html" class="btn btn-secondary btn-big">Volver a editar</a>
+            <button class="btn-link" id="btn-cancelar">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             6. Bloque "¿Qué sigue?" (post-cierre)
+             ========================================================= -->
+        <div class="card" id="next-block" style="display: none;">
+          <div class="card-head">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <h2>¿Qué sigue?</h2>
+          </div>
+          <div class="card-body">
+            <p class="text-sm text-muted" style="margin-bottom: var(--sp-4);">
+              La OC está cerrada y lista para enviar al proveedor. Cuando tengas confirmación de que llegó,
+              marcala como "enviada" para seguirle el rastro.
+            </p>
+            <div class="row-3" style="flex-wrap: wrap;">
+              <button class="btn btn-primary" id="btn-marcar-enviada">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Marcar como enviada al proveedor
+              </button>
+              <a href="../index.html" class="btn btn-secondary">Volver al listado de OCs</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /close-wrap -->
+    </div><!-- /close-scroll -->
+
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- =================================================================
+     Scripts
+     ================================================================= -->
+<script type="module">
+  import { oc, proveedor, proveedores, fmtGs } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  // ====================================================================
+  // Resolver proveedor asignado (fallback: primer proveedor del catálogo)
+  // ====================================================================
+  const provAsignado = (oc.proveedorId && proveedor) ? proveedor : proveedores[0];
+  document.getElementById('meta-proveedor').textContent = provAsignado.nombre;
+  document.getElementById('res-prov-nombre').textContent = provAsignado.nombre;
+  document.getElementById('res-prov-ruc').textContent = provAsignado.ruc;
+  document.getElementById('res-prov-contacto').textContent = provAsignado.contacto;
+
+  // ====================================================================
+  // Fechas
+  // ====================================================================
+  function fmtFechaCorta(s) {
+    if (!s) return '—';
+    const parts = s.split(' ')[0].split('-'); // yyyy-mm-dd
+    if (parts.length !== 3) return s;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  const fechaCreacion = fmtFechaCorta(oc.fechaCreacion);
+  const hoy = new Date();
+  const fechaCierre = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+  document.getElementById('res-fecha-creacion').textContent = fechaCreacion;
+  document.getElementById('res-fecha-cierre').textContent = `hoy, ${fechaCierre}`;
+
+  // ====================================================================
+  // Cálculos sobre la OC
+  // ====================================================================
+  function calcularTotales() {
+    let totComprarUds = 0, totCentralUds = 0, totNonecUds = 0;
+    let totComprarGs = 0;
+    const desglose = [];
+    const localesSet = new Set();
+
+    oc.grupos.forEach(g => {
+      let comprar = 0, central = 0, nonec = 0;
+      g.pedidos.forEach(p => {
+        localesSet.add(p.localId);
+        if (p.decision === 'comprar') comprar += p.cantidadComprar;
+        else if (p.decision === 'repone_central') central += Math.max(0, p.pidio - p.stockLocal);
+        else if (p.decision === 'no_necesita') nonec += p.pidio;
+      });
+      const subtotal = comprar * g.costoEstimado;
+      totComprarUds += comprar;
+      totCentralUds += central;
+      totNonecUds += nonec;
+      totComprarGs += subtotal;
+      desglose.push({
+        productoId: g.productoId,
+        barras: g.barras,
+        nombre: g.nombre,
+        comprar, central, nonec, subtotal
+      });
+    });
+
+    return { totComprarUds, totCentralUds, totNonecUds, totComprarGs, desglose, localesSet };
+  }
+
+  const tot = calcularTotales();
+
+  // ====================================================================
+  // Resumen
+  // ====================================================================
+  document.getElementById('res-ops-count').textContent = oc.opsOrigen.length;
+  document.getElementById('res-locales-count').textContent = tot.localesSet.size;
+  document.getElementById('res-productos-count').textContent = oc.grupos.length;
+  document.getElementById('tot-comprar-gs').textContent = fmtGs(tot.totComprarGs);
+  document.getElementById('tot-comprar-uds').textContent = tot.totComprarUds;
+  document.getElementById('tot-central-uds').textContent = tot.totCentralUds;
+  document.getElementById('tot-nonec-uds').textContent = tot.totNonecUds;
+
+  // OPs chips
+  const opsChips = document.getElementById('ops-chips');
+  opsChips.innerHTML = oc.opsOrigen.map(o => `
+    <span class="op-chip" title="${o.cajera} · ${o.fecha}">
+      <span class="op-code">${o.id}</span>
+      <span>${o.localNombre}</span>
+    </span>
+  `).join('');
+
+  // ====================================================================
+  // Desglose por producto
+  // ====================================================================
+  const bdBody = document.getElementById('breakdown-body');
+  bdBody.innerHTML = tot.desglose.map(d => `
+    <tr>
+      <td><span class="prod-code">${d.barras}</span></td>
+      <td>${d.nombre}</td>
+      <td class="col-num ${d.comprar === 0 ? 'qty-zero' : ''}">${d.comprar}</td>
+      <td class="col-num ${d.central === 0 ? 'qty-zero' : ''}">${d.central}</td>
+      <td class="col-num ${d.nonec === 0 ? 'qty-zero' : ''}">${d.nonec}</td>
+      <td class="col-num">${d.subtotal > 0 ? fmtGs(d.subtotal) : '<span class="qty-zero">0</span>'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('bd-tot-comprar').textContent = tot.totComprarUds;
+  document.getElementById('bd-tot-central').textContent = tot.totCentralUds;
+  document.getElementById('bd-tot-nonec').textContent = tot.totNonecUds;
+  document.getElementById('bd-tot-gs').textContent = fmtGs(tot.totComprarGs);
+  document.getElementById('breakdown-count').textContent = `${oc.grupos.length} productos`;
+
+  // Toggle desglose
+  const bdCard = document.getElementById('breakdown-card');
+  const bdToggle = document.getElementById('breakdown-toggle');
+  function toggleBreakdown() {
+    const open = bdCard.classList.toggle('open');
+    bdToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  bdToggle.addEventListener('click', toggleBreakdown);
+  bdToggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleBreakdown(); }
+  });
+
+  // ====================================================================
+  // Checklist de validación
+  // ====================================================================
+  // Supuesto de decisión: snapshot máximo 30 min — si es más, se bloquea.
+  // En este mock arrancamos con el snapshot en "45 min" para demo del flujo
+  // "Actualizar stock" → el humano puede comentar la línea si quiere todo OK.
+  const SNAPSHOT_MAX_MIN = 30;
+  const snapshotDemoMin = 45; // forzado para mostrar estado "falla"
+
+  const checks = [
+    {
+      id: 'proveedor',
+      ok: !!provAsignado,
+      label: 'Proveedor asignado',
+      hint: provAsignado ? provAsignado.nombre : 'Falta asignar proveedor desde el editor'
+    },
+    {
+      id: 'lineas',
+      ok: tot.totComprarUds > 0,
+      label: 'Al menos 1 línea con cantidad a comprar > 0',
+      hint: `${tot.totComprarUds} unidades a comprar en total`
+    },
+    {
+      id: 'snapshot',
+      ok: snapshotDemoMin <= SNAPSHOT_MAX_MIN,
+      label: 'Snapshot de stock central con menos de 30 min',
+      hint: `Último refresh: hace ${snapshotDemoMin} min — ${snapshotDemoMin <= SNAPSHOT_MAX_MIN ? 'OK' : 'se requiere refrescar antes de cerrar'}`,
+      action: snapshotDemoMin <= SNAPSHOT_MAX_MIN ? null : 'refresh-snapshot'
+    },
+    {
+      id: 'pendientes',
+      ok: true,
+      label: 'Ningún pedido en estado "pendiente"',
+      hint: 'Todos decididos: No necesita / Repone central / Comprar'
+    }
+  ];
+
+  const checklistEl = document.getElementById('checklist');
+  function renderChecklist() {
+    checklistEl.innerHTML = checks.map(c => {
+      const iconCls = c.ok ? 'check-ok' : 'check-fail';
+      const iconSvg = c.ok
+        ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      const actionBtn = c.action === 'refresh-snapshot'
+        ? `<button class="btn btn-sm btn-secondary check-action" data-check-action="refresh-snapshot">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+             Actualizar stock
+           </button>`
+        : '';
+      return `
+        <div class="check-item" data-check-id="${c.id}">
+          <span class="check-icon ${iconCls}" aria-hidden="true">${iconSvg}</span>
+          <div>
+            <div class="check-label"><strong>${c.label}</strong></div>
+            <div class="check-hint">${c.hint}</div>
+          </div>
+          ${actionBtn}
+        </div>
+      `;
+    }).join('');
+  }
+  renderChecklist();
+
+  function allChecksOk() {
+    return checks.every(c => c.ok);
+  }
+
+  // Acción refrescar snapshot
+  checklistEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-check-action="refresh-snapshot"]');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = 'Refrescando…';
+    setTimeout(() => {
+      const snap = checks.find(c => c.id === 'snapshot');
+      snap.ok = true;
+      snap.hint = 'Último refresh: hace <1 min — OK';
+      snap.action = null;
+      renderChecklist();
+      updateCloseButton();
+      showToast('Stock central actualizado');
+    }, 700);
+  });
+
+  // ====================================================================
+  // WhatsApp link + preview
+  // ====================================================================
+  function telLimpio(t) {
+    return String(t || '').replace(/[^\d]/g, '');
+  }
+  function armarMensajeWA() {
+    return [
+      `Hola ${provAsignado.contacto ? provAsignado.contacto.split(' ')[0] : provAsignado.nombre},`,
+      `Te paso la Orden de Compra #${oc.numero} del ${fechaCierre}.`,
+      ``,
+      `Resumen:`,
+      `- ${oc.grupos.length} productos distintos`,
+      `- ${tot.totComprarUds} unidades totales`,
+      `- Total: Gs. ${fmtGs(tot.totComprarGs)}`,
+      ``,
+      `Adjunto el PDF por acá. Cualquier duda me avisás.`,
+      `Shirley.`
+    ].join('\n');
+  }
+
+  function actualizarWA() {
+    const msg = armarMensajeWA();
+    document.getElementById('wa-preview').textContent = msg;
+    const href = `https://wa.me/${telLimpio(provAsignado.telefono)}?text=${encodeURIComponent(msg)}`;
+    document.getElementById('btn-wa').setAttribute('href', href);
+  }
+  actualizarWA();
+
+  // ====================================================================
+  // Confirmación + botón Cerrar
+  // ====================================================================
+  const chkConfirm = document.getElementById('chk-confirm');
+  const btnCerrar = document.getElementById('btn-cerrar-oc');
+
+  function updateCloseButton() {
+    const listo = allChecksOk() && chkConfirm.checked;
+    btnCerrar.disabled = !listo;
+    btnCerrar.title = listo
+      ? 'Cerrar la OC'
+      : (!allChecksOk() ? 'Hay validaciones pendientes' : 'Marcá la confirmación para habilitar');
+  }
+  chkConfirm.addEventListener('change', updateCloseButton);
+  updateCloseButton();
+
+  // ====================================================================
+  // Cambiar UI a estado "cerrada"
+  // ====================================================================
+  function marcarCerrada() {
+    // Badge
+    const badge = document.getElementById('oc-badge');
+    badge.className = 'badge badge-cerrada';
+    badge.textContent = 'Cerrada';
+
+    // Banner éxito
+    const banner = document.getElementById('banner-success');
+    banner.style.display = 'flex';
+    document.getElementById('banner-ops-count').textContent = oc.opsOrigen.length;
+
+    // Habilitar acciones
+    ['pdf', 'excel', 'wa'].forEach(k => {
+      const box = document.getElementById(`action-${k}`);
+      box.classList.remove('disabled');
+      const lock = document.getElementById(`lock-${k}`);
+      if (lock) lock.remove();
+    });
+    document.getElementById('btn-pdf').disabled = false;
+    document.getElementById('btn-excel').disabled = false;
+    const wa = document.getElementById('btn-wa');
+    wa.removeAttribute('aria-disabled');
+    document.getElementById('actions-state-hint').textContent = 'Disponibles ahora';
+
+    // Ocultar confirmación, mostrar "¿qué sigue?"
+    document.getElementById('confirm-block').style.display = 'none';
+    document.getElementById('next-block').style.display = 'block';
+
+    // Scroll al banner
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  btnCerrar.addEventListener('click', () => {
+    if (btnCerrar.disabled) return;
+    showToast(`OC ${oc.numero} cerrada. ${oc.opsOrigen.length} OPs quedaron cerradas.`);
+    marcarCerrada();
+  });
+
+  // Demo: botones PDF/Excel post-cierre
+  document.getElementById('btn-pdf').addEventListener('click', () => {
+    if (document.getElementById('btn-pdf').disabled) return;
+    showToast('PDF generado (mockup, no se descarga nada real).');
+  });
+  document.getElementById('btn-excel').addEventListener('click', () => {
+    if (document.getElementById('btn-excel').disabled) return;
+    showToast('Excel generado (mockup).');
+  });
+  document.getElementById('btn-wa').addEventListener('click', (e) => {
+    if (document.getElementById('btn-wa').getAttribute('aria-disabled') === 'true') {
+      e.preventDefault();
+      showToast('Cerrá la OC primero para habilitar el link de WhatsApp.');
+    }
+  });
+
+  document.getElementById('btn-cancelar').addEventListener('click', () => {
+    if (confirm('¿Cancelar el cierre y volver al editor?')) {
+      window.location.href = 'oc-editar.html';
+    }
+  });
+
+  document.getElementById('btn-marcar-enviada').addEventListener('click', () => {
+    const badge = document.getElementById('oc-badge');
+    badge.className = 'badge badge-enviada-proveedor';
+    badge.textContent = 'Enviada a proveedor';
+    showToast(`OC marcada como enviada a ${provAsignado.nombre}.`);
+  });
+
+  // ====================================================================
+  // Toast helper
+  // ====================================================================
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  // ====================================================================
+  // App shell: sidebar colapsado + preferencia
+  // ====================================================================
+  const app = document.getElementById('app');
+  const STORAGE_KEY_SIDEBAR = 'multicompra.sidebar.forceOpen';
+
+  function applySidebarPref() {
+    const forced = localStorage.getItem(STORAGE_KEY_SIDEBAR);
+    if (forced === 'true') app.classList.add('sidebar-forced-open');
+    else app.classList.remove('sidebar-forced-open');
+  }
+  applySidebarPref();
+
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    const isOpen = app.classList.toggle('sidebar-forced-open');
+    localStorage.setItem(STORAGE_KEY_SIDEBAR, isOpen ? 'true' : 'false');
+  });
+
+  // Decisión 25: click fuera del sidebar lo colapsa
+  initSidebarClickOutside();
+
+  // ====================================================================
+  // Theme toggle
+  // ====================================================================
+  const THEME_KEY = 'multicompra:theme';
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+</script>
+
+<!-- =================================================================
+     VARIANTE POST-CIERRE — descomentar para ver el estado final sin
+     hacer click en "Cerrar OC":
+     ================================================================= -->
+<!--
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+      var btn = document.getElementById('btn-cerrar-oc');
+      document.getElementById('chk-confirm').checked = true;
+      btn.disabled = false;
+      btn.click();
+    }, 400);
+  });
+</script>
+-->
+
+</body>
+</html>
