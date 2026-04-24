@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Órdenes de Compra</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    .list-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: var(--sp-3) var(--sp-4) 0;
+    }
+    .table-host {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .table tbody tr { cursor: pointer; }
+
+    /* Badges de estado de OC extendidos */
+    .badge-en-edicion { background: var(--warning-soft); color: var(--warning-text); }
+    .badge-recibida   { background: var(--success-soft); color: var(--success-text); }
+
+    /* Dropdown multi-select estados (simulación con chips clickeables) */
+    .filter-states {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      flex-wrap: wrap;
+    }
+    .filter-states .chip-estado {
+      padding: 0 var(--sp-2);
+      height: 24px;
+      font-size: var(--fs-xs);
+    }
+
+    /* Paginación */
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-4);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .pagination .grow { flex: 1; }
+    .page-btn {
+      height: 28px;
+      min-width: 28px;
+      padding: 0 var(--sp-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elev);
+      color: var(--text);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+    }
+    .page-btn:hover:not(:disabled) { background: var(--bg-elev-2); }
+    .page-btn.current {
+      background: var(--primary);
+      color: var(--primary-on);
+      border-color: var(--primary);
+    }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .cta-primary {
+      background: var(--primary);
+      color: var(--primary-on);
+      border-color: var(--primary);
+    }
+    .cta-primary:hover { background: var(--primary-hover); }
+
+    .empty-state {
+      padding: var(--sp-10) var(--sp-6);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state h3 { color: var(--text-strong); margin-bottom: var(--sp-2); }
+  </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="dashboard.html">Inicio</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">OCs</span>
+    </nav>
+    <div class="grow"></div>
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="dashboard.html" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="dashboard.html" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="nav-item-label">OPs pendientes</span>
+      </a>
+      <a class="nav-item active" href="oc-lista.html" data-label="OCs" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg></span>
+        <span class="nav-item-label">OCs</span>
+      </a>
+      <a class="nav-item" href="compra-lista.html" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span class="nav-item-label">Compras</span>
+      </a>
+      <a class="nav-item" href="catalogo.html" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <h1 class="screen-title">Órdenes de Compra</h1>
+      <span class="chip chip-timestamp" id="count-total">0 OCs</span>
+      <div class="grow"></div>
+      <a href="oc-nueva.html" class="btn cta-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva OC
+      </a>
+    </div>
+
+    <div class="filter-bar" role="region" aria-label="Filtros">
+      <div style="position: relative;">
+        <input type="search" id="filter-search" class="input input-search input-sm" placeholder="Buscar por código, proveedor…" aria-label="Buscar OCs" style="padding-left: 28px; width: 260px;" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-subtle);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+
+      <select id="filter-proveedor" class="select input-sm" aria-label="Filtrar por proveedor" style="width: 220px;">
+        <option value="">Todos los proveedores</option>
+      </select>
+
+      <input type="date" id="filter-desde" class="input input-sm" aria-label="Fecha desde" style="width: 150px;" />
+      <span class="text-muted text-xs">a</span>
+      <input type="date" id="filter-hasta" class="input input-sm" aria-label="Fecha hasta" style="width: 150px;" />
+
+      <div class="divider-v" aria-hidden="true"></div>
+
+      <div class="filter-states" role="group" aria-label="Filtrar por estado">
+        <button class="chip chip-estado" data-estado="abierta"               aria-pressed="false">Abierta</button>
+        <button class="chip chip-estado" data-estado="en_edicion"            aria-pressed="false">En edición</button>
+        <button class="chip chip-estado" data-estado="cerrada"               aria-pressed="false">Cerrada</button>
+        <button class="chip chip-estado" data-estado="enviada_a_proveedor"   aria-pressed="false">Enviada</button>
+        <button class="chip chip-estado" data-estado="parcialmente_recibida" aria-pressed="false">Parcial</button>
+        <button class="chip chip-estado" data-estado="recibida"              aria-pressed="false">Recibida</button>
+        <button class="chip chip-estado" data-estado="cerrada_con_faltante"  aria-pressed="false">C/faltante</button>
+        <button class="chip chip-estado" data-estado="anulada"               aria-pressed="false">Anulada</button>
+      </div>
+
+      <span class="filter-count" id="filter-count" style="margin-left: auto; font-size: var(--fs-sm); color: var(--text-muted);">
+        <strong id="count-visible">0</strong> visibles
+      </span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="table-host">
+        <table class="table" id="oc-table" aria-label="Listado de Órdenes de Compra">
+          <thead>
+            <tr>
+              <th style="width: 110px;">Código</th>
+              <th>Proveedor</th>
+              <th style="width: 120px;">Fecha</th>
+              <th style="width: 140px;">Estado</th>
+              <th class="col-num" style="width: 110px;">Unidades</th>
+              <th class="col-num" style="width: 140px;">Total Gs</th>
+              <th class="col-num" style="width: 70px;">OPs</th>
+              <th class="col-num" style="width: 90px;">Compras</th>
+              <th style="width: 80px;" class="cell-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="oc-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination">
+        <span id="pagination-info">&mdash;</span>
+        <div class="grow"></div>
+        <button type="button" class="page-btn" id="page-prev">&larr; Anterior</button>
+        <span id="page-list" style="display: inline-flex; gap: 4px;"></span>
+        <button type="button" class="page-btn" id="page-next">Siguiente &rarr;</button>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script type="module">
+  import { ocsHistorico, proveedores, fmtGs, fmtFecha } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  const ESTADO_BADGE = {
+    abierta:                { cls: 'badge-abierta',              txt: 'Abierta' },
+    en_edicion:             { cls: 'badge-en-edicion',           txt: 'En edición' },
+    cerrada:                { cls: 'badge-cerrada',              txt: 'Cerrada' },
+    enviada_a_proveedor:    { cls: 'badge-enviada-proveedor',    txt: 'Enviada' },
+    parcialmente_recibida:  { cls: 'badge-parcial',              txt: 'Parcial' },
+    recibida:               { cls: 'badge-recibida',             txt: 'Recibida' },
+    cerrada_con_faltante:   { cls: 'badge-cerrada-con-faltante', txt: 'C/faltante' },
+    anulada:                { cls: 'badge-anulada',              txt: 'Anulada' }
+  };
+
+  const state = {
+    search: '',
+    proveedor: '',
+    desde: '',
+    hasta: '',
+    estados: new Set(),
+    page: 1,
+    perPage: 20
+  };
+
+  // Cargar proveedores
+  const selProv = document.getElementById('filter-proveedor');
+  proveedores.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    selProv.appendChild(opt);
+  });
+
+  const tbody = document.getElementById('oc-tbody');
+
+  function filtrar() {
+    const q = state.search.trim().toLowerCase();
+    return ocsHistorico.filter(oc => {
+      if (state.proveedor && oc.proveedorId !== state.proveedor) return false;
+      if (state.estados.size > 0 && !state.estados.has(oc.estado)) return false;
+      if (state.desde && oc.fechaCreacion < state.desde) return false;
+      if (state.hasta && oc.fechaCreacion > state.hasta) return false;
+      if (q) {
+        const txt = `${oc.numero} ${oc.proveedorNombre}`.toLowerCase();
+        if (!txt.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function linkDestino(oc) {
+    if (oc.estado === 'abierta' || oc.estado === 'en_edicion') return 'oc-editar.html';
+    return `oc-detalle.html?id=${encodeURIComponent(oc.id)}`;
+  }
+
+  function rowHTML(oc) {
+    const badge = ESTADO_BADGE[oc.estado] || ESTADO_BADGE.abierta;
+    return `
+      <tr data-href="${linkDestino(oc)}">
+        <td class="text-mono"><strong>${oc.numero}</strong></td>
+        <td>${oc.proveedorNombre}</td>
+        <td class="text-mono text-xs">${fmtFecha(oc.fechaCreacion)}</td>
+        <td><span class="badge ${badge.cls}">${badge.txt}</span></td>
+        <td class="col-num">${oc.unidadesTotal.toLocaleString('es-PY')}</td>
+        <td class="col-num">${fmtGs(oc.totalGs)}</td>
+        <td class="col-num">${oc.opsCount}</td>
+        <td class="col-num">${oc.comprasCount}</td>
+        <td class="cell-center">
+          <a class="btn btn-ghost btn-icon btn-sm" href="${linkDestino(oc)}" title="Ver detalle" aria-label="Ver ${oc.numero}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </a>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderTabla() {
+    const filtradas = filtrar();
+    const total = filtradas.length;
+    const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+    if (state.page > totalPages) state.page = totalPages;
+    const ini = (state.page - 1) * state.perPage;
+    const fin = Math.min(ini + state.perPage, total);
+    const pageData = filtradas.slice(ini, fin);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="9">
+          <div class="empty-state">
+            <h3>Sin resultados</h3>
+            <p>Probá ajustar filtros o creá una nueva OC.</p>
+          </div>
+        </td></tr>
+      `;
+    } else {
+      tbody.innerHTML = pageData.map(rowHTML).join('');
+    }
+
+    document.getElementById('count-visible').textContent = total;
+    document.getElementById('count-total').textContent = `${ocsHistorico.length} OCs`;
+    document.getElementById('pagination-info').textContent = total === 0
+      ? 'Sin resultados'
+      : `Mostrando ${ini + 1}–${fin} de ${total}`;
+
+    // Page buttons
+    const pageList = document.getElementById('page-list');
+    pageList.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'page-btn' + (i === state.page ? ' current' : '');
+      b.textContent = i;
+      b.addEventListener('click', () => { state.page = i; renderTabla(); });
+      pageList.appendChild(b);
+    }
+    document.getElementById('page-prev').disabled = state.page <= 1;
+    document.getElementById('page-next').disabled = state.page >= totalPages;
+  }
+
+  // Eventos
+  document.getElementById('filter-search').addEventListener('input', (e) => {
+    state.search = e.target.value; state.page = 1; renderTabla();
+  });
+  selProv.addEventListener('change', (e) => { state.proveedor = e.target.value; state.page = 1; renderTabla(); });
+  document.getElementById('filter-desde').addEventListener('change', (e) => { state.desde = e.target.value; state.page = 1; renderTabla(); });
+  document.getElementById('filter-hasta').addEventListener('change', (e) => { state.hasta = e.target.value; state.page = 1; renderTabla(); });
+
+  document.querySelectorAll('.chip-estado').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const estado = chip.dataset.estado;
+      if (state.estados.has(estado)) {
+        state.estados.delete(estado);
+        chip.classList.remove('chip-active');
+        chip.setAttribute('aria-pressed', 'false');
+      } else {
+        state.estados.add(estado);
+        chip.classList.add('chip-active');
+        chip.setAttribute('aria-pressed', 'true');
+      }
+      state.page = 1;
+      renderTabla();
+    });
+  });
+
+  document.getElementById('page-prev').addEventListener('click', () => { if (state.page > 1) { state.page--; renderTabla(); } });
+  document.getElementById('page-next').addEventListener('click', () => { state.page++; renderTabla(); });
+
+  tbody.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;
+    const tr = e.target.closest('tr[data-href]');
+    if (!tr) return;
+    window.location.href = tr.dataset.href;
+  });
+
+  // App shell
+  const app = document.getElementById('app');
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    app.classList.toggle('sidebar-collapsed');
+  });
+  initSidebarClickOutside();
+
+  const THEME_KEY = 'multicompra:theme';
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  renderTabla();
+</script>
+
+</body>
+</html>

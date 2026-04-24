@@ -206,17 +206,38 @@ export const opsPendientes = [
 ];
 
 // Locales: los 10 de la cadena
+// Campos extendidos (dirección, ciudad, teléfono, estado, cajeras) usados en admin/config/locales.
 export const locales = [
-  { id: 'loc-01', nombre: 'Shopping Mcal.',     codigo: 'SHM' },
-  { id: 'loc-02', nombre: 'Villa Morra',        codigo: 'VM'  },
-  { id: 'loc-03', nombre: 'Ciudad del Este',    codigo: 'CDE' },
-  { id: 'loc-04', nombre: 'San Lorenzo',        codigo: 'SL'  },
-  { id: 'loc-05', nombre: 'Lambaré',            codigo: 'LAM' },
-  { id: 'loc-06', nombre: 'Fernando de la Mora',codigo: 'FDM' },
-  { id: 'loc-07', nombre: 'Capiatá',            codigo: 'CAP' },
-  { id: 'loc-08', nombre: 'Luque',              codigo: 'LUQ' },
-  { id: 'loc-09', nombre: 'Encarnación',        codigo: 'ENC' },
-  { id: 'loc-10', nombre: 'Shopping del Sol',   codigo: 'SDS' }
+  { id: 'loc-01', nombre: 'Shopping Mcal.',      codigo: 'SHM',
+    direccion: 'Shopping Mariscal López, local 112', ciudad: 'Asunción',
+    telefono: '+595 21 611-200', activo: true,  cajerasCount: 1 },
+  { id: 'loc-02', nombre: 'Villa Morra',         codigo: 'VM',
+    direccion: 'Av. Mcal. López 3333 c/ Senador Long', ciudad: 'Asunción',
+    telefono: '+595 21 605-411', activo: true,  cajerasCount: 1 },
+  { id: 'loc-03', nombre: 'Ciudad del Este',     codigo: 'CDE',
+    direccion: 'Shopping París, local 48',        ciudad: 'Ciudad del Este',
+    telefono: '+595 61 512-890', activo: true,  cajerasCount: 1 },
+  { id: 'loc-04', nombre: 'San Lorenzo',         codigo: 'SL',
+    direccion: 'Ruta Mcal. Estigarribia km 13',   ciudad: 'San Lorenzo',
+    telefono: '+595 21 576-014', activo: false, cajerasCount: 0 },
+  { id: 'loc-05', nombre: 'Lambaré',             codigo: 'LAM',
+    direccion: 'Av. Cacique Lambaré c/ Perú',     ciudad: 'Lambaré',
+    telefono: '+595 21 900-124', activo: true,  cajerasCount: 1 },
+  { id: 'loc-06', nombre: 'Fernando de la Mora', codigo: 'FDM',
+    direccion: 'Av. San Blas 789',                ciudad: 'Fernando de la Mora',
+    telefono: '+595 21 680-733', activo: true,  cajerasCount: 1 },
+  { id: 'loc-07', nombre: 'Capiatá',             codigo: 'CAP',
+    direccion: 'Ruta 2 km 20, frente al cruce',   ciudad: 'Capiatá',
+    telefono: '+595 228 635-501', activo: true, cajerasCount: 1 },
+  { id: 'loc-08', nombre: 'Luque',               codigo: 'LUQ',
+    direccion: 'Av. Cacique Guarira 1450',        ciudad: 'Luque',
+    telefono: '+595 21 644-320', activo: true,  cajerasCount: 1 },
+  { id: 'loc-09', nombre: 'Encarnación',         codigo: 'ENC',
+    direccion: 'Av. Caballero 1220',              ciudad: 'Encarnación',
+    telefono: '+595 71 203-415', activo: true,  cajerasCount: 1 },
+  { id: 'loc-10', nombre: 'Shopping del Sol',    codigo: 'SDS',
+    direccion: 'Shopping del Sol, local 205',     ciudad: 'Asunción',
+    telefono: '+595 21 611-700', activo: true,  cajerasCount: 1 }
 ];
 
 // =========================================================================
@@ -896,9 +917,498 @@ export const dashboardAdmin = {
 };
 
 // =========================================================================
+// OCs históricas — listado para /supervisor/oc
+// Estados posibles: 'abierta' | 'en_edicion' | 'cerrada' | 'enviada_a_proveedor'
+//                   | 'parcialmente_recibida' | 'recibida' | 'cerrada_con_faltante' | 'anulada'
+// La OC-0042 actual (abierta) aparece primero; el resto son del histórico
+// de los últimos 3 meses con variedad de estados y proveedores.
+// =========================================================================
+export const ocsHistorico = [
+  {
+    id: 'oc-0042', numero: 'OC-0042',
+    proveedorId: 'prov-01', proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaCreacion: '2026-04-22', estado: 'abierta',
+    unidadesTotal: 312, totalGs: 8_640_000,
+    opsCount: 5, comprasCount: 0
+  },
+  {
+    id: 'oc-0041', numero: 'OC-0041',
+    proveedorId: 'prov-03', proveedorNombre: 'TechPoint Paraguay S.A.',
+    fechaCreacion: '2026-04-18', estado: 'enviada_a_proveedor',
+    unidadesTotal: 145, totalGs: 14_320_000,
+    opsCount: 4, comprasCount: 0
+  },
+  {
+    id: 'oc-0040', numero: 'OC-0040',
+    proveedorId: 'prov-04', proveedorNombre: 'MayoMóvil Distribuciones',
+    fechaCreacion: '2026-04-15', estado: 'parcialmente_recibida',
+    unidadesTotal: 420, totalGs: 6_180_000,
+    opsCount: 6, comprasCount: 1
+  },
+  {
+    id: 'oc-0039', numero: 'OC-0039',
+    proveedorId: 'prov-02', proveedorNombre: 'Importadora AccesoTech S.R.L.',
+    fechaCreacion: '2026-04-10', estado: 'cerrada',
+    unidadesTotal: 88, totalGs: 9_850_000,
+    opsCount: 3, comprasCount: 1
+  },
+  {
+    id: 'oc-0038', numero: 'OC-0038',
+    proveedorId: 'prov-01', proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaCreacion: '2026-04-05', estado: 'cerrada_con_faltante',
+    unidadesTotal: 210, totalGs: 5_460_000,
+    opsCount: 5, comprasCount: 2
+  },
+  {
+    id: 'oc-0037', numero: 'OC-0037',
+    proveedorId: 'prov-03', proveedorNombre: 'TechPoint Paraguay S.A.',
+    fechaCreacion: '2026-03-29', estado: 'cerrada',
+    unidadesTotal: 176, totalGs: 11_480_000,
+    opsCount: 4, comprasCount: 1
+  },
+  {
+    id: 'oc-0036', numero: 'OC-0036',
+    proveedorId: 'prov-04', proveedorNombre: 'MayoMóvil Distribuciones',
+    fechaCreacion: '2026-03-22', estado: 'anulada',
+    unidadesTotal: 0, totalGs: 0,
+    opsCount: 3, comprasCount: 0
+  },
+  {
+    id: 'oc-0035', numero: 'OC-0035',
+    proveedorId: 'prov-02', proveedorNombre: 'Importadora AccesoTech S.R.L.',
+    fechaCreacion: '2026-03-18', estado: 'cerrada',
+    unidadesTotal: 64, totalGs: 7_120_000,
+    opsCount: 2, comprasCount: 1
+  },
+  {
+    id: 'oc-0034', numero: 'OC-0034',
+    proveedorId: 'prov-01', proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaCreacion: '2026-03-12', estado: 'cerrada',
+    unidadesTotal: 298, totalGs: 8_220_000,
+    opsCount: 5, comprasCount: 1
+  },
+  {
+    id: 'oc-0033', numero: 'OC-0033',
+    proveedorId: 'prov-03', proveedorNombre: 'TechPoint Paraguay S.A.',
+    fechaCreacion: '2026-03-05', estado: 'cerrada',
+    unidadesTotal: 112, totalGs: 10_640_000,
+    opsCount: 3, comprasCount: 1
+  },
+  {
+    id: 'oc-0032', numero: 'OC-0032',
+    proveedorId: 'prov-04', proveedorNombre: 'MayoMóvil Distribuciones',
+    fechaCreacion: '2026-02-26', estado: 'cerrada',
+    unidadesTotal: 356, totalGs: 4_980_000,
+    opsCount: 4, comprasCount: 1
+  },
+  {
+    id: 'oc-0031', numero: 'OC-0031',
+    proveedorId: 'prov-01', proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaCreacion: '2026-02-18', estado: 'cerrada_con_faltante',
+    unidadesTotal: 184, totalGs: 6_310_000,
+    opsCount: 4, comprasCount: 2
+  }
+];
+
+// =========================================================================
+// Compras históricas — listado para /supervisor/compra
+// Estados posibles: 'precargada' | 'en_verificacion' | 'con_diferencias'
+//                   | 'confirmada' | 'error_sincronizacion' | 'anulada'
+// =========================================================================
+export const comprasHistorico = [
+  {
+    id: 'comp-0017', numero: 'COMP-0017',
+    ocId: 'oc-0042', ocNumero: 'OC-0042',
+    proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaFactura: '2026-04-22', nroComprobante: '001-001-0045789',
+    totalFactura: 8_625_500, estado: 'en_verificacion'
+  },
+  {
+    id: 'comp-0016', numero: 'COMP-0016',
+    ocId: 'oc-0040', ocNumero: 'OC-0040',
+    proveedorNombre: 'MayoMóvil Distribuciones',
+    fechaFactura: '2026-04-19', nroComprobante: '001-003-0012441',
+    totalFactura: 3_910_000, estado: 'con_diferencias'
+  },
+  {
+    id: 'comp-0015', numero: 'COMP-0015',
+    ocId: 'oc-0039', ocNumero: 'OC-0039',
+    proveedorNombre: 'Importadora AccesoTech S.R.L.',
+    fechaFactura: '2026-04-14', nroComprobante: '002-001-0008712',
+    totalFactura: 9_850_000, estado: 'confirmada'
+  },
+  {
+    id: 'comp-0014', numero: 'COMP-0014',
+    ocId: 'oc-0038', ocNumero: 'OC-0038',
+    proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaFactura: '2026-04-09', nroComprobante: '001-001-0045612',
+    totalFactura: 5_200_000, estado: 'error_sincronizacion'
+  },
+  {
+    id: 'comp-0013', numero: 'COMP-0013',
+    ocId: 'oc-0037', ocNumero: 'OC-0037',
+    proveedorNombre: 'TechPoint Paraguay S.A.',
+    fechaFactura: '2026-04-02', nroComprobante: '001-002-0019334',
+    totalFactura: 11_480_000, estado: 'confirmada'
+  },
+  {
+    id: 'comp-0012', numero: 'COMP-0012',
+    ocId: 'oc-0035', ocNumero: 'OC-0035',
+    proveedorNombre: 'Importadora AccesoTech S.R.L.',
+    fechaFactura: '2026-03-24', nroComprobante: '002-001-0008665',
+    totalFactura: 7_120_000, estado: 'confirmada'
+  },
+  {
+    id: 'comp-0011', numero: 'COMP-0011',
+    ocId: 'oc-0034', ocNumero: 'OC-0034',
+    proveedorNombre: 'Distribuidora Celular Plus S.A.',
+    fechaFactura: '2026-03-15', nroComprobante: '001-001-0045488',
+    totalFactura: 8_220_000, estado: 'confirmada'
+  },
+  {
+    id: 'comp-0010', numero: 'COMP-0010',
+    ocId: 'oc-0032', ocNumero: 'OC-0032',
+    proveedorNombre: 'MayoMóvil Distribuciones',
+    fechaFactura: '2026-03-02', nroComprobante: '001-003-0012301',
+    totalFactura: 4_980_000, estado: 'confirmada'
+  }
+];
+
+// =========================================================================
+// Auditoría / timeline de eventos por entidad
+// Eventos genéricos: 'creada', 'enviada', 'devuelta', 'en_oc', 'cerrada',
+// 'enviada_a_proveedor', 'recibida', 'anulada', etc.
+// =========================================================================
+export const auditoria = {
+  // OPs pendientes — eventos de ciclo corto
+  'op-1043': [
+    { ts: '2026-04-20 11:02', actor: 'Nélida',  evento: 'creada',  detalle: 'OP creada en estado borrador.' },
+    { ts: '2026-04-20 11:10', actor: 'Nélida',  evento: 'enviada', detalle: 'OP enviada al supervisor.' },
+    { ts: '2026-04-22 13:55', actor: 'Shirley', evento: 'en_oc',   detalle: 'Incluida en OC-0042.' }
+  ],
+  'op-1047': [
+    { ts: '2026-04-22 08:15', actor: 'Andrea',  evento: 'creada',  detalle: 'OP creada en estado borrador.' },
+    { ts: '2026-04-22 08:30', actor: 'Andrea',  evento: 'enviada', detalle: 'OP enviada al supervisor.' }
+  ],
+  'op-1048': [
+    { ts: '2026-04-22 09:00', actor: 'Mirta',   evento: 'creada',  detalle: 'OP creada en estado borrador (marcada excepción).' },
+    { ts: '2026-04-22 09:12', actor: 'Mirta',   evento: 'enviada', detalle: 'OP enviada al supervisor.' }
+  ],
+  'op-1053': [
+    { ts: '2026-04-13 09:00', actor: 'Nélida',  evento: 'creada',  detalle: 'OP creada en estado borrador.' },
+    { ts: '2026-04-13 09:15', actor: 'Nélida',  evento: 'enviada', detalle: 'OP enviada al supervisor.' }
+  ],
+  // OC-0042 actual
+  'oc-0042': [
+    { ts: '2026-04-22 13:55', actor: 'Shirley', evento: 'creada',               detalle: 'OC creada agrupando 5 OPs.' },
+    { ts: '2026-04-22 14:05', actor: 'Shirley', evento: 'edicion',              detalle: 'Decisiones por pedido marcadas.' }
+  ],
+  'oc-0040': [
+    { ts: '2026-04-15 10:20', actor: 'Shirley', evento: 'creada',               detalle: 'OC creada agrupando 6 OPs.' },
+    { ts: '2026-04-15 16:30', actor: 'Shirley', evento: 'cerrada',              detalle: 'OC cerrada con Gs. 6.180.000.' },
+    { ts: '2026-04-15 17:00', actor: 'Shirley', evento: 'enviada_a_proveedor', detalle: 'Enviada por WhatsApp al proveedor.' },
+    { ts: '2026-04-19 11:40', actor: 'Shirley', evento: 'compra_parcial',      detalle: 'Compra parcial registrada (COMP-0016).' }
+  ]
+};
+
+// =========================================================================
+// Reportes admin — datasets mock
+// Los períodos se representan como clave textual: '7d' | 'mes' | '3m' | 'anio'
+// Cada producto/fila trae datos coherentes entre pedido, comprado, vendido.
+// =========================================================================
+
+// ---- Reporte 1: OP vs Compra vs Venta (el reporte madre) ----------------
+// Cada fila: producto + pedido (u) + comprado (u) + vendido (u) + costo
+// Los ratios se calculan en el cliente. Señal visual verde/ámbar/roja.
+export const reporteOpvsCompravsVenta = {
+  periodoDefault: '3m',
+  // KPIs se calculan sumando las filas (se hace en el render).
+  filas: [
+    // Verdes: todo coherente
+    { productoId: 'p01', pedido: 68,  comprado: 60, vendido: 57 }, // Cargador USB-C 20W
+    { productoId: 'p02', pedido: 85,  comprado: 70, vendido: 66 }, // Cable Lightning
+    { productoId: 'p06', pedido: 140, comprado:135, vendido:128 }, // Vidrio templado iPhone
+    { productoId: 'p10', pedido: 42,  comprado: 40, vendido: 38 }, // Adaptador OTG
+    { productoId: 'p21', pedido: 96,  comprado: 90, vendido: 85 }, // Cable micro USB
+    { productoId: 'p24', pedido:180,  comprado:170, vendido:160 }, // Cinta limpiadora
+
+    // Ámbar: discrepancias moderadas (pedido > comprado o compra > venta con margen)
+    { productoId: 'p05', pedido: 58,  comprado: 32, vendido: 28 }, // Funda iPhone 14 — bajaron mucho
+    { productoId: 'p07', pedido: 50,  comprado: 30, vendido: 18 }, // Vidrio Samsung — vendido bajo
+    { productoId: 'p09', pedido: 22,  comprado: 20, vendido: 12 }, // Power Bank
+    { productoId: 'p15', pedido: 28,  comprado: 25, vendido: 14 }, // Cargador coche
+    { productoId: 'p16', pedido: 20,  comprado: 18, vendido:  9 }, // Funda iPhone 15 Pro
+    { productoId: 'p25', pedido: 72,  comprado: 65, vendido: 40 }, // Adhesivo anti-polvo
+
+    // Rojo: desfases grandes
+    { productoId: 'p14', pedido:120,  comprado: 90, vendido: 15 }, // Mica hidrogel — stock muerto claro
+    { productoId: 'p20', pedido: 45,  comprado: 40, vendido:  5 }, // Pop socket — compra alta, venta mínima
+    { productoId: 'p04', pedido: 25,  comprado: 25, vendido:  3 }, // Funda iPhone 13 — vendió casi nada
+
+    // Variado adicional
+    { productoId: 'p03', pedido: 14,  comprado: 12, vendido: 10 }, // Auricular TWS
+    { productoId: 'p13', pedido: 10,  comprado:  8, vendido:  7 }, // Parlante
+    { productoId: 'p18', pedido: 12,  comprado: 10, vendido:  7 }, // MicroSD 64
+    { productoId: 'p22', pedido:  8,  comprado:  6, vendido:  4 }, // Funda billetera
+    { productoId: 'p23', pedido:  9,  comprado:  8, vendido:  6 }  // Smartwatch T500
+  ]
+};
+
+// ---- Reporte 2: OP fuera de protocolo (excepciones) ---------------------
+export const reporteOpFueraProtocolo = {
+  periodoDefault: 'mes',
+  totalActual: 14,
+  totalAnterior: 9,
+  deltaPct: 55,
+  porCajera: [
+    {
+      cajera: 'Lucía', localCodigo: 'LAM', count: 5,
+      excepciones: [
+        { opId: 'op-1052', fecha: '2026-04-20', motivo: 'Se rompió vitrina, quedaron sin muestra de auriculares y smartwatch.' },
+        { opId: 'op-1040', fecha: '2026-04-15', motivo: 'Cliente mayorista pidió 30 fundas iPhone urgentes para regalo corporativo.' },
+        { opId: 'op-1033', fecha: '2026-04-08', motivo: 'Entraron por error 20 Power Banks vencidos, hay que reemplazar.' },
+        { opId: 'op-1028', fecha: '2026-04-04', motivo: 'Agotamos cargadores USB-C por promo del fin de semana.' },
+        { opId: 'op-1020', fecha: '2026-03-28', motivo: 'Pedido de escuela local — se llevó todo el stock de micas hidrogel.' }
+      ]
+    },
+    {
+      cajera: 'Mirta', localCodigo: 'CAP', count: 3,
+      excepciones: [
+        { opId: 'op-1048', fecha: '2026-04-22', motivo: 'Venta mayorista ayer agotó stock de cargadores y fundas iPhone.' },
+        { opId: 'op-1036', fecha: '2026-04-11', motivo: 'Rotura de stock de vidrios templados por campaña del shopping.' },
+        { opId: 'op-1025', fecha: '2026-04-01', motivo: 'Cliente pidió 15 cables Lightning, agotaron existencia.' }
+      ]
+    },
+    {
+      cajera: 'Carolina', localCodigo: 'SDS', count: 2,
+      excepciones: [
+        { opId: 'op-1055', fecha: '2026-04-21', motivo: 'Venta corporativa de 12 fundas y 6 cargadores a empresa del shopping.' },
+        { opId: 'op-1019', fecha: '2026-03-23', motivo: 'Venta grande a oficina nos dejó sin stock de cables Lightning y fundas.' }
+      ]
+    },
+    {
+      cajera: 'Romina', localCodigo: 'SHM', count: 1,
+      excepciones: [
+        { opId: 'op-1042', fecha: '2026-04-20', motivo: 'Evento de apertura agotó stock de vidrios templados Samsung.' }
+      ]
+    },
+    {
+      cajera: 'Andrea', localCodigo: 'FDM', count: 2,
+      excepciones: [
+        { opId: 'op-1045', fecha: '2026-04-16', motivo: 'Stock crítico de cargadores de coche tras promo fin de semana.' },
+        { opId: 'op-1029', fecha: '2026-04-02', motivo: 'Venta flash en feria del barrio agotó fundas y cables.' }
+      ]
+    },
+    { cajera: 'Nélida', localCodigo: 'VM',  count: 1,
+      excepciones: [
+        { opId: 'op-1032', fecha: '2026-04-06', motivo: 'Rotura de vitrina, hay que reponer muestra de smartwatch urgente.' }
+      ]
+    }
+  ],
+  umbralAlerta: 3 // Cajeras con 3+ excepciones quedan marcadas
+};
+
+// ---- Reporte 3: Reposición desde central ---------------------------------
+export const reporteReposicionCentral = {
+  periodoDefault: '3m',
+  totalAhorroGs: 8_420_000,
+  totalProductos: 12,
+  totalUnidades: 185,
+  tendenciaMensual: [
+    { mes: 'Ene', ahorroGs: 1_200_000 },
+    { mes: 'Feb', ahorroGs: 1_850_000 },
+    { mes: 'Mar', ahorroGs: 2_140_000 },
+    { mes: 'Abr', ahorroGs: 3_230_000 }
+  ],
+  filas: [
+    { productoId: 'p06', veces: 8, unidades: 35, ahorroGs:   280_000 },
+    { productoId: 'p14', veces: 7, unidades: 40, ahorroGs:   160_000 },
+    { productoId: 'p02', veces: 6, unidades: 22, ahorroGs:   396_000 },
+    { productoId: 'p21', veces: 5, unidades: 18, ahorroGs:   180_000 },
+    { productoId: 'p24', veces: 5, unidades: 30, ahorroGs:    90_000 },
+    { productoId: 'p07', veces: 4, unidades: 14, ahorroGs:   126_000 },
+    { productoId: 'p01', veces: 4, unidades:  8, ahorroGs:   304_000 },
+    { productoId: 'p10', veces: 3, unidades:  6, ahorroGs:    72_000 },
+    { productoId: 'p25', veces: 3, unidades: 12, ahorroGs:    60_000 },
+    { productoId: 'p05', veces: 2, unidades:  5, ahorroGs:   125_000 },
+    { productoId: 'p09', veces: 2, unidades:  3, ahorroGs:   195_000 },
+    { productoId: 'p15', veces: 1, unidades:  2, ahorroGs:    64_000 }
+  ]
+};
+
+// ---- Reporte 4: Stock muerto -------------------------------------------
+export const reporteStockMuerto = {
+  totalInmovilizadoGs: 14_280_000,
+  umbralDiasDefault: 30,
+  // Productos candidatos a sacar del catálogo o al menos revisar
+  filas: [
+    { productoId: 'p14', stockTotal: 485, ultimaVenta: '2026-01-12', diasSinRotar: 100, valorGs: 1_940_000 },
+    { productoId: 'p20', stockTotal: 195, ultimaVenta: '2026-02-05', diasSinRotar: 76,  valorGs: 1_170_000 },
+    { productoId: 'p04', stockTotal:  58, ultimaVenta: '2026-01-28', diasSinRotar: 84,  valorGs: 1_450_000 },
+    { productoId: 'p12', stockTotal:  42, ultimaVenta: '2026-02-20', diasSinRotar: 61,  valorGs: 1_176_000 },
+    { productoId: 'p19', stockTotal:  28, ultimaVenta: '2026-01-30', diasSinRotar: 82,  valorGs: 2_100_000 },
+    { productoId: 'p17', stockTotal:  35, ultimaVenta: '2026-02-15', diasSinRotar: 66,  valorGs:   980_000 },
+    { productoId: 'p08', stockTotal:  25, ultimaVenta: '2026-03-02', diasSinRotar: 51,  valorGs:   550_000 },
+    { productoId: 'p22', stockTotal:  18, ultimaVenta: '2026-02-08', diasSinRotar: 73,  valorGs:   756_000 },
+    { productoId: 'p26', stockTotal:  32, ultimaVenta: '2026-01-18', diasSinRotar: 94,  valorGs: 1_760_000 },
+    { productoId: 'p27', stockTotal:  44, ultimaVenta: '2026-02-25', diasSinRotar: 56,  valorGs:   528_000 }
+  ]
+};
+
+// ---- Reporte 5: Devoluciones -------------------------------------------
+export const reporteDevoluciones = {
+  periodoDefault: '3m',
+  totalDevoluciones: 8,
+  totalAnterior: 5,
+  deltaPct: 60,
+  porCajera: [
+    {
+      cajera: 'Carolina', localCodigo: 'SDS', count: 1,
+      devoluciones: [
+        {
+          opId: 'op-1026', fecha: '2026-04-02',
+          nota: 'La cantidad de cargadores pedidos es muy alta. Revisá cuánto rotaste la semana pasada y mandame el pedido ajustado.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-04-03'
+        }
+      ]
+    },
+    {
+      cajera: 'Lucía', localCodigo: 'LAM', count: 3,
+      devoluciones: [
+        {
+          opId: 'op-1024', fecha: '2026-04-18',
+          nota: 'Estás pidiendo 40 fundas cuando tu promedio semanal es 8. Revisá stock actual antes de pedir.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-04-19'
+        },
+        {
+          opId: 'op-1015', fecha: '2026-03-28',
+          nota: 'El pedido incluye productos que ya te repusimos hace 4 días. Verificá bodega antes de enviar.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-03-29'
+        },
+        {
+          opId: 'op-1008', fecha: '2026-03-15',
+          nota: 'Pediste 25 Power Banks, no es coherente con tu venta. Si es excepción, marcala como tal.',
+          supervisora: 'Shirley', corregida: false, fechaCorreccion: null
+        }
+      ]
+    },
+    {
+      cajera: 'Nélida', localCodigo: 'VM', count: 2,
+      devoluciones: [
+        {
+          opId: 'op-1053', fecha: '2026-04-21',
+          nota: 'Pediste 60 unidades de micas y tenés 180 en stock. Revisá antes de enviar.',
+          supervisora: 'Shirley', corregida: false, fechaCorreccion: null
+        },
+        {
+          opId: 'op-1021', fecha: '2026-03-24',
+          nota: 'Las cantidades están redondeadas de forma rara. Indicá qué te hace falta concretamente.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-03-25'
+        }
+      ]
+    },
+    {
+      cajera: 'Clara', localCodigo: 'SL', count: 1,
+      devoluciones: [
+        {
+          opId: 'op-1017', fecha: '2026-03-30',
+          nota: 'Pediste 15 cables Lightning pero ya tenés 45 en stock. Verificá stock antes de pedir.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-03-31'
+        }
+      ]
+    },
+    {
+      cajera: 'Mirta', localCodigo: 'CAP', count: 1,
+      devoluciones: [
+        {
+          opId: 'op-1009', fecha: '2026-03-10',
+          nota: 'Marcaste excepción sin explicar el motivo. Volvé a enviar con el motivo completo.',
+          supervisora: 'Shirley', corregida: true, fechaCorreccion: '2026-03-10'
+        }
+      ]
+    }
+  ]
+};
+
+// =========================================================================
+// Config — Cajeras (admin/config/cajeras)
+// 1 cajera por local (loc-01..loc-10). El loc-04 (San Lorenzo) está inactivo.
+// Campos: id, nombre, email, localId, activa, fechaAlta, ultimoAcceso.
+// =========================================================================
+export const cajerasConfig = [
+  { id: 'caj-01', nombre: 'Romina Benítez',   email: 'romina.benitez@multicompra.py',   localId: 'loc-01', activa: true,  fechaAlta: '2025-11-03', ultimoAcceso: '2026-04-22 09:10' },
+  { id: 'caj-02', nombre: 'Nélida Gómez',     email: 'nelida.gomez@multicompra.py',     localId: 'loc-02', activa: true,  fechaAlta: '2025-09-14', ultimoAcceso: '2026-04-21 17:33' },
+  { id: 'caj-03', nombre: 'Paola Espínola',   email: 'paola.espinola@multicompra.py',   localId: 'loc-03', activa: true,  fechaAlta: '2025-08-22', ultimoAcceso: '2026-04-22 10:04' },
+  { id: 'caj-04', nombre: 'Clara Duarte',     email: 'clara.duarte@multicompra.py',     localId: 'loc-04', activa: false, fechaAlta: '2024-06-10', ultimoAcceso: '2026-02-17 19:48' },
+  { id: 'caj-05', nombre: 'Gisela Ortiz',     email: 'gisela.ortiz@multicompra.py',     localId: 'loc-05', activa: true,  fechaAlta: '2025-10-01', ultimoAcceso: '2026-04-22 08:42' },
+  { id: 'caj-06', nombre: 'Andrea Sanabria',  email: 'andrea.sanabria@multicompra.py',  localId: 'loc-06', activa: true,  fechaAlta: '2025-07-18', ultimoAcceso: '2026-04-22 08:30' },
+  { id: 'caj-07', nombre: 'Mirta Aquino',     email: 'mirta.aquino@multicompra.py',     localId: 'loc-07', activa: true,  fechaAlta: '2025-05-06', ultimoAcceso: '2026-04-22 09:12' },
+  { id: 'caj-08', nombre: 'Fátima Rolón',     email: 'fatima.rolon@multicompra.py',     localId: 'loc-08', activa: true,  fechaAlta: '2025-12-12', ultimoAcceso: '2026-04-21 16:45' },
+  { id: 'caj-09', nombre: 'Jessica Villalba', email: 'jessica.villalba@multicompra.py', localId: 'loc-09', activa: true,  fechaAlta: '2025-04-29', ultimoAcceso: '2026-04-21 11:20' },
+  { id: 'caj-10', nombre: 'Carolina Méndez',  email: 'carolina.mendez@multicompra.py',  localId: 'loc-10', activa: true,  fechaAlta: '2025-02-15', ultimoAcceso: '2026-04-22 07:58' }
+];
+
+// =========================================================================
+// Config — Proveedores (admin/config/proveedores)
+// Extiende `proveedores` agregando estado y OCs del último mes.
+// =========================================================================
+export const proveedoresConfig = [
+  { id: 'prov-01', nombre: 'Distribuidora Celular Plus S.A.', ruc: '80012345-6',
+    contacto: 'Marcelo Ayala',     telefono: '+595 981 123-456',
+    ocsUltimoMes: 4, activo: true,
+    especialidad: 'Cargadores, cables y adaptadores' },
+  { id: 'prov-02', nombre: 'Importadora AccesoTech S.R.L.',   ruc: '80098765-4',
+    contacto: 'Gabriela Benítez',  telefono: '+595 982 987-654',
+    ocsUltimoMes: 2, activo: true,
+    especialidad: 'Accesorios iPhone y Samsung premium' },
+  { id: 'prov-03', nombre: 'TechPoint Paraguay S.A.',         ruc: '80044556-7',
+    contacto: 'Rodrigo Cáceres',   telefono: '+595 985 445-566',
+    ocsUltimoMes: 3, activo: true,
+    especialidad: 'Audio, parlantes y smartwatch' },
+  { id: 'prov-04', nombre: 'MayoMóvil Distribuciones',        ruc: '80033221-9',
+    contacto: 'Laura Giménez',     telefono: '+595 971 332-219',
+    ocsUltimoMes: 1, activo: true,
+    especialidad: 'Vidrios templados, micas y fundas' },
+  { id: 'prov-05', nombre: 'Accesorios Amambay S.A.',         ruc: '80055667-1',
+    contacto: 'Hugo Fernández',    telefono: '+595 984 556-671',
+    ocsUltimoMes: 0, activo: false,
+    especialidad: 'Power banks y cables microUSB' }
+];
+
+// =========================================================================
+// Config — Parámetros globales del sistema (admin/config/parametros)
+// =========================================================================
+export const parametros = {
+  op: {
+    diaFijoProtocolo: 'lunes',           // dropdown
+    minCaracteresMotivoExcepcion: 30,    // D29
+    permitirExcepciones: true            // toggle
+  },
+  oc: {
+    snapshotMaxMinutos: 30,              // D33
+    validarTotalFacturaVsLineas: true,   // D37 - bloquea al cerrar si no coincide
+    exigirJustificacionLineaDiferencia: true // D38
+  },
+  alertas: {
+    opsViejasUmbralDias: 7,
+    excepcionesCajeraUmbral: 3           // a partir de este nro → chip ámbar
+  },
+  notificaciones: {
+    emailAdmin: 'diego@multicompra.py'
+  }
+};
+
+// =========================================================================
 // Utilidades de formato
 // =========================================================================
 export function fmtGs(n) {
   if (n == null || isNaN(n)) return '-';
   return n.toLocaleString('es-PY', { maximumFractionDigits: 0 });
+}
+
+// Formatea una fecha "YYYY-MM-DD" como "DD/MM/YYYY"
+export function fmtFecha(d) {
+  if (!d) return '-';
+  const [y, m, dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
 }

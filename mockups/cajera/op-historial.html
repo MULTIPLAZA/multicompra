@@ -337,11 +337,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
       Inicio
     </a>
+    <a href="op-nueva.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Nueva OP
+    </a>
     <a href="op-historial.html" class="tab-btn active" aria-current="page">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Historial
     </a>
-    <a href="#" class="tab-btn" onclick="return false;">
+    <a href="perfil.html" class="tab-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
       Perfil
     </a>
@@ -527,12 +531,16 @@
       </table>
     `;
 
-    // Click en una fila — por ahora placeholder al link propio (detalle no existe)
+    // Click en una fila → va al detalle. Si es devuelta, va a op-devuelta.
     wrap.querySelectorAll('tr[data-op-id]').forEach(tr => {
-      tr.addEventListener('click', (e) => {
-        // Placeholder: pantalla de detalle OP no existe aún → quedamos en la misma.
-        // Cuando exista, link: /cajera/op/${tr.dataset.opId}
-        e.preventDefault();
+      tr.addEventListener('click', () => {
+        const opId = tr.dataset.opId;
+        const op = historialCajera.find(o => o.id === opId);
+        if (op && op.estado === 'devuelta') {
+          location.href = 'op-devuelta.html?id=' + opId;
+        } else {
+          location.href = 'op-detalle.html?id=' + opId;
+        }
       });
     });
   }

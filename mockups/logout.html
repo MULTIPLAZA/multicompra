@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Cerrando sesión</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="shared/styles.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-4);
+      background: var(--bg);
+    }
+    .center-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-4);
+      max-width: 360px;
+      text-align: center;
+    }
+    .brand {
+      font-size: var(--fs-xl);
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+      margin-bottom: var(--sp-2);
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .msg {
+      color: var(--text-strong);
+      font-size: var(--fs-md);
+      font-weight: 500;
+    }
+    .sub {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="center-box" role="status" aria-live="polite">
+    <div class="brand">MultiCompra</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="msg">Cerrando sesión...</div>
+    <div class="sub">Te estamos llevando al inicio de sesión.</div>
+  </div>
+
+  <script>
+    (function () {
+      // Limpiar datos del usuario y cualquier draft
+      try {
+        localStorage.removeItem('multicompra:user');
+        // Borrar todos los drafts multicompra:draft:*
+        var toRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('multicompra:draft:') === 0) toRemove.push(k);
+        }
+        toRemove.forEach(function (k) { localStorage.removeItem(k); });
+      } catch (e) {}
+
+      // Redirigir a login después de un breve delay
+      setTimeout(function () {
+        window.location.href = 'login.html';
+      }, 500);
+    })();
+  </script>
+</body>
+</html>

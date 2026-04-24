@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Stock muerto</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../../shared/styles.css" />
+  <style>
+    :root {
+      --admin-header-h: 56px;
+      --admin-bottombar-h: 60px;
+      --admin-sidebar-w: 220px;
+    }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .admin-header {
+      position: sticky; top: 0; z-index: 10;
+      height: var(--admin-header-h);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: var(--sp-2);
+      padding: 0 var(--sp-3);
+    }
+    .admin-header .logo { font-size: var(--fs-md); font-weight: 700; color: var(--primary); }
+    .admin-title {
+      font-size: var(--fs-md); font-weight: 600; color: var(--text-strong);
+      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    @media (max-width: 480px) {
+      .admin-header .logo .logo-text { display: none; }
+      .admin-header .user-chip .user-name { display: none; }
+    }
+
+    .admin-layout { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .admin-main {
+      flex: 1;
+      padding: var(--sp-4) var(--sp-3);
+      padding-bottom: calc(var(--admin-bottombar-h) + var(--sp-4));
+      max-width: 1300px; width: 100%;
+      margin: 0 auto;
+      display: flex; flex-direction: column; gap: var(--sp-4);
+    }
+
+    .breadcrumb {
+      display: flex; align-items: center; gap: var(--sp-1);
+      font-size: var(--fs-sm); color: var(--text-muted);
+    }
+    .breadcrumb a { color: var(--primary); }
+    .page-title { font-size: var(--fs-xl); font-weight: 700; color: var(--text-strong); margin: 0; }
+    .page-title-sub { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.5; }
+
+    .filters-card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--sp-3);
+    }
+    .filter-row {
+      display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center;
+    }
+    .filter-row + .filter-row {
+      margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border);
+    }
+    .periodo-chips { display: flex; gap: var(--sp-1); flex-wrap: wrap; flex: 1; }
+    .chip-period {
+      padding: 6px var(--sp-3); background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+      font-size: var(--fs-sm); cursor: pointer;
+    }
+    .chip-period:hover { background: var(--border); }
+    .chip-period.active {
+      background: var(--primary-soft); border-color: var(--primary);
+      color: var(--primary); font-weight: 600;
+    }
+
+    .switch-label {
+      display: flex; align-items: center; gap: var(--sp-2);
+      font-size: var(--fs-sm); color: var(--text);
+      cursor: pointer;
+    }
+
+    .kpi-hero {
+      background: var(--bg-elev);
+      border: 1px solid var(--danger);
+      border-radius: var(--radius);
+      padding: var(--sp-5);
+      background: linear-gradient(135deg, var(--danger-soft), var(--bg-elev) 80%);
+    }
+    [data-theme="dark"] .kpi-hero { background: var(--bg-elev); }
+    .kpi-hero-label {
+      font-size: var(--fs-xs); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+    .kpi-hero-value {
+      font-size: 44px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--danger);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .kpi-hero-value small {
+      font-size: var(--fs-md);
+      color: var(--danger-text);
+      font-weight: 500;
+      margin-left: var(--sp-2);
+    }
+    [data-theme="dark"] .kpi-hero-value small { color: var(--danger); }
+    .kpi-hero-sub {
+      margin-top: var(--sp-2);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .kpi-hero-sub strong { color: var(--text-strong); }
+
+    .card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--sp-3); border-bottom: 1px solid var(--border);
+      gap: var(--sp-2);
+    }
+    .card-title { font-size: var(--fs-md); font-weight: 600; color: var(--text-strong); }
+
+    .table-scroll { overflow-x: auto; }
+    .rpt-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      font-size: var(--fs-sm); min-width: 820px;
+    }
+    .rpt-table thead th {
+      text-align: left; padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2); color: var(--text-muted);
+      font-weight: 600; font-size: var(--fs-xs);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .rpt-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+    }
+    .rpt-table tbody tr:last-child td { border-bottom: none; }
+    .rpt-table tbody tr:hover td { background: var(--bg-elev-2); }
+    .col-num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .col-dias {
+      text-align: right; font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .col-dias.crit { color: var(--danger); font-weight: 600; }
+    .col-dias.warn { color: var(--warning-text); font-weight: 600; }
+    .col-valor { color: var(--danger); font-weight: 600; }
+    .cod-mono {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-muted); display: block; margin-top: 1px;
+    }
+    .prod-name { font-weight: 500; color: var(--text-strong); }
+
+    .mark-btn {
+      padding: 4px var(--sp-2);
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      font-size: var(--fs-xs);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .mark-btn:hover {
+      background: var(--warning-soft); border-color: var(--warning);
+      color: var(--warning-text);
+    }
+
+    /* Bottombar mobile / sidebar desktop */
+    .admin-bottombar {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      height: var(--admin-bottombar-h);
+      background: var(--bg-elev); border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      z-index: 20;
+    }
+    .bb-item {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 10px; font-weight: 500;
+    }
+    .bb-item svg { width: 20px; height: 20px; }
+    .bb-item.active { color: var(--primary); }
+    .bb-item:hover { color: var(--text-strong); text-decoration: none; }
+    .bb-item.active:hover { color: var(--primary); }
+
+    @media (min-width: 1024px) {
+      .admin-layout { flex-direction: row; }
+      .admin-bottombar {
+        position: sticky; top: var(--admin-header-h);
+        height: calc(100vh - var(--admin-header-h));
+        width: var(--admin-sidebar-w);
+        border-top: 0; border-right: 1px solid var(--border);
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto 1fr;
+        align-content: start;
+        padding: var(--sp-3) var(--sp-2); gap: var(--sp-1);
+        flex-shrink: 0;
+      }
+      .bb-item {
+        flex-direction: row; justify-content: flex-start;
+        gap: var(--sp-3); padding: var(--sp-2) var(--sp-3);
+        border-radius: var(--radius); font-size: var(--fs-base);
+      }
+      .bb-item.active { background: var(--primary-soft); }
+      .bb-item svg { width: 18px; height: 18px; }
+      .admin-main { padding: var(--sp-5); padding-bottom: var(--sp-8); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="logo"><span class="logo-text">MultiCompra</span></div>
+    <div class="admin-title">Reporte · Stock muerto</div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip"><span class="avatar">DG</span><span class="user-name">Diego</span></div>
+  </header>
+
+  <div class="admin-layout">
+
+    <nav class="admin-bottombar">
+      <a class="bb-item" href="../dashboard.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="bb-item active" href="stock-muerto.html" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Reportes</span>
+      </a>
+      <a class="bb-item" href="../config/locales.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+        <span>Config</span>
+      </a>
+      <a class="bb-item" href="../../logout.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Salir</span>
+      </a>
+    </nav>
+
+    <main class="admin-main">
+
+      <div>
+        <div class="breadcrumb">
+          <a href="../dashboard.html">Dashboard</a> <span>/</span> <span>Reportes</span> <span>/</span> <span>Stock muerto</span>
+        </div>
+        <h1 class="page-title" style="margin-top: var(--sp-2);">Stock muerto</h1>
+        <p class="page-title-sub">
+          Productos con stock alto y baja rotación. Candidatos a sacar del catálogo, aplicar descuento o reasignar entre locales. El valor inmovilizado es plata que se podría haber vendido.
+        </p>
+      </div>
+
+      <section class="filters-card">
+        <div class="filter-row">
+          <div class="periodo-chips">
+            <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
+            <button type="button" class="chip-period" data-periodo="3m">Últimos 3 meses</button>
+            <button type="button" class="chip-period active" data-periodo="anio">Este año</button>
+            <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <label class="switch-label">
+            <input type="checkbox" id="chk-30d" checked />
+            Solo productos con +30 días sin venta
+          </label>
+        </div>
+      </section>
+
+      <!-- KPI -->
+      <div class="kpi-hero">
+        <div class="kpi-hero-label">Total Gs en stock sin rotación</div>
+        <div class="kpi-hero-value"><span id="kpi-total">-</span><small>Gs</small></div>
+        <div class="kpi-hero-sub"><strong id="kpi-productos">-</strong> productos identificados · <strong id="kpi-unidades">-</strong> unidades inmovilizadas</div>
+      </div>
+
+      <!-- Tabla -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">Candidatos a revisar</div>
+          <span style="font-size: var(--fs-sm); color: var(--text-muted);">
+            Ordenados por valor inmovilizado (desc)
+          </span>
+        </div>
+        <div class="table-scroll">
+          <table class="rpt-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th style="text-align: right;">Stock total</th>
+                <th>Última venta</th>
+                <th style="text-align: right;">Días sin rotar</th>
+                <th style="text-align: right;">Valor inmovilizado</th>
+                <th style="text-align: right; width: 160px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="rpt-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { productos, reporteStockMuerto, fmtGs } from '../../shared/mock-data.js';
+
+    const r = reporteStockMuerto;
+    const prodById = new Map(productos.map(p => [p.id, p]));
+
+    let soloMas30 = true;
+
+    function diasCls(d) {
+      if (d >= 80) return 'crit';
+      if (d >= 45) return 'warn';
+      return '';
+    }
+
+    function fmtFecha(s) {
+      if (!s) return '-';
+      const [y, m, d] = s.split('-');
+      return `${d}/${m}/${y.slice(2)}`;
+    }
+
+    function render() {
+      let filas = r.filas;
+      if (soloMas30) filas = filas.filter(f => f.diasSinRotar > 30);
+      filas = [...filas].sort((a, b) => b.valorGs - a.valorGs);
+
+      const total = filas.reduce((s, f) => s + f.valorGs, 0);
+      const totUnids = filas.reduce((s, f) => s + f.stockTotal, 0);
+
+      document.getElementById('kpi-total').textContent = fmtGs(total);
+      document.getElementById('kpi-productos').textContent = filas.length;
+      document.getElementById('kpi-unidades').textContent = totUnids;
+
+      document.getElementById('rpt-body').innerHTML = filas.map(f => {
+        const p = prodById.get(f.productoId);
+        if (!p) return '';
+        return `
+          <tr>
+            <td>
+              <div class="prod-name">${p.nombre}</div>
+              <span class="cod-mono">${p.barras}</span>
+            </td>
+            <td class="col-num">${f.stockTotal}</td>
+            <td style="color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;">${fmtFecha(f.ultimaVenta)}</td>
+            <td class="col-dias ${diasCls(f.diasSinRotar)}">${f.diasSinRotar} días</td>
+            <td class="col-num col-valor">${fmtGs(f.valorGs)}</td>
+            <td style="text-align: right;">
+              <button type="button" class="mark-btn" data-pid="${f.productoId}">Marcar para revisión</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Bind buttons
+      document.querySelectorAll('.mark-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          b.textContent = '✓ Marcado';
+          b.style.background = 'var(--success-soft)';
+          b.style.borderColor = 'var(--success)';
+          b.style.color = 'var(--success-text)';
+          b.disabled = true;
+        });
+      });
+    }
+
+    render();
+
+    document.getElementById('chk-30d').addEventListener('change', (e) => {
+      soloMas30 = e.target.checked;
+      render();
+    });
+
+    document.querySelectorAll('.chip-period').forEach(c => {
+      c.addEventListener('click', () => {
+        document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      });
+    });
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    });
+  </script>
+
+</body>
+</html>

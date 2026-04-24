@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Detalle de OC</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    .detail-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-4);
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: var(--sp-4);
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1100px) {
+      .page-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card + .card { margin-top: var(--sp-4); }
+    .card-head {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .card-head h2 {
+      font-size: var(--fs-md);
+      margin: 0;
+      flex: 1;
+    }
+    .card-body { padding: var(--sp-4); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--sp-3);
+    }
+    @media (max-width: 720px) { .summary-grid { grid-template-columns: 1fr; } }
+    .summary-box {
+      padding: var(--sp-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elev-2);
+    }
+    .summary-box.hl {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+    }
+    .summary-box-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      margin-bottom: var(--sp-1);
+    }
+    .summary-box.hl .summary-box-label { color: var(--primary); }
+    .summary-box-value {
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-strong);
+    }
+    .summary-box.hl .summary-box-value { color: var(--primary); }
+
+    /* Tabla desglose */
+    .desglose-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    .desglose-table thead th {
+      text-align: left;
+      padding: var(--sp-2) var(--sp-3);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      font-weight: 600;
+    }
+    .desglose-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .desglose-table .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+      position: relative;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: var(--sp-3);
+      position: relative;
+    }
+    .timeline-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-top: 5px;
+      margin-left: 5px;
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .timeline-item.dot-warn .timeline-dot { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+    .timeline-item.dot-ok .timeline-dot { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+    .timeline-item.dot-info .timeline-dot { background: var(--info); box-shadow: 0 0 0 3px var(--info-soft); }
+    .timeline-item:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 14px;
+      bottom: -14px;
+      width: 2px;
+      background: var(--border);
+    }
+    .timeline-body { font-size: var(--fs-sm); color: var(--text); }
+    .timeline-body strong { color: var(--text-strong); }
+    .timeline-ts {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 2px;
+    }
+
+    .badge-en-edicion { background: var(--warning-soft); color: var(--warning-text); }
+    .badge-recibida   { background: var(--success-soft); color: var(--success-text); }
+
+    .anulada-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-4);
+      background: var(--danger-soft);
+      border: 1px solid var(--danger);
+      color: var(--danger-text);
+      border-radius: var(--radius);
+    }
+    .anulada-banner strong { display: block; margin-bottom: 2px; color: var(--danger-text); font-size: var(--fs-md); }
+
+    .actions-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+    .cta-primary { background: var(--primary); color: var(--primary-on); border-color: var(--primary); }
+    .cta-primary:hover { background: var(--primary-hover); }
+  </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="dashboard.html">Inicio</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="oc-lista.html">OCs</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current" id="breadcrumb-id">&mdash;</span>
+    </nav>
+    <div class="grow"></div>
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="dashboard.html" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="dashboard.html" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="nav-item-label">OPs pendientes</span>
+      </a>
+      <a class="nav-item active" href="oc-lista.html" data-label="OCs" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg></span>
+        <span class="nav-item-label">OCs</span>
+      </a>
+      <a class="nav-item" href="compra-lista.html" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span class="nav-item-label">Compras</span>
+      </a>
+      <a class="nav-item" href="catalogo.html" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <a href="oc-lista.html" class="btn btn-ghost btn-sm" aria-label="Volver al listado">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        Volver
+      </a>
+      <h1 class="screen-title">
+        <span class="screen-title-mono" id="subh-id">&mdash;</span>
+      </h1>
+      <span class="badge" id="subh-badge">&mdash;</span>
+      <span class="meta-item"><strong>Proveedor:</strong>&nbsp;<span id="subh-proveedor">&mdash;</span></span>
+      <span class="divider-v" aria-hidden="true"></span>
+      <span class="meta-item"><strong>Creada:</strong>&nbsp;<span id="subh-fecha" class="text-mono">&mdash;</span></span>
+      <div class="grow"></div>
+      <div class="actions-row" id="subh-actions"></div>
+    </div>
+
+    <div class="detail-scroll">
+      <div class="page-grid">
+
+        <div>
+
+          <!-- Banner si anulada -->
+          <div id="anulada-host"></div>
+
+          <!-- Resumen económico -->
+          <section class="card" aria-label="Resumen económico">
+            <header class="card-head">
+              <h2>Resumen económico</h2>
+            </header>
+            <div class="card-body">
+              <div class="summary-grid">
+                <div class="summary-box">
+                  <div class="summary-box-label">Unidades totales</div>
+                  <div class="summary-box-value" id="sum-unidades">0</div>
+                </div>
+                <div class="summary-box">
+                  <div class="summary-box-label">Productos distintos</div>
+                  <div class="summary-box-value" id="sum-productos">0</div>
+                </div>
+                <div class="summary-box hl">
+                  <div class="summary-box-label">Total OC</div>
+                  <div class="summary-box-value"><span>Gs.</span> <span id="sum-total">0</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Desglose por producto -->
+          <section class="card" aria-label="Desglose por producto">
+            <header class="card-head">
+              <h2>Desglose por producto</h2>
+              <span class="text-sm text-muted" id="prod-count-hint">&mdash;</span>
+            </header>
+            <div class="card-body" style="padding: 0;">
+              <table class="desglose-table" id="desglose-table">
+                <thead>
+                  <tr>
+                    <th style="width: 140px;">Código</th>
+                    <th>Descripción</th>
+                    <th class="col-num" style="width: 110px;">Cantidad</th>
+                    <th class="col-num" style="width: 130px;">Costo unit.</th>
+                    <th class="col-num" style="width: 150px;">Subtotal Gs</th>
+                  </tr>
+                </thead>
+                <tbody id="desglose-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Columna derecha: auditoría -->
+        <aside>
+          <section class="card" aria-label="Auditoría">
+            <header class="card-head">
+              <h2>Historial</h2>
+            </header>
+            <div class="card-body">
+              <div class="timeline" id="timeline"></div>
+            </div>
+          </section>
+
+          <section class="card" aria-label="OPs origen">
+            <header class="card-head">
+              <h2>OPs origen</h2>
+            </header>
+            <div class="card-body" style="display: flex; flex-direction: column; gap: var(--sp-2);" id="ops-origen-host"></div>
+          </section>
+        </aside>
+
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script type="module">
+  import { ocsHistorico, oc as ocActual, ops, auditoria, fmtGs, fmtFecha } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  const ESTADO_BADGE = {
+    abierta:                { cls: 'badge-abierta',              txt: 'Abierta' },
+    en_edicion:             { cls: 'badge-en-edicion',           txt: 'En edición' },
+    cerrada:                { cls: 'badge-cerrada',              txt: 'Cerrada' },
+    enviada_a_proveedor:    { cls: 'badge-enviada-proveedor',    txt: 'Enviada al proveedor' },
+    parcialmente_recibida:  { cls: 'badge-parcial',              txt: 'Parcialmente recibida' },
+    recibida:               { cls: 'badge-recibida',             txt: 'Recibida' },
+    cerrada_con_faltante:   { cls: 'badge-cerrada-con-faltante', txt: 'Cerrada con faltante' },
+    anulada:                { cls: 'badge-anulada',              txt: 'Anulada' }
+  };
+
+  // Resolver OC por ?id=
+  const params = new URLSearchParams(window.location.search);
+  const ocId = (params.get('id') || 'oc-0039').toLowerCase();
+  const ocMeta = ocsHistorico.find(o => o.id.toLowerCase() === ocId) || ocsHistorico[3];
+
+  // Cabecera
+  document.getElementById('breadcrumb-id').textContent = ocMeta.numero;
+  document.getElementById('subh-id').textContent = ocMeta.numero;
+  const badge = ESTADO_BADGE[ocMeta.estado] || ESTADO_BADGE.cerrada;
+  const badgeEl = document.getElementById('subh-badge');
+  badgeEl.className = 'badge ' + badge.cls;
+  badgeEl.textContent = badge.txt;
+  document.getElementById('subh-proveedor').textContent = ocMeta.proveedorNombre;
+  document.getElementById('subh-fecha').textContent = fmtFecha(ocMeta.fechaCreacion);
+  document.title = `MultiCompra — ${ocMeta.numero}`;
+
+  // Resumen económico — si es la OC-0042 actual usamos sus grupos; si no, simulamos proporcional
+  let productosDesglose = [];
+  let totalCalculado = 0;
+  let unidadesCalc = 0;
+  if (ocMeta.id === 'oc-0042') {
+    // Usar datos reales de la OC actual
+    ocActual.grupos.forEach(g => {
+      const comprar = g.pedidos.reduce((s, p) => s + (p.decision === 'comprar' ? p.cantidadComprar : 0), 0);
+      if (comprar > 0) {
+        productosDesglose.push({
+          barras: g.barras,
+          nombre: g.nombre,
+          cantidad: comprar,
+          costoUnit: g.costoEstimado,
+          subtotal: comprar * g.costoEstimado
+        });
+        totalCalculado += comprar * g.costoEstimado;
+        unidadesCalc += comprar;
+      }
+    });
+  } else {
+    // Simulación a partir del total de la OC histórica: repartir en 6-10 productos plausibles
+    const n = Math.max(4, Math.min(10, ocMeta.opsCount + 3));
+    const nombresMock = [
+      'Cargador USB-C 20W Premium','Cable Lightning 1m reforzado','Funda silicona iPhone 14',
+      'Vidrio templado iPhone 13/14','Power Bank 10000mAh','Adaptador OTG USB-C a USB',
+      'Soporte auto magnético','Auricular Bluetooth TWS Pro','Cable HDMI 1.5m',
+      'Mica hidrogel universal'
+    ];
+    let resto = ocMeta.totalGs;
+    let restoUnid = ocMeta.unidadesTotal;
+    for (let i = 0; i < n; i++) {
+      const esUltimo = i === n - 1;
+      const subtotal = esUltimo ? resto : Math.round(ocMeta.totalGs / n);
+      const unidades = esUltimo ? restoUnid : Math.max(1, Math.round(ocMeta.unidadesTotal / n));
+      resto -= subtotal;
+      restoUnid -= unidades;
+      const costoUnit = unidades > 0 ? Math.round(subtotal / unidades) : 0;
+      productosDesglose.push({
+        barras: '784000100' + (1000 + i).toString().slice(1),
+        nombre: nombresMock[i % nombresMock.length],
+        cantidad: unidades,
+        costoUnit,
+        subtotal
+      });
+    }
+    totalCalculado = ocMeta.totalGs;
+    unidadesCalc = ocMeta.unidadesTotal;
+  }
+
+  document.getElementById('sum-unidades').textContent = unidadesCalc.toLocaleString('es-PY');
+  document.getElementById('sum-productos').textContent = productosDesglose.length;
+  document.getElementById('sum-total').textContent = fmtGs(totalCalculado);
+  document.getElementById('prod-count-hint').textContent = `${productosDesglose.length} productos`;
+
+  // Tabla
+  const tbodyDes = document.getElementById('desglose-tbody');
+  tbodyDes.innerHTML = productosDesglose.map(p => `
+    <tr>
+      <td class="text-mono text-xs" style="color: var(--text-muted);">${p.barras}</td>
+      <td>${p.nombre}</td>
+      <td class="col-num">${p.cantidad}</td>
+      <td class="col-num">${fmtGs(p.costoUnit)}</td>
+      <td class="col-num"><strong>${fmtGs(p.subtotal)}</strong></td>
+    </tr>
+  `).join('');
+
+  // Banner anulada
+  if (ocMeta.estado === 'anulada') {
+    document.getElementById('anulada-host').innerHTML = `
+      <div class="anulada-banner">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        <div>
+          <strong>Orden anulada</strong>
+          Esta OC fue anulada el ${fmtFecha(ocMeta.fechaCreacion)}. Las OPs asociadas volvieron al estado "enviada" y pueden agruparse nuevamente.
+        </div>
+      </div>
+    `;
+  }
+
+  // Acciones según estado
+  const actionsHost = document.getElementById('subh-actions');
+  const acciones = [];
+  if (ocMeta.estado === 'cerrada' && ocMeta.comprasCount === 0) {
+    acciones.push(`<button type="button" class="btn cta-primary" id="btn-enviar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Marcar enviada al proveedor
+    </button>`);
+  }
+  if (ocMeta.estado === 'enviada_a_proveedor') {
+    actionsHost.parentNode;
+    // chip pasivo + CTA
+    acciones.push(`<span class="chip chip-timestamp" title="Enviada al proveedor">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+      Enviada al proveedor
+    </span>`);
+    acciones.push(`<a class="btn cta-primary" href="compra-nueva.html?oc=${encodeURIComponent(ocMeta.id)}">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Registrar Compra
+    </a>`);
+  }
+  if (ocMeta.estado === 'parcialmente_recibida') {
+    acciones.push(`<a class="btn btn-primary" href="compra-nueva.html?oc=${encodeURIComponent(ocMeta.id)}">
+      Registrar otra Compra
+    </a>`);
+    acciones.push(`<button type="button" class="btn btn-secondary" id="btn-marcar-faltante">
+      Marcar cerrada con faltante
+    </button>`);
+  }
+  if (ocMeta.estado === 'cerrada_con_faltante' || ocMeta.estado === 'recibida') {
+    acciones.push(`<span class="text-sm text-muted">OC finalizada. Solo lectura.</span>`);
+  }
+  if (ocMeta.estado === 'anulada') {
+    acciones.push(`<span class="text-sm text-muted">OC anulada. Solo lectura.</span>`);
+  }
+  actionsHost.innerHTML = acciones.join('');
+
+  const btnEnviar = document.getElementById('btn-enviar');
+  if (btnEnviar) btnEnviar.addEventListener('click', () => {
+    alert('La OC pasaría a estado "enviada_a_proveedor". (Mockup decorativo.)');
+  });
+  const btnFaltante = document.getElementById('btn-marcar-faltante');
+  if (btnFaltante) btnFaltante.addEventListener('click', () => {
+    alert('La OC se cerraría como "cerrada_con_faltante". (Mockup decorativo.)');
+  });
+
+  // Timeline
+  const eventos = auditoria[ocMeta.id] || [
+    { ts: ocMeta.fechaCreacion + ' 09:00', actor: 'Shirley', evento: 'creada', detalle: `OC creada agrupando ${ocMeta.opsCount} OPs.` },
+    { ts: ocMeta.fechaCreacion + ' 17:30', actor: 'Shirley', evento: 'cerrada', detalle: `OC cerrada con Gs. ${fmtGs(ocMeta.totalGs)}.` }
+  ];
+  function dotCls(ev) {
+    if (ev === 'anulada' || ev === 'devuelta') return 'dot-warn';
+    if (ev === 'cerrada' || ev === 'recibida' || ev === 'compra_parcial') return 'dot-ok';
+    if (ev === 'enviada_a_proveedor' || ev === 'en_oc') return 'dot-info';
+    return '';
+  }
+  document.getElementById('timeline').innerHTML = eventos.map(e => `
+    <div class="timeline-item ${dotCls(e.evento)}">
+      <span class="timeline-dot" aria-hidden="true"></span>
+      <div class="timeline-body">
+        <div class="timeline-ts">${e.ts}</div>
+        <div><strong>${e.actor}</strong> &middot; ${e.detalle || e.evento}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // OPs origen (usar las de OC-0042 si aplica; si no, generar placeholders)
+  const opsOrigen = (ocMeta.id === 'oc-0042')
+    ? ocActual.opsOrigen
+    : Array.from({ length: ocMeta.opsCount }, (_, i) => ({
+        id: `op-${(1000 + (ocMeta.opsCount * 2) + i).toString()}`,
+        localNombre: ['Shopping Mcal.','Villa Morra','Ciudad del Este','San Lorenzo','Lambaré','Fernando de la Mora','Capiatá','Luque','Encarnación','Shopping del Sol'][i % 10],
+        cajera: ['Romina','Nélida','Paola','Clara','Gisela','Andrea','Mirta','Fátima','Jessica','Carolina'][i % 10],
+        fecha: ocMeta.fechaCreacion
+      }));
+  document.getElementById('ops-origen-host').innerHTML = opsOrigen.map(op => `
+    <div class="audit-row" style="display: flex; justify-content: space-between; padding: var(--sp-1) 0; font-size: var(--fs-sm); border-bottom: 1px dashed var(--border);">
+      <div>
+        <div style="color: var(--text);">${op.localNombre}</div>
+        <div class="text-xs text-muted">${op.cajera}</div>
+      </div>
+      <a href="op-detalle.html?id=${encodeURIComponent(op.id)}" class="text-xs" title="Ver ${op.id}">${op.id}</a>
+    </div>
+  `).join('');
+
+  // App shell
+  const app = document.getElementById('app');
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    app.classList.toggle('sidebar-collapsed');
+  });
+  initSidebarClickOutside();
+
+  const THEME_KEY = 'multicompra:theme';
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Config · Cajeras</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../../shared/styles.css" />
+  <link rel="stylesheet" href="config-shared.css" />
+</head>
+<body>
+
+  <header class="admin-header" role="banner">
+    <div class="logo"><span class="logo-text">MultiCompra</span></div>
+    <div class="admin-title">Config · Cajeras</div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip" tabindex="0" aria-label="Usuario Diego">
+      <span class="avatar" aria-hidden="true">DG</span>
+      <span class="user-name">Diego</span>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+
+    <nav class="admin-bottombar" aria-label="Navegación principal">
+      <a class="bb-item" href="../dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
+      <a class="bb-item" href="../reportes/op-vs-compra-vs-venta.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Reportes</span></a>
+      <a class="bb-item active" href="locales.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Config</span></a>
+      <a class="bb-item" href="../../logout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Salir</span></a>
+    </nav>
+
+    <main class="admin-main" role="main">
+
+      <nav class="config-tabs" aria-label="Secciones de configuración">
+        <a class="config-tab" href="locales.html">Locales</a>
+        <a class="config-tab active" href="cajeras.html" aria-current="page">Cajeras</a>
+        <a class="config-tab" href="proveedores.html">Proveedores</a>
+        <a class="config-tab" href="parametros.html">Parámetros</a>
+      </nav>
+
+      <section class="page-head">
+        <div>
+          <h1 class="page-title">Cajeras</h1>
+          <p class="page-sub">Usuarias con rol cajera, asignadas a un local. Desde acá podés dar de alta, editar, resetear contraseña o desactivar.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-new" id="btn-nuevo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Nueva cajera</span>
+        </button>
+      </section>
+
+      <section class="filters-card">
+        <div class="search-wrap">
+          <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="inp-search" class="input input-search" type="search" placeholder="Buscar por nombre o email…" />
+        </div>
+        <div class="filter-field">
+          <label for="sel-local">Local</label>
+          <select id="sel-local">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="filter-count" id="filter-count">10 cajeras</div>
+      </section>
+
+      <section class="card card-tight">
+        <div class="table-wrap config-table-wrap">
+          <table class="table" id="tbl-cajeras">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Local</th>
+                <th>Estado</th>
+                <th>Alta</th>
+                <th>Último acceso</th>
+                <th class="col-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal editar / crear -->
+  <div class="modal-backdrop" id="modal" hidden>
+    <div class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <div class="modal-head">
+        <h2 id="modal-title">Nueva cajera</h2>
+        <button type="button" class="icon-btn-light" id="modal-close" aria-label="Cerrar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form class="modal-body" id="form-cajera">
+        <div class="form-row">
+          <label>Nombre completo</label>
+          <input class="input" name="nombre" placeholder="Ej: María Fernández" required />
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input class="input" name="email" type="email" placeholder="maria.fernandez@multicompra.py" required />
+        </div>
+        <div class="form-row">
+          <label>Local asignado</label>
+          <select class="input" name="localId" required id="form-local-sel"></select>
+          <span class="form-hint">Cada cajera trabaja en un único local.</span>
+        </div>
+        <div class="form-row form-row-switch">
+          <label for="sw-activa">Cuenta activa</label>
+          <label class="switch">
+            <input type="checkbox" id="sw-activa" checked />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </form>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btn-cancel">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal reset pass (confirmación simple) -->
+  <div class="modal-backdrop" id="modal-reset" hidden>
+    <div class="modal" role="dialog" aria-labelledby="reset-title" aria-modal="true" style="max-width: 440px;">
+      <div class="modal-head">
+        <h2 id="reset-title">Resetear contraseña</h2>
+        <button type="button" class="icon-btn-light" id="reset-close" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: var(--fs-base); line-height: 1.6;">
+          Se generará una contraseña temporal para <strong id="reset-nombre">la cajera</strong> y se le enviará por email.
+          Al ingresar por primera vez tendrá que cambiarla.
+        </p>
+        <p class="form-hint" style="color: var(--warning-text);">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="reset-cancel">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="reset-confirm">Enviar contraseña temporal</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import { cajerasConfig, locales } from '../../shared/mock-data.js';
+
+    const data = cajerasConfig.map(c => ({ ...c }));
+    const localById = Object.fromEntries(locales.map(l => [l.id, l]));
+    const tbody = document.getElementById('tbody');
+    const countEl = document.getElementById('filter-count');
+    const inpSearch = document.getElementById('inp-search');
+    const selLocal = document.getElementById('sel-local');
+    const formLocalSel = document.getElementById('form-local-sel');
+
+    // Poblar filtro + form dropdown
+    locales.forEach(l => {
+      const o1 = document.createElement('option');
+      o1.value = l.id; o1.textContent = l.codigo + ' · ' + l.nombre;
+      selLocal.appendChild(o1);
+      const o2 = o1.cloneNode(true);
+      formLocalSel.appendChild(o2);
+    });
+
+    function fmtFechaCorta(s) {
+      if (!s) return '—';
+      const [y, m, d] = s.split(' ')[0].split('-');
+      return `${d}/${m}/${y}`;
+    }
+    function fmtUltimoAcceso(s) {
+      if (!s) return '—';
+      const [fecha, hora] = s.split(' ');
+      const [y, m, d] = fecha.split('-');
+      return `${d}/${m} ${hora || ''}`.trim();
+    }
+
+    function render(rows) {
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-row">No hay cajeras que coincidan.</td></tr>';
+        countEl.textContent = '0 cajeras';
+        return;
+      }
+      tbody.innerHTML = rows.map(c => {
+        const loc = localById[c.localId];
+        return `
+          <tr data-id="${c.id}">
+            <td class="cell-strong">${c.nombre}</td>
+            <td class="text-mono cell-muted">${c.email}</td>
+            <td>${loc ? `<span class="badge-code">${loc.codigo}</span> ${loc.nombre}` : '—'}</td>
+            <td>
+              <span class="badge ${c.activa ? 'badge-confirmada' : 'badge-anulada'}">
+                ${c.activa ? 'Activa' : 'Inactiva'}
+              </span>
+            </td>
+            <td class="text-mono cell-muted">${fmtFechaCorta(c.fechaAlta)}</td>
+            <td class="text-mono cell-muted">${fmtUltimoAcceso(c.ultimoAcceso)}</td>
+            <td class="col-actions">
+              <button type="button" class="btn btn-sm btn-secondary" data-act="edit" data-id="${c.id}">Editar</button>
+              <button type="button" class="btn btn-sm btn-secondary" data-act="reset" data-id="${c.id}">Resetear clave</button>
+              <button type="button" class="btn btn-sm ${c.activa ? 'btn-danger' : 'btn-secondary'}" data-act="toggle" data-id="${c.id}">
+                ${c.activa ? 'Desactivar' : 'Activar'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      countEl.textContent = rows.length + ' ' + (rows.length === 1 ? 'cajera' : 'cajeras');
+    }
+
+    function applyFilter() {
+      const q = (inpSearch.value || '').toLowerCase().trim();
+      const lf = selLocal.value;
+      let rows = data;
+      if (lf) rows = rows.filter(c => c.localId === lf);
+      if (q) rows = rows.filter(c => c.nombre.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+      render(rows);
+    }
+
+    inpSearch.addEventListener('input', applyFilter);
+    selLocal.addEventListener('change', applyFilter);
+    render(data);
+
+    // ---------- Modal edición / alta --------------------------------
+    const modal = document.getElementById('modal');
+    const form = document.getElementById('form-cajera');
+    const modalTitle = document.getElementById('modal-title');
+    let editingId = null;
+
+    function openModal(cajera) {
+      editingId = cajera ? cajera.id : null;
+      modalTitle.textContent = cajera ? 'Editar cajera' : 'Nueva cajera';
+      form.nombre.value = cajera ? cajera.nombre : '';
+      form.email.value  = cajera ? cajera.email : '';
+      form.localId.value = cajera ? cajera.localId : (locales[0] && locales[0].id);
+      document.getElementById('sw-activa').checked = cajera ? !!cajera.activa : true;
+      modal.hidden = false;
+    }
+    function closeModal() { modal.hidden = true; editingId = null; }
+
+    document.getElementById('btn-nuevo').addEventListener('click', () => openModal(null));
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    document.getElementById('btn-save').addEventListener('click', () => {
+      if (!form.reportValidity()) return;
+      showToast(editingId ? 'Cajera actualizada.' : 'Cajera creada. Se envió email de bienvenida.');
+      closeModal();
+    });
+
+    // ---------- Modal reset contraseña -----------------------------
+    const mReset = document.getElementById('modal-reset');
+    const resetNombre = document.getElementById('reset-nombre');
+    let resetId = null;
+    function openReset(cajera) {
+      resetId = cajera.id;
+      resetNombre.textContent = cajera.nombre;
+      mReset.hidden = false;
+    }
+    function closeReset() { mReset.hidden = true; resetId = null; }
+    document.getElementById('reset-close').addEventListener('click', closeReset);
+    document.getElementById('reset-cancel').addEventListener('click', closeReset);
+    mReset.addEventListener('click', e => { if (e.target === mReset) closeReset(); });
+    document.getElementById('reset-confirm').addEventListener('click', () => {
+      showToast('Contraseña temporal enviada por email.');
+      closeReset();
+    });
+
+    // ---------- Acciones por fila -----------------------------------
+    tbody.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const act = btn.getAttribute('data-act');
+      const c = data.find(x => x.id === id);
+      if (!c) return;
+      if (act === 'edit')    openModal(c);
+      if (act === 'reset')   openReset(c);
+      if (act === 'toggle') {
+        c.activa = !c.activa;
+        applyFilter();
+        showToast(c.activa ? `${c.nombre} fue activada.` : `${c.nombre} fue desactivada.`);
+      }
+    });
+
+    // ---------- Toast + theme + escape -----------------------------
+    const toast = document.getElementById('toast');
+    let toastTimer;
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      toastTimer = setTimeout(() => toast.classList.remove('visible'), 2400);
+    }
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (!modal.hidden) closeModal();
+        else if (!mReset.hidden) closeReset();
+      }
+    });
+  </script>
+</body>
+</html>

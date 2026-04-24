@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — OP vs Compra vs Venta</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../../shared/styles.css" />
+  <style>
+    :root {
+      --admin-header-h: 56px;
+      --admin-bottombar-h: 60px;
+      --admin-sidebar-w: 220px;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admin-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      height: var(--admin-header-h);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: 0 var(--sp-3);
+    }
+    .admin-header .logo { font-size: var(--fs-md); font-weight: 700; color: var(--primary); }
+    .admin-title {
+      font-size: var(--fs-md);
+      font-weight: 600;
+      color: var(--text-strong);
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .icon-btn {
+      position: relative;
+      width: 36px; height: 36px;
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .icon-btn:hover { background: var(--bg-elev-2); color: var(--text-strong); }
+    @media (max-width: 480px) {
+      .admin-header .logo .logo-text { display: none; }
+      .admin-header .user-chip .user-name { display: none; }
+    }
+
+    .admin-layout { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    .admin-main {
+      flex: 1;
+      padding: var(--sp-4) var(--sp-3);
+      padding-bottom: calc(var(--admin-bottombar-h) + var(--sp-4));
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-1);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .breadcrumb a { color: var(--primary); }
+
+    .page-title {
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      margin: 0;
+    }
+    .page-title-sub {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Selector de período + filtros */
+    .filters-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--sp-3);
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2);
+      align-items: center;
+    }
+    .filter-row + .filter-row { margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+    .periodo-chips {
+      display: flex;
+      gap: var(--sp-1);
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .chip-period {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px var(--sp-3);
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-sm);
+      color: var(--text);
+      cursor: pointer;
+      transition: all var(--t-fast);
+    }
+    .chip-period:hover { background: var(--border); }
+    .chip-period.active {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .filter-field {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .filter-field label {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .filter-field select {
+      height: 34px;
+      padding: 0 var(--sp-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      color: var(--text);
+      font-size: var(--fs-sm);
+    }
+
+    /* KPIs */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--sp-3);
+    }
+    .kpi {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--sp-3);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .kpi-label {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .kpi-value small { font-size: var(--fs-sm); color: var(--text-muted); font-weight: 400; }
+    .kpi-sub {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .kpi.highlight {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .kpi.highlight .kpi-value { color: var(--primary); }
+
+    /* Tabla detallada */
+    .table-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      gap: var(--sp-2);
+    }
+    .table-title {
+      font-size: var(--fs-md);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .link-export {
+      font-size: var(--fs-sm);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+    }
+    .link-export:hover { text-decoration: underline; }
+
+    .table-scroll { overflow-x: auto; }
+    .rpt-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--fs-sm);
+      min-width: 760px;
+    }
+    .rpt-table thead th {
+      text-align: left;
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .rpt-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text);
+    }
+    .rpt-table tbody tr:last-child td { border-bottom: none; }
+    .rpt-table tbody tr:hover td { background: var(--bg-elev-2); }
+    .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .col-prod { min-width: 220px; }
+    .col-signal { width: 100px; text-align: center; }
+    .cod-mono {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      display: block;
+    }
+    .prod-name {
+      font-weight: 500;
+      color: var(--text-strong);
+    }
+
+    .signal {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px var(--sp-2);
+      border-radius: var(--radius-pill);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .signal::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .signal-green  { background: var(--success-soft); color: var(--success-text); }
+    .signal-amber  { background: var(--warning-soft); color: var(--warning-text); }
+    .signal-red    { background: var(--danger-soft);  color: var(--danger-text); }
+
+    .ratio {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .ratio.good { color: var(--success); }
+    .ratio.mid  { color: var(--warning-text); }
+    .ratio.bad  { color: var(--danger); }
+
+    /* Bottombar mobile / sidebar desktop */
+    .admin-bottombar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--admin-bottombar-h);
+      background: var(--bg-elev);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 20;
+    }
+    .bb-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .bb-item svg { width: 20px; height: 20px; }
+    .bb-item.active { color: var(--primary); }
+    .bb-item:hover { color: var(--text-strong); text-decoration: none; }
+    .bb-item.active:hover { color: var(--primary); }
+
+    @media (min-width: 1024px) {
+      .admin-layout { flex-direction: row; }
+      .admin-bottombar {
+        position: sticky;
+        top: var(--admin-header-h);
+        height: calc(100vh - var(--admin-header-h));
+        width: var(--admin-sidebar-w);
+        border-top: 0;
+        border-right: 1px solid var(--border);
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto 1fr;
+        align-content: start;
+        padding: var(--sp-3) var(--sp-2);
+        gap: var(--sp-1);
+        flex-shrink: 0;
+      }
+      .bb-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: var(--sp-3);
+        padding: var(--sp-2) var(--sp-3);
+        border-radius: var(--radius);
+        font-size: var(--fs-base);
+      }
+      .bb-item.active { background: var(--primary-soft); }
+      .bb-item svg { width: 18px; height: 18px; }
+      .admin-main { padding: var(--sp-5); padding-bottom: var(--sp-8); }
+      .kpis { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header" role="banner">
+    <div class="logo">
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <div class="admin-title">Reporte · OP vs Compra vs Venta</div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip" tabindex="0">
+      <span class="avatar">DG</span>
+      <span class="user-name">Diego</span>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+
+    <nav class="admin-bottombar">
+      <a class="bb-item" href="../dashboard.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="bb-item active" href="op-vs-compra-vs-venta.html" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Reportes</span>
+      </a>
+      <a class="bb-item" href="../config/locales.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Config</span>
+      </a>
+      <a class="bb-item" href="../../logout.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Salir</span>
+      </a>
+    </nav>
+
+    <main class="admin-main">
+
+      <!-- Breadcrumb + title -->
+      <div>
+        <div class="breadcrumb">
+          <a href="../dashboard.html">Dashboard</a>
+          <span>/</span>
+          <span>Reportes</span>
+          <span>/</span>
+          <span>OP vs Compra vs Venta</span>
+        </div>
+        <h1 class="page-title" style="margin-top: var(--sp-2);">OP vs Compra vs Venta</h1>
+        <p class="page-title-sub">
+          Compara lo que las cajeras pidieron, lo que Shirley efectivamente compró y lo que se vendió. Mide si el sistema está evitando stock muerto y alineando pedido con realidad.
+        </p>
+      </div>
+
+      <!-- Filtros -->
+      <section class="filters-card">
+        <div class="filter-row">
+          <div class="periodo-chips" role="tablist" aria-label="Período">
+            <button type="button" class="chip-period" data-periodo="7d">Últimos 7 días</button>
+            <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
+            <button type="button" class="chip-period active" data-periodo="3m">Últimos 3 meses</button>
+            <button type="button" class="chip-period" data-periodo="anio">Este año</button>
+            <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-field">
+            <label for="f-producto">Producto:</label>
+            <select id="f-producto"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-field">
+            <label for="f-local">Local:</label>
+            <select id="f-local">
+              <option value="">Todos</option>
+              <option>Shopping del Sol</option>
+              <option>Villa Morra</option>
+              <option>Ciudad del Este</option>
+              <option>San Lorenzo</option>
+              <option>Lambaré</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="f-cajera">Cajera:</label>
+            <select id="f-cajera">
+              <option value="">Todas</option>
+              <option>Carolina</option>
+              <option>Romina</option>
+              <option>Nélida</option>
+              <option>Paola</option>
+              <option>Lucía</option>
+              <option>Andrea</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPIs -->
+      <section class="kpis">
+        <div class="kpi">
+          <span class="kpi-label">Total pedido</span>
+          <div class="kpi-value"><span id="kpi-pedido-u">-</span><small> u</small></div>
+          <div class="kpi-sub"><span id="kpi-pedido-gs">-</span> Gs estimados (a costo)</div>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Total comprado</span>
+          <div class="kpi-value"><span id="kpi-comprado-u">-</span><small> u</small></div>
+          <div class="kpi-sub"><span id="kpi-comprado-gs">-</span> Gs</div>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Total vendido</span>
+          <div class="kpi-value"><span id="kpi-vendido-u">-</span><small> u</small></div>
+          <div class="kpi-sub">Proyectado desde sistema base (API)</div>
+        </div>
+        <div class="kpi highlight">
+          <span class="kpi-label">Stock muerto evitado</span>
+          <div class="kpi-value"><span id="kpi-evitado">-</span><small> Gs</small></div>
+          <div class="kpi-sub">Pedido − comprado, a costo</div>
+        </div>
+      </section>
+
+      <!-- Tabla -->
+      <section class="table-card">
+        <div class="table-head">
+          <div class="table-title">Detalle por producto</div>
+          <a href="#" class="link-export" onclick="event.preventDefault(); alert('(Mock) Exportando a Excel...');">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar a Excel
+          </a>
+        </div>
+        <div class="table-scroll">
+          <table class="rpt-table">
+            <thead>
+              <tr>
+                <th class="col-prod">Producto</th>
+                <th style="text-align: right;">Pedido (u)</th>
+                <th style="text-align: right;">Comprado (u)</th>
+                <th style="text-align: right;">Vendido (u)</th>
+                <th style="text-align: right;">Ratio ajuste</th>
+                <th style="text-align: right;">Ratio venta</th>
+                <th class="col-signal">Señal</th>
+              </tr>
+            </thead>
+            <tbody id="rpt-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { productos, reporteOpvsCompravsVenta, fmtGs } from '../../shared/mock-data.js';
+
+    const prodById = new Map(productos.map(p => [p.id, p]));
+
+    // Llenar select de productos
+    const fProducto = document.getElementById('f-producto');
+    reporteOpvsCompravsVenta.filas.forEach(f => {
+      const p = prodById.get(f.productoId);
+      if (!p) return;
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.nombre;
+      fProducto.appendChild(opt);
+    });
+
+    function calcSignal(pedido, comprado, vendido) {
+      // Ratio ajuste = comprado / pedido (si 1.0 perfecto, si <0.5 bajón fuerte)
+      const rAjuste = pedido > 0 ? comprado / pedido : 1;
+      // Ratio venta = vendido / comprado (si 1.0 perfecto, si <0.3 crítico)
+      const rVenta = comprado > 0 ? vendido / comprado : 0;
+      // Señal:
+      // Verde: rAjuste >= 0.85 y rVenta >= 0.75
+      // Rojo: rVenta < 0.3 (compra alta, venta mínima → stock muerto)
+      // Ámbar: todo lo demás
+      if (rVenta < 0.3) return { cls: 'signal-red', label: 'Crítico', rAjuste, rVenta };
+      if (rAjuste >= 0.85 && rVenta >= 0.75) return { cls: 'signal-green', label: 'OK', rAjuste, rVenta };
+      return { cls: 'signal-amber', label: 'Revisar', rAjuste, rVenta };
+    }
+
+    function ratioCls(r) {
+      if (r >= 0.85) return 'good';
+      if (r >= 0.5)  return 'mid';
+      return 'bad';
+    }
+
+    function render() {
+      let totPedidoU = 0, totCompradoU = 0, totVendidoU = 0;
+      let totPedidoGs = 0, totCompradoGs = 0;
+
+      const filas = reporteOpvsCompravsVenta.filas.map(f => {
+        const p = prodById.get(f.productoId);
+        if (!p) return '';
+        totPedidoU += f.pedido;
+        totCompradoU += f.comprado;
+        totVendidoU += f.vendido;
+        totPedidoGs += f.pedido * p.costo;
+        totCompradoGs += f.comprado * p.costo;
+
+        const sig = calcSignal(f.pedido, f.comprado, f.vendido);
+        return `
+          <tr>
+            <td class="col-prod">
+              <div class="prod-name">${p.nombre}</div>
+              <span class="cod-mono">${p.barras}</span>
+            </td>
+            <td class="col-num">${f.pedido}</td>
+            <td class="col-num">${f.comprado}</td>
+            <td class="col-num">${f.vendido}</td>
+            <td class="col-num"><span class="ratio ${ratioCls(sig.rAjuste)}">${Math.round(sig.rAjuste * 100)}%</span></td>
+            <td class="col-num"><span class="ratio ${ratioCls(sig.rVenta)}">${Math.round(sig.rVenta * 100)}%</span></td>
+            <td class="col-signal"><span class="signal ${sig.cls}">${sig.label}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('rpt-body').innerHTML = filas;
+
+      const evitado = totPedidoGs - totCompradoGs;
+      document.getElementById('kpi-pedido-u').textContent = totPedidoU.toLocaleString('es-PY');
+      document.getElementById('kpi-pedido-gs').textContent = fmtGs(totPedidoGs);
+      document.getElementById('kpi-comprado-u').textContent = totCompradoU.toLocaleString('es-PY');
+      document.getElementById('kpi-comprado-gs').textContent = fmtGs(totCompradoGs);
+      document.getElementById('kpi-vendido-u').textContent = totVendidoU.toLocaleString('es-PY');
+      document.getElementById('kpi-evitado').textContent = fmtGs(Math.max(0, evitado));
+    }
+    render();
+
+    // Selector de período (solo visual)
+    document.querySelectorAll('.chip-period').forEach(c => {
+      c.addEventListener('click', () => {
+        document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      });
+    });
+
+    // Theme
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    });
+  </script>
+
+</body>
+</html>

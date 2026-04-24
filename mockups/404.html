@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Página no encontrada</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="shared/styles.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-3) var(--sp-4);
+    }
+    .topbar .brand {
+      font-size: var(--fs-md);
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-4) var(--sp-4) var(--sp-10);
+    }
+    .card-center {
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+    .number-404 {
+      font-size: 120px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -2px;
+      font-family: var(--font-mono);
+      margin: 0;
+    }
+    @media (min-width: 640px) {
+      .number-404 { font-size: 160px; }
+    }
+    h1.title {
+      font-size: var(--fs-xl);
+      color: var(--text-strong);
+      margin-top: var(--sp-2);
+    }
+    .sub {
+      font-size: var(--fs-md);
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 360px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+      width: 100%;
+      max-width: 260px;
+      margin-top: var(--sp-3);
+    }
+    .btn-home {
+      height: 44px;
+      font-size: var(--fs-md);
+      font-weight: 600;
+      background: var(--primary);
+      color: var(--primary-on);
+      border-color: var(--primary);
+    }
+    .btn-home:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .link-support {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      margin-top: var(--sp-2);
+    }
+    .link-support:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">MultiCompra</div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <div class="wrap">
+    <div class="card-center">
+      <p class="number-404" aria-hidden="true">404</p>
+      <h1 class="title">Página no encontrada</h1>
+      <p class="sub">La dirección que intentaste abrir no existe o cambió de lugar.</p>
+
+      <div class="actions">
+        <button type="button" class="btn btn-home" id="btn-home">Volver al inicio</button>
+        <a href="#" class="link-support" onclick="return false;">Si pensás que es un error, contactá al admin</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      document.getElementById('btn-theme').addEventListener('click', function () {
+        var curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        var next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+      });
+
+      document.getElementById('btn-home').addEventListener('click', function () {
+        var target = 'login.html';
+        try {
+          var raw = localStorage.getItem('multicompra:user');
+          if (raw) {
+            var u = JSON.parse(raw);
+            if (u && u.rol === 'cajera')     target = 'cajera/dashboard.html';
+            if (u && u.rol === 'supervisor') target = 'supervisor/dashboard.html';
+            if (u && u.rol === 'admin')      target = 'admin/dashboard.html';
+          }
+        } catch (e) {}
+        window.location.href = target;
+      });
+    })();
+  </script>
+</body>
+</html>

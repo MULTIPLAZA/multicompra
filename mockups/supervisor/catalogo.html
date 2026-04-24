@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Consulta de stock</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    .search-wrap {
+      padding: var(--sp-5) var(--sp-4) var(--sp-3);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+    }
+    .search-host {
+      max-width: 820px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .input-search-big {
+      height: 56px;
+      padding: 0 var(--sp-4) 0 52px;
+      font-size: var(--fs-lg);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      width: 100%;
+      font-family: var(--font-sans);
+    }
+    .input-search-big:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Dropdown de resultados */
+    .search-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      max-height: 360px;
+      overflow-y: auto;
+      z-index: 20;
+      display: none;
+    }
+    .search-results.visible { display: block; }
+    .search-result-item {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+    .search-result-item:last-child { border-bottom: 0; }
+    .search-result-item:hover { background: var(--bg-elev-2); }
+    .search-result-item.active { background: var(--primary-soft); }
+    .search-result-barras {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      min-width: 130px;
+    }
+    .search-result-nombre { flex: 1; color: var(--text); }
+    .search-result-stock {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .search-result-stock strong { color: var(--text-strong); }
+
+    .search-hint {
+      max-width: 820px;
+      margin: var(--sp-2) auto 0;
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .search-hint .kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      border: 1px solid var(--border-strong);
+      border-bottom-width: 2px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      background: var(--bg-elev);
+      color: var(--text-muted);
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--sp-4);
+    }
+    .content-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .card-head h2 {
+      font-size: var(--fs-md);
+      margin: 0;
+      flex: 1;
+    }
+    .card-body { padding: var(--sp-4); }
+
+    .product-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: var(--sp-3) var(--sp-4);
+      align-items: center;
+    }
+    .product-thumb {
+      width: 64px; height: 64px;
+      border-radius: var(--radius);
+      background: var(--bg-elev-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-subtle);
+    }
+    .product-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .product-nombre {
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .product-barras {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .product-meta {
+      display: flex;
+      gap: var(--sp-3);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .product-meta strong {
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .product-stock-box {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+    .product-stock-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+    }
+    .product-stock-total {
+      font-size: var(--fs-2xl);
+      font-weight: 700;
+      color: var(--text-strong);
+    }
+
+    /* Tabla stock por local */
+    .stock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    .stock-table thead th {
+      text-align: left;
+      padding: var(--sp-2) var(--sp-3);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev-2);
+      font-weight: 600;
+    }
+    .stock-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+    }
+    .stock-table .col-num {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .stock-table tr.row-central td {
+      background: var(--primary-soft);
+    }
+    .stock-table tr.row-central .col-nombre strong { color: var(--primary); }
+    .stock-cell-zero { color: var(--text-muted); }
+    .stock-cell-neg { color: var(--danger); font-weight: 600; }
+    .local-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .local-chip-icon {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+    }
+
+    .timestamp-host {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      padding: var(--sp-10) var(--sp-4);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state svg {
+      width: 48px; height: 48px;
+      color: var(--text-subtle);
+      margin: 0 auto var(--sp-3);
+    }
+    .empty-state h3 {
+      color: var(--text-strong);
+      font-size: var(--fs-lg);
+      margin-bottom: var(--sp-2);
+    }
+
+    /* Último movimiento decorativo */
+    .mov-item {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-2) 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: var(--fs-sm);
+      color: var(--text);
+    }
+    .mov-item:last-child { border-bottom: 0; }
+    .mov-item .mov-ts {
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      min-width: 120px;
+    }
+    .mov-item .mov-qty {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .mov-item .mov-qty.neg { color: var(--danger); }
+    .mov-item .mov-qty.pos { color: var(--success); }
+  </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="dashboard.html">Inicio</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">Catálogo</span>
+    </nav>
+    <div class="grow"></div>
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="dashboard.html" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="dashboard.html" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="nav-item-label">OPs pendientes</span>
+      </a>
+      <a class="nav-item" href="oc-lista.html" data-label="OCs">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg></span>
+        <span class="nav-item-label">OCs</span>
+      </a>
+      <a class="nav-item" href="compra-lista.html" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span class="nav-item-label">Compras</span>
+      </a>
+      <a class="nav-item active" href="catalogo.html" data-label="Catálogo" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <h1 class="screen-title">Consulta de stock</h1>
+      <span class="text-sm text-muted">Buscá un producto para ver su stock en central y por local.</span>
+    </div>
+
+    <!-- Buscador grande -->
+    <div class="search-wrap">
+      <div class="search-host">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="buscador" class="input-search-big" placeholder="Buscar por código de barra o descripción&hellip;" autocomplete="off" aria-label="Buscar producto" />
+        <div class="search-results" id="search-results" role="listbox"></div>
+      </div>
+      <p class="search-hint">
+        Tipeá al menos 2 caracteres.
+        <span class="kbd">↑</span><span class="kbd">↓</span> para navegar resultados &middot;
+        <span class="kbd">Enter</span> para elegir.
+      </p>
+    </div>
+
+    <div class="content-area">
+      <div class="content-wrap" id="content-wrap">
+
+        <!-- Empty inicial -->
+        <div class="empty-state" id="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <h3>Sin producto seleccionado</h3>
+          <p>Buscá un producto para ver su stock por local.</p>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script type="module">
+  import { productos, locales } from '../shared/mock-data.js';
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  // =====================================================================
+  // Buscador con dropdown
+  // =====================================================================
+  const input = document.getElementById('buscador');
+  const resultsEl = document.getElementById('search-results');
+  const contentWrap = document.getElementById('content-wrap');
+  let currentIdx = -1;
+  let currentResults = [];
+
+  function buscar(q) {
+    q = q.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return productos.filter(p => {
+      // startsWith por código, includes por descripción (D28)
+      const byBarras = p.barras.toLowerCase().startsWith(q);
+      const byNombre = p.nombre.toLowerCase().includes(q);
+      return byBarras || byNombre;
+    }).slice(0, 12);
+  }
+
+  function renderResults() {
+    if (currentResults.length === 0) {
+      resultsEl.innerHTML = `<div style="padding: var(--sp-3); color: var(--text-muted); font-size: var(--fs-sm);">Sin coincidencias</div>`;
+      resultsEl.classList.add('visible');
+      return;
+    }
+    resultsEl.innerHTML = currentResults.map((p, i) => `
+      <div class="search-result-item ${i === currentIdx ? 'active' : ''}" data-idx="${i}" role="option" aria-selected="${i === currentIdx}">
+        <span class="search-result-barras">${p.barras}</span>
+        <span class="search-result-nombre">${p.nombre}</span>
+        <span class="search-result-stock">Central: <strong>${p.stockCentral}</strong></span>
+      </div>
+    `).join('');
+    resultsEl.classList.add('visible');
+  }
+
+  function elegir(p) {
+    resultsEl.classList.remove('visible');
+    input.value = p.nombre;
+    renderProducto(p);
+  }
+
+  input.addEventListener('input', () => {
+    currentResults = buscar(input.value);
+    currentIdx = currentResults.length > 0 ? 0 : -1;
+    if (input.value.trim().length < 2) {
+      resultsEl.classList.remove('visible');
+    } else {
+      renderResults();
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (!resultsEl.classList.contains('visible')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (currentResults.length === 0) return;
+      currentIdx = (currentIdx + 1) % currentResults.length;
+      renderResults();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (currentResults.length === 0) return;
+      currentIdx = (currentIdx - 1 + currentResults.length) % currentResults.length;
+      renderResults();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentIdx >= 0 && currentResults[currentIdx]) {
+        elegir(currentResults[currentIdx]);
+      }
+    } else if (e.key === 'Escape') {
+      resultsEl.classList.remove('visible');
+    }
+  });
+
+  resultsEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.search-result-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    if (currentResults[idx]) elegir(currentResults[idx]);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.search-host')) return;
+    resultsEl.classList.remove('visible');
+  });
+
+  // =====================================================================
+  // Render producto elegido
+  // =====================================================================
+  function nowTs() {
+    const d = new Date();
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function renderProducto(p) {
+    const totalLocales = locales.reduce((s, l) => s + (p.stockPorLocal[l.id] || 0), 0);
+    const grandTotal = totalLocales + Math.max(0, p.stockCentral);
+    const tsAhora = nowTs();
+
+    // Filas: central primero, después los 10 locales
+    const filas = [];
+    filas.push(`
+      <tr class="row-central">
+        <td class="col-nombre">
+          <div class="local-chip">
+            <span class="local-chip-icon" style="background: var(--primary); color: var(--primary-on);">CE</span>
+            <strong>Depósito Central</strong>
+          </div>
+        </td>
+        <td class="col-num">
+          ${p.stockCentral < 0
+            ? `<span class="stock-cell-neg">${p.stockCentral}</span>`
+            : `<strong>${p.stockCentral}</strong>`}
+        </td>
+      </tr>
+    `);
+    locales.forEach(l => {
+      const q = p.stockPorLocal[l.id];
+      const qTxt = q == null ? '—' : q;
+      const cls = q === 0 ? 'stock-cell-zero' : (q < 0 ? 'stock-cell-neg' : '');
+      filas.push(`
+        <tr>
+          <td class="col-nombre">
+            <div class="local-chip">
+              <span class="local-chip-icon">${l.codigo}</span>
+              ${l.nombre}
+            </div>
+          </td>
+          <td class="col-num"><span class="${cls}">${qTxt}</span></td>
+        </tr>
+      `);
+    });
+
+    contentWrap.innerHTML = `
+      <section class="card" aria-label="Información del producto">
+        <header class="card-head">
+          <h2>Producto</h2>
+          <div class="timestamp-host">
+            <span class="chip chip-timestamp" id="chip-ts" title="Timestamp del snapshot de stock">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Stock al ${tsAhora}
+            </span>
+            <button class="btn btn-ghost btn-icon btn-sm" id="btn-refresh" aria-label="Refrescar stock" title="Refrescar snapshot">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="product-card">
+            <div class="product-thumb" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            </div>
+            <div class="product-info">
+              <span class="product-nombre">${p.nombre}</span>
+              <span class="product-barras">${p.barras}</span>
+              <div class="product-meta">
+                <span>Costo: <strong>Gs. ${p.costo.toLocaleString('es-PY')}</strong></span>
+                <span>Precio sug.: <strong>Gs. ${p.precio.toLocaleString('es-PY')}</strong></span>
+              </div>
+            </div>
+            <div class="product-stock-box">
+              <div class="product-stock-label">Total cadena</div>
+              <div class="product-stock-total">${grandTotal}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Stock por local">
+        <header class="card-head">
+          <h2>Stock por ubicación</h2>
+          <span class="text-sm text-muted">${locales.length} locales + depósito central</span>
+        </header>
+        <div class="card-body" style="padding: 0;">
+          <table class="stock-table">
+            <thead>
+              <tr>
+                <th>Ubicación</th>
+                <th class="col-num" style="width: 140px;">Unidades</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filas.join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Últimos movimientos">
+        <header class="card-head">
+          <h2>Últimos movimientos</h2>
+          <span class="text-sm text-muted">Referencial (viene del sistema base)</span>
+        </header>
+        <div class="card-body">
+          <div class="mov-item">
+            <span class="mov-ts">22/04 10:15</span>
+            <span style="flex: 1;">Venta &middot; Shopping del Sol</span>
+            <span class="mov-qty neg">-2</span>
+          </div>
+          <div class="mov-item">
+            <span class="mov-ts">21/04 16:30</span>
+            <span style="flex: 1;">Traslado Central → Villa Morra</span>
+            <span class="mov-qty">&plusmn;5</span>
+          </div>
+          <div class="mov-item">
+            <span class="mov-ts">20/04 09:40</span>
+            <span style="flex: 1;">Compra registrada &middot; COMP-0015</span>
+            <span class="mov-qty pos">+40</span>
+          </div>
+          <div class="mov-item">
+            <span class="mov-ts">18/04 13:22</span>
+            <span style="flex: 1;">Venta &middot; Fernando de la Mora</span>
+            <span class="mov-qty neg">-1</span>
+          </div>
+        </div>
+      </section>
+    `;
+
+    // Refresh button decorativo
+    const btnRef = document.getElementById('btn-refresh');
+    if (btnRef) btnRef.addEventListener('click', () => {
+      const chip = document.getElementById('chip-ts');
+      if (chip) {
+        chip.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Stock al ${nowTs()}
+        `;
+      }
+    });
+  }
+
+  // =====================================================================
+  // App shell
+  // =====================================================================
+  const app = document.getElementById('app');
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    app.classList.toggle('sidebar-collapsed');
+  });
+  initSidebarClickOutside();
+
+  const THEME_KEY = 'multicompra:theme';
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  // Focus buscador al cargar
+  setTimeout(() => input.focus(), 100);
+</script>
+
+</body>
+</html>

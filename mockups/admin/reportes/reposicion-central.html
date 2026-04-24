@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Reposición desde central</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../../shared/styles.css" />
+  <style>
+    :root {
+      --admin-header-h: 56px;
+      --admin-bottombar-h: 60px;
+      --admin-sidebar-w: 220px;
+    }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .admin-header {
+      position: sticky; top: 0; z-index: 10;
+      height: var(--admin-header-h);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: var(--sp-2);
+      padding: 0 var(--sp-3);
+    }
+    .admin-header .logo { font-size: var(--fs-md); font-weight: 700; color: var(--primary); }
+    .admin-title {
+      font-size: var(--fs-md); font-weight: 600; color: var(--text-strong);
+      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    @media (max-width: 480px) {
+      .admin-header .logo .logo-text { display: none; }
+      .admin-header .user-chip .user-name { display: none; }
+    }
+
+    .admin-layout { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .admin-main {
+      flex: 1;
+      padding: var(--sp-4) var(--sp-3);
+      padding-bottom: calc(var(--admin-bottombar-h) + var(--sp-4));
+      max-width: 1300px; width: 100%;
+      margin: 0 auto;
+      display: flex; flex-direction: column; gap: var(--sp-4);
+    }
+
+    .breadcrumb {
+      display: flex; align-items: center; gap: var(--sp-1);
+      font-size: var(--fs-sm); color: var(--text-muted);
+    }
+    .breadcrumb a { color: var(--primary); }
+    .page-title { font-size: var(--fs-xl); font-weight: 700; color: var(--text-strong); margin: 0; }
+    .page-title-sub { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.5; }
+
+    .filters-card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--sp-3);
+    }
+    .periodo-chips { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+    .chip-period {
+      padding: 6px var(--sp-3); background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
+      font-size: var(--fs-sm); cursor: pointer;
+    }
+    .chip-period:hover { background: var(--border); }
+    .chip-period.active {
+      background: var(--primary-soft); border-color: var(--primary);
+      color: var(--primary); font-weight: 600;
+    }
+
+    .kpi-hero {
+      background: var(--bg-elev);
+      border: 1px solid var(--success);
+      border-radius: var(--radius);
+      padding: var(--sp-5);
+      background: linear-gradient(135deg, var(--success-soft), var(--bg-elev) 80%);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--sp-4); flex-wrap: wrap;
+    }
+    [data-theme="dark"] .kpi-hero { background: var(--bg-elev); }
+    .kpi-hero-label {
+      font-size: var(--fs-xs); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+    .kpi-hero-value {
+      font-size: 44px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--success);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .kpi-hero-value small {
+      font-size: var(--fs-md);
+      color: var(--success-text);
+      font-weight: 500;
+      margin-left: var(--sp-2);
+    }
+    [data-theme="dark"] .kpi-hero-value small { color: var(--success); }
+    .kpi-hero-sub {
+      margin-top: var(--sp-2);
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .kpi-hero-sub strong { color: var(--text-strong); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--sp-3);
+    }
+    .kpi-sm {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: var(--sp-3);
+    }
+    .kpi-sm-label {
+      font-size: var(--fs-xs); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600;
+    }
+    .kpi-sm-value {
+      font-size: 22px;
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong); font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--sp-3); border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: var(--fs-md); font-weight: 600; color: var(--text-strong); }
+
+    /* SVG chart container */
+    .chart-wrap {
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elev);
+    }
+    .chart-svg { width: 100%; height: 200px; display: block; }
+    .chart-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: var(--sp-2);
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+
+    .table-scroll { overflow-x: auto; }
+    .rpt-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      font-size: var(--fs-sm); min-width: 640px;
+    }
+    .rpt-table thead th {
+      text-align: left; padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2); color: var(--text-muted);
+      font-weight: 600; font-size: var(--fs-xs);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .rpt-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+    }
+    .rpt-table tbody tr:last-child td { border-bottom: none; }
+    .rpt-table tbody tr:hover td { background: var(--bg-elev-2); }
+    .col-num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .col-ahorro { color: var(--success); font-weight: 600; }
+    .cod-mono {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-muted); display: block; margin-top: 1px;
+    }
+    .prod-name { font-weight: 500; color: var(--text-strong); }
+
+    /* Bottombar mobile / sidebar desktop */
+    .admin-bottombar {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      height: var(--admin-bottombar-h);
+      background: var(--bg-elev); border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      z-index: 20;
+    }
+    .bb-item {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 10px; font-weight: 500;
+    }
+    .bb-item svg { width: 20px; height: 20px; }
+    .bb-item.active { color: var(--primary); }
+    .bb-item:hover { color: var(--text-strong); text-decoration: none; }
+    .bb-item.active:hover { color: var(--primary); }
+
+    @media (min-width: 1024px) {
+      .admin-layout { flex-direction: row; }
+      .admin-bottombar {
+        position: sticky; top: var(--admin-header-h);
+        height: calc(100vh - var(--admin-header-h));
+        width: var(--admin-sidebar-w);
+        border-top: 0; border-right: 1px solid var(--border);
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto 1fr;
+        align-content: start;
+        padding: var(--sp-3) var(--sp-2); gap: var(--sp-1);
+        flex-shrink: 0;
+      }
+      .bb-item {
+        flex-direction: row; justify-content: flex-start;
+        gap: var(--sp-3); padding: var(--sp-2) var(--sp-3);
+        border-radius: var(--radius); font-size: var(--fs-base);
+      }
+      .bb-item.active { background: var(--primary-soft); }
+      .bb-item svg { width: 18px; height: 18px; }
+      .admin-main { padding: var(--sp-5); padding-bottom: var(--sp-8); }
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="admin-header">
+    <div class="logo"><span class="logo-text">MultiCompra</span></div>
+    <div class="admin-title">Reporte · Reposición desde central</div>
+    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema">
+      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="user-chip"><span class="avatar">DG</span><span class="user-name">Diego</span></div>
+  </header>
+
+  <div class="admin-layout">
+
+    <nav class="admin-bottombar">
+      <a class="bb-item" href="../dashboard.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="bb-item active" href="reposicion-central.html" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Reportes</span>
+      </a>
+      <a class="bb-item" href="../config/locales.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+        <span>Config</span>
+      </a>
+      <a class="bb-item" href="../../logout.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Salir</span>
+      </a>
+    </nav>
+
+    <main class="admin-main">
+
+      <div>
+        <div class="breadcrumb">
+          <a href="../dashboard.html">Dashboard</a> <span>/</span> <span>Reportes</span> <span>/</span> <span>Reposición desde central</span>
+        </div>
+        <h1 class="page-title" style="margin-top: var(--sp-2);">Reposición desde central</h1>
+        <p class="page-title-sub">
+          Mide cuánto se decidió reponer desde el depósito central en vez de comprar al proveedor. El traslado físico lo maneja el sistema base; acá vemos el ahorro estimado evitando compras duplicadas.
+        </p>
+      </div>
+
+      <section class="filters-card">
+        <div class="periodo-chips">
+          <button type="button" class="chip-period" data-periodo="7d">Últimos 7 días</button>
+          <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
+          <button type="button" class="chip-period active" data-periodo="3m">Últimos 3 meses</button>
+          <button type="button" class="chip-period" data-periodo="anio">Este año</button>
+          <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
+        </div>
+      </section>
+
+      <!-- KPI hero -->
+      <div class="kpi-hero">
+        <div>
+          <div class="kpi-hero-label">Gs ahorrados por reposición</div>
+          <div class="kpi-hero-value"><span id="kpi-ahorro">-</span><small>Gs</small></div>
+          <div class="kpi-hero-sub"><strong id="kpi-productos">-</strong> productos · <strong id="kpi-unidades">-</strong> unidades repuestas desde central</div>
+        </div>
+        <div style="min-width: 240px; max-width: 320px;">
+          <div class="chart-wrap" style="padding: 0; background: transparent;">
+            <svg class="chart-svg" id="hero-chart" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs secundarios -->
+      <div class="kpi-grid">
+        <div class="kpi-sm">
+          <div class="kpi-sm-label">Productos únicos</div>
+          <div class="kpi-sm-value" id="kpi2-productos">-</div>
+        </div>
+        <div class="kpi-sm">
+          <div class="kpi-sm-label">Total unidades</div>
+          <div class="kpi-sm-value" id="kpi2-unidades">-</div>
+        </div>
+        <div class="kpi-sm">
+          <div class="kpi-sm-label">Veces reposiciones</div>
+          <div class="kpi-sm-value" id="kpi2-veces">-</div>
+        </div>
+      </div>
+
+      <!-- Tendencia -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">Tendencia mensual de ahorro</div>
+        </div>
+        <div class="chart-wrap">
+          <svg class="chart-svg" id="trend-chart" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="chart-legend" id="trend-legend"></div>
+        </div>
+      </section>
+
+      <!-- Tabla -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">Detalle por producto</div>
+        </div>
+        <div class="table-scroll">
+          <table class="rpt-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th style="text-align: right;">Veces</th>
+                <th style="text-align: right;">Unidades</th>
+                <th style="text-align: right;">Ahorro (Gs)</th>
+              </tr>
+            </thead>
+            <tbody id="rpt-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { productos, reporteReposicionCentral, fmtGs } from '../../shared/mock-data.js';
+
+    const r = reporteReposicionCentral;
+    const prodById = new Map(productos.map(p => [p.id, p]));
+
+    // KPIs
+    document.getElementById('kpi-ahorro').textContent = fmtGs(r.totalAhorroGs);
+    document.getElementById('kpi-productos').textContent = r.totalProductos;
+    document.getElementById('kpi-unidades').textContent = r.totalUnidades;
+    document.getElementById('kpi2-productos').textContent = r.totalProductos;
+    document.getElementById('kpi2-unidades').textContent = r.totalUnidades;
+    const totalVeces = r.filas.reduce((s, x) => s + x.veces, 0);
+    document.getElementById('kpi2-veces').textContent = totalVeces;
+
+    // Hero spark — mini area
+    const heroVals = r.tendenciaMensual.map(x => x.ahorroGs);
+    const heroMax = Math.max(...heroVals);
+    const heroPoints = heroVals.map((v, i) => {
+      const x = (i / (heroVals.length - 1)) * 320;
+      const y = 120 - (v / heroMax) * 100;
+      return `${x},${y}`;
+    }).join(' ');
+    document.getElementById('hero-chart').innerHTML = `
+      <polyline points="${heroPoints}" fill="none" stroke="var(--success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <polygon points="0,120 ${heroPoints} 320,120" fill="var(--success)" opacity="0.15"/>
+    `;
+
+    // Tendencia mensual — barras
+    const trendVals = r.tendenciaMensual.map(x => x.ahorroGs);
+    const trendMax = Math.max(...trendVals);
+    const barW = 600 / trendVals.length;
+    const bars = trendVals.map((v, i) => {
+      const h = (v / trendMax) * 180;
+      const x = i * barW + barW * 0.15;
+      const y = 200 - h;
+      const w = barW * 0.7;
+      const isLast = i === trendVals.length - 1;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${isLast ? 'var(--success)' : 'var(--primary)'}" opacity="${isLast ? 1 : 0.7}" rx="3"/>`;
+    }).join('');
+    document.getElementById('trend-chart').innerHTML = bars;
+    document.getElementById('trend-legend').innerHTML = r.tendenciaMensual.map(m =>
+      `<span>${m.mes} · <strong style="color: var(--text-strong); font-family: var(--font-mono);">${fmtGs(m.ahorroGs)}</strong></span>`
+    ).join('');
+
+    // Tabla
+    const filas = [...r.filas].sort((a, b) => b.ahorroGs - a.ahorroGs);
+    document.getElementById('rpt-body').innerHTML = filas.map(f => {
+      const p = prodById.get(f.productoId);
+      if (!p) return '';
+      return `
+        <tr>
+          <td>
+            <div class="prod-name">${p.nombre}</div>
+            <span class="cod-mono">${p.barras}</span>
+          </td>
+          <td class="col-num">${f.veces}</td>
+          <td class="col-num">${f.unidades}</td>
+          <td class="col-num col-ahorro">${fmtGs(f.ahorroGs)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Período
+    document.querySelectorAll('.chip-period').forEach(c => {
+      c.addEventListener('click', () => {
+        document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+      });
+    });
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    });
+  </script>
+
+</body>
+</html>

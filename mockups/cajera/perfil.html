@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Perfil (Carolina)</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    .cajera-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .cajera-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--sp-4);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+    }
+    .cajera-header .logo { font-size: var(--fs-md); gap: var(--sp-2); }
+    .cajera-hello {
+      text-align: center;
+      font-size: var(--fs-xl);
+      font-weight: 600;
+      color: var(--text-strong);
+    }
+    .cajera-hello .local { color: var(--text-muted); font-weight: 500; }
+    .cajera-hello .sep { color: var(--text-subtle); margin: 0 var(--sp-2); }
+    .cajera-header .right { display: flex; align-items: center; gap: var(--sp-2); justify-self: end; }
+    .cajera-header .avatar { width: 36px; height: 36px; font-size: var(--fs-md); }
+    .cajera-header .btn-logout { height: 36px; font-size: var(--fs-md); }
+
+    .cajera-topbar {
+      display: flex;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-6);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      justify-content: center;
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-6);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      color: var(--text-muted);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      text-decoration: none;
+      min-width: 180px;
+      justify-content: center;
+    }
+    .tab-btn:hover { background: var(--bg-elev-2); color: var(--text-strong); text-decoration: none; }
+    .tab-btn.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-btn svg { width: 20px; height: 20px; }
+
+    .cajera-main {
+      flex: 1;
+      padding: var(--sp-6);
+      display: flex;
+      justify-content: center;
+    }
+    .cajera-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+
+    .page-title {
+      font-size: var(--fs-2xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      margin-bottom: var(--sp-2);
+    }
+
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-5) var(--sp-6);
+    }
+    .card h2 {
+      font-size: var(--fs-lg);
+      font-weight: 600;
+      color: var(--text-strong);
+      margin-bottom: var(--sp-4);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .card h2 svg {
+      width: 20px; height: 20px;
+      color: var(--text-muted);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--sp-4);
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+    .info-value {
+      font-size: var(--fs-md);
+      color: var(--text-strong);
+      font-weight: 500;
+    }
+
+    .pref-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-3) 0;
+      border-bottom: 1px solid var(--border);
+      gap: var(--sp-3);
+    }
+    .pref-row:last-child { border-bottom: none; }
+    .pref-main { display: flex; flex-direction: column; gap: 2px; }
+    .pref-name {
+      font-size: var(--fs-md);
+      font-weight: 500;
+      color: var(--text-strong);
+    }
+    .pref-hint {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    .theme-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-1) var(--sp-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--bg-elev-2);
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      font-weight: 500;
+    }
+    .theme-switch:hover { background: var(--border); color: var(--text-strong); }
+    .theme-switch svg { width: 16px; height: 16px; }
+    .theme-switch .icon-sun  { display: none; }
+    .theme-switch .icon-moon { display: inline; }
+    [data-theme="dark"] .theme-switch .icon-sun  { display: inline; }
+    [data-theme="dark"] .theme-switch .icon-moon { display: none; }
+
+    .idioma-select {
+      height: 36px;
+      padding: 0 var(--sp-3);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      color: var(--text-muted);
+      font-size: var(--fs-md);
+      cursor: not-allowed;
+    }
+
+    .btn-change {
+      background: var(--bg-elev-2);
+      color: var(--text-strong);
+      border: 1px solid var(--border-strong);
+      padding: 0 var(--sp-4);
+      height: 40px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: var(--fs-md);
+      font-weight: 500;
+    }
+    .btn-change:hover {
+      background: var(--border);
+    }
+
+    .logout-section {
+      display: flex;
+      justify-content: center;
+      padding-top: var(--sp-6);
+    }
+    .btn-logout-big {
+      background: transparent;
+      color: var(--danger);
+      border: 2px solid var(--danger);
+      height: 52px;
+      padding: 0 var(--sp-6);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .btn-logout-big:hover {
+      background: var(--danger-soft);
+      text-decoration: none;
+    }
+
+    /* Modal cambiar contraseña */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal {
+      width: 90%;
+      max-width: 480px;
+      background: var(--bg-elev);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-5) var(--sp-6);
+      box-shadow: var(--shadow-lg);
+    }
+    .modal h3 {
+      font-size: var(--fs-xl);
+      color: var(--text-strong);
+      margin-bottom: var(--sp-4);
+    }
+    .modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-1);
+      margin-bottom: var(--sp-4);
+    }
+    .modal-field label {
+      font-size: var(--fs-sm);
+      font-weight: 500;
+      color: var(--text-strong);
+    }
+    .modal-field input {
+      height: 40px;
+      padding: 0 var(--sp-3);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      font-size: var(--fs-md);
+    }
+    .modal-field input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--sp-3);
+      margin-top: var(--sp-5);
+    }
+
+    @media (max-width: 900px) {
+      .cajera-header {
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+      }
+      .cajera-hello { grid-column: 1 / -1; grid-row: 2; text-align: left; font-size: var(--fs-lg); }
+      .cajera-topbar { overflow-x: auto; justify-content: flex-start; }
+      .tab-btn { min-width: 140px; }
+      .cajera-main { padding: var(--sp-3); }
+      .card { padding: var(--sp-4); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cajera-shell">
+
+  <header class="cajera-header">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/>
+        <circle cx="9" cy="21" r="1.5"/>
+        <circle cx="18" cy="21" r="1.5"/>
+      </svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <div class="cajera-hello">
+      Hola <span id="hello-name">Carolina</span>
+      <span class="sep">&middot;</span>
+      <span class="local" id="hello-local">Shopping del Sol</span>
+    </div>
+    <div class="right">
+      <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema">
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <div class="avatar" title="Carolina">CA</div>
+      <a href="../logout.html" class="btn btn-ghost btn-logout">Salir</a>
+    </div>
+  </header>
+
+  <nav class="cajera-topbar">
+    <a href="dashboard.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+      Inicio
+    </a>
+    <a href="op-nueva.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Nueva OP
+    </a>
+    <a href="op-historial.html" class="tab-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Historial
+    </a>
+    <a href="perfil.html" class="tab-btn active" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+      Perfil
+    </a>
+  </nav>
+
+  <main class="cajera-main">
+    <div class="cajera-container">
+      <h1 class="page-title">Mi perfil</h1>
+
+      <!-- Datos personales -->
+      <section class="card">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+          Datos personales
+        </h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Nombre</span>
+            <span class="info-value" id="info-nombre">Carolina Benítez</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value" id="info-email">carolina.benitez@multicompra.com.py</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Local asignado</span>
+            <span class="info-value" id="info-localp">Shopping del Sol</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Código de local</span>
+            <span class="info-value" id="info-localcod" style="font-family: var(--font-mono);">SDS</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Fecha de alta</span>
+            <span class="info-value">15/11/2025</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Rol</span>
+            <span class="info-value">Cajera</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seguridad -->
+      <section class="card">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Seguridad
+        </h2>
+        <div class="pref-row">
+          <div class="pref-main">
+            <div class="pref-name">Contraseña</div>
+            <div class="pref-hint">Última vez cambiada hace 3 meses.</div>
+          </div>
+          <button type="button" class="btn-change" id="btn-pwd">Cambiar contraseña</button>
+        </div>
+      </section>
+
+      <!-- Preferencias -->
+      <section class="card">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Preferencias
+        </h2>
+
+        <div class="pref-row">
+          <div class="pref-main">
+            <div class="pref-name">Tema de pantalla</div>
+            <div class="pref-hint">Claro u oscuro. Se acuerda entre sesiones.</div>
+          </div>
+          <button type="button" class="theme-switch" id="btn-theme-pref">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span id="theme-label">Oscuro</span>
+          </button>
+        </div>
+
+        <div class="pref-row">
+          <div class="pref-main">
+            <div class="pref-name">Idioma</div>
+            <div class="pref-hint">Por ahora solo español paraguayo.</div>
+          </div>
+          <select class="idioma-select" disabled>
+            <option>Español (PY)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Logout -->
+      <div class="logout-section">
+        <a href="../logout.html" class="btn-logout-big">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Cerrar sesión
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal cambiar contraseña -->
+<div class="modal-backdrop" id="modal-pwd">
+  <div class="modal">
+    <h3>Cambiar contraseña</h3>
+    <div class="modal-field">
+      <label for="pwd-actual">Contraseña actual</label>
+      <input type="password" id="pwd-actual" autocomplete="current-password" />
+    </div>
+    <div class="modal-field">
+      <label for="pwd-nueva">Nueva contraseña</label>
+      <input type="password" id="pwd-nueva" autocomplete="new-password" />
+    </div>
+    <div class="modal-field">
+      <label for="pwd-confirmar">Confirmar nueva contraseña</label>
+      <input type="password" id="pwd-confirmar" autocomplete="new-password" />
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="pwd-cancelar">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="pwd-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { cajeraActual } from '../shared/mock-data.js';
+
+  document.getElementById('hello-name').textContent = cajeraActual.nombre;
+  document.getElementById('hello-local').textContent = cajeraActual.localNombre;
+  document.querySelector('.cajera-header .avatar').textContent = cajeraActual.iniciales;
+  document.getElementById('info-localp').textContent = cajeraActual.localNombre;
+  document.getElementById('info-localcod').textContent = cajeraActual.localCodigo;
+
+  // Theme toggle (header + preferencia) — sincronizados
+  function updateThemeLabel() {
+    const theme = document.documentElement.getAttribute('data-theme');
+    document.getElementById('theme-label').textContent = theme === 'dark' ? 'Oscuro' : 'Claro';
+  }
+  function toggleTheme() {
+    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    updateThemeLabel();
+  }
+  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+  document.getElementById('btn-theme-pref').addEventListener('click', toggleTheme);
+  updateThemeLabel();
+
+  // Modal cambiar contraseña
+  const modal = document.getElementById('modal-pwd');
+  document.getElementById('btn-pwd').addEventListener('click', () => modal.classList.add('visible'));
+  document.getElementById('pwd-cancelar').addEventListener('click', () => {
+    modal.classList.remove('visible');
+    document.getElementById('pwd-actual').value = '';
+    document.getElementById('pwd-nueva').value = '';
+    document.getElementById('pwd-confirmar').value = '';
+  });
+  document.getElementById('pwd-guardar').addEventListener('click', () => {
+    const actual = document.getElementById('pwd-actual').value;
+    const nueva = document.getElementById('pwd-nueva').value;
+    const conf = document.getElementById('pwd-confirmar').value;
+    if (!actual || !nueva || !conf) { alert('Completá los 3 campos.'); return; }
+    if (nueva !== conf) { alert('La nueva contraseña y la confirmación no coinciden.'); return; }
+    if (nueva.length < 6) { alert('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
+    alert('(Mock) Contraseña actualizada.');
+    modal.classList.remove('visible');
+    document.getElementById('pwd-actual').value = '';
+    document.getElementById('pwd-nueva').value = '';
+    document.getElementById('pwd-confirmar').value = '';
+  });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('visible');
+  });
+</script>
+
+</body>
+</html>

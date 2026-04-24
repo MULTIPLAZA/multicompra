@@ -352,21 +352,21 @@
         <span class="nav-item-label">OPs pendientes</span>
         <span class="nav-item-count" id="nav-count-ops">0</span>
       </a>
-      <a class="nav-item" href="oc-editar.html" data-label="OCs">
+      <a class="nav-item" href="oc-lista.html" data-label="OCs">
         <span class="nav-item-icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
         </span>
         <span class="nav-item-label">OCs</span>
         <span class="nav-item-count">3</span>
       </a>
-      <a class="nav-item" href="compra-verificar.html" data-label="Compras">
+      <a class="nav-item" href="compra-lista.html" data-label="Compras">
         <span class="nav-item-icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </span>
         <span class="nav-item-label">Compras</span>
         <span class="nav-item-count">2</span>
       </a>
-      <a class="nav-item" href="#" data-label="Catálogo">
+      <a class="nav-item" href="catalogo.html" data-label="Catálogo">
         <span class="nav-item-icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         </span>
@@ -455,15 +455,14 @@
       <div class="resumen-kpi">
         <span class="resumen-kpi-label">
           OCs abiertas
-          <!-- Placeholder: /supervisor/oc no existe como listado todavía -->
-          <a href="oc-editar.html" title="Ver OCs abiertas (placeholder)">ver</a>
+          <a href="oc-lista.html" title="Ver todas las OCs">ver</a>
         </span>
         <span class="resumen-kpi-value">3</span>
       </div>
       <div class="resumen-kpi">
         <span class="resumen-kpi-label">
           Compras pendientes verificar
-          <a href="compra-verificar.html">ver</a>
+          <a href="compra-lista.html">ver</a>
         </span>
         <span class="resumen-kpi-value">2</span>
       </div>
@@ -723,9 +722,8 @@
     if (e.target.closest('.badge')) return;
     const row = e.target.closest('.op-row');
     if (!row) return;
-    // Placeholder: la pantalla de detalle de OP no existe aún.
-    // Abrimos oc-nueva.html como link provisorio.
-    window.location.href = 'oc-nueva.html';
+    const opId = row.dataset.opId;
+    window.location.href = `op-detalle.html?id=${encodeURIComponent(opId)}`;
   });
 
   // =====================================================================

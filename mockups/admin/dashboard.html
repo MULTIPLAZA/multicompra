@@ -532,24 +532,24 @@
         </svg>
         <span>Dashboard</span>
       </a>
-      <a class="bb-item" href="#" title="Reportes (pendiente)">
+      <a class="bb-item" href="reportes/op-vs-compra-vs-venta.html" title="Reportes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
         <span>Reportes</span>
       </a>
-      <a class="bb-item" href="#" title="Configuración (pendiente)">
+      <a class="bb-item" href="config/locales.html" title="Configuración">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
         <span>Config</span>
       </a>
-      <a class="bb-item" href="#" title="Perfil (pendiente)">
+      <a class="bb-item" href="../logout.html" title="Cerrar sesión">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
-        <span>Perfil</span>
+        <span>Salir</span>
       </a>
     </nav>
 
@@ -558,7 +558,7 @@
 
       <!-- Fila 1: KPIs numéricos -->
       <section class="kpis" aria-label="Indicadores del mes">
-        <a class="kpi" href="#">
+        <a class="kpi" href="reportes/op-vs-compra-vs-venta.html">
           <div class="kpi-head">
             <span class="kpi-label">OPs este mes</span>
             <span class="kpi-icon" style="background: var(--primary-soft); color: var(--primary)">
@@ -569,7 +569,7 @@
           <div class="kpi-delta up" id="kpi-ops-delta">+12% vs mes pasado</div>
         </a>
 
-        <a class="kpi" href="#">
+        <a class="kpi" href="reportes/op-vs-compra-vs-venta.html">
           <div class="kpi-head">
             <span class="kpi-label">OCs cerradas</span>
             <span class="kpi-icon" style="background: var(--success-soft); color: var(--success-text)">
@@ -580,7 +580,7 @@
           <div class="kpi-delta up" id="kpi-ocs-delta">+20% vs mes pasado</div>
         </a>
 
-        <a class="kpi" href="#">
+        <a class="kpi" href="reportes/op-vs-compra-vs-venta.html">
           <div class="kpi-head">
             <span class="kpi-label">Gs gastados</span>
             <span class="kpi-icon" style="background: var(--warning-soft); color: var(--warning-text)">
@@ -591,7 +591,7 @@
           <div class="kpi-delta down" id="kpi-gs-delta">–5% vs mes pasado</div>
         </a>
 
-        <a class="kpi" href="#">
+        <a class="kpi" href="reportes/stock-muerto.html">
           <div class="kpi-head">
             <span class="kpi-label">Stock muerto evitado</span>
             <span class="kpi-icon" style="background: var(--primary-soft); color: var(--primary)">
@@ -618,7 +618,7 @@
         <section class="card" aria-label="Factor de ajuste por cajera">
           <div class="card-head">
             <h3 class="card-title">Ajuste del supervisor por cajera</h3>
-            <a href="#" class="card-link">Ver reporte</a>
+            <a href="reportes/op-vs-compra-vs-venta.html" class="card-link">Ver reporte</a>
           </div>
           <div class="bar-list" id="bar-list"></div>
           <p class="text-xs text-muted" style="margin-top: var(--sp-3)">
@@ -630,7 +630,7 @@
         <section class="card" aria-label="OPs fuera de protocolo">
           <div class="card-head">
             <h3 class="card-title">OPs fuera de protocolo</h3>
-            <a href="#" class="card-link">Ver detalle</a>
+            <a href="reportes/op-fuera-protocolo.html" class="card-link">Ver detalle</a>
           </div>
           <div class="chip-list" id="chip-list"></div>
           <p class="text-xs text-muted" style="margin-top: var(--sp-3)">
@@ -642,7 +642,7 @@
         <section class="card" aria-label="Reposición desde central">
           <div class="card-head">
             <h3 class="card-title">Reposición desde central</h3>
-            <a href="#" class="card-link">Ver detalle</a>
+            <a href="reportes/reposicion-central.html" class="card-link">Ver detalle</a>
           </div>
           <div class="repo-row">
             <div class="repo-text">

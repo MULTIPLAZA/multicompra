@@ -269,15 +269,32 @@
             <span class="arrow" aria-hidden="true">&rarr;</span>
           </div>
           <div class="path">/cajera/op/historial</div>
-          <div class="desc">Lista de las propias OPs del local asignado con filtros (rango de fechas, estado, búsqueda por producto). Badge de excepción con tooltip de motivo.</div>
+          <div class="desc">Lista de las propias OPs del local asignado con filtros (rango de fechas, estado, búsqueda por producto). Badge de excepción con tooltip de motivo. Click en una fila lleva al detalle.</div>
         </a>
-        <div class="link-card pending">
+        <a class="link-card" href="cajera/op-detalle.html?id=op-1055">
+          <div class="card-head">
+            <span class="card-title">Detalle de mi OP</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/cajera/op/:id</div>
+          <div class="desc">Vista read-only de una OP propia. Datos, motivo de excepción (si aplica), tabla de productos. Acción contextual según estado: continuar borrador, esperar, volver al historial.</div>
+        </a>
+        <a class="link-card" href="cajera/op-devuelta.html?id=op-1026">
+          <div class="card-head">
+            <span class="card-title">OP devuelta</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/cajera/op/:id/devuelta</div>
+          <div class="desc">Banner rojo + nota de Shirley bien visible + tabla de productos originales. Botón "Corregir y reenviar" precarga draft; "Anular" con modal de confirmación.</div>
+        </a>
+        <a class="link-card" href="cajera/perfil.html">
           <div class="card-head">
             <span class="card-title">Perfil</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
           </div>
           <div class="path">/cajera/perfil</div>
-          <div class="desc">Datos de la cajera, local asignado, cambio de contraseña.</div>
-        </div>
+          <div class="desc">Datos personales, local asignado, modal para cambiar contraseña, preferencia de tema (sol/luna sincronizado con header), idioma (solo ES, disabled) y botón cerrar sesión.</div>
+        </a>
       </div>
     </div>
 
@@ -295,6 +312,22 @@
           </div>
           <div class="path">/supervisor</div>
           <div class="desc">Home del supervisor (Decisión D4): lista directa de OPs pendientes, no bandeja con contadores. Saludo, chip con cuenta total, CTA "Armar nueva OC", filtros (excepción, viejas, local), devolución por modal y panel lateral con resumen + alertas.</div>
+        </a>
+        <a class="link-card" href="supervisor/op-detalle.html?id=op-1047">
+          <div class="card-head">
+            <span class="card-title">Detalle de OP</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/op/:id</div>
+          <div class="desc">Vista de una OP individual. Datos de cabecera (local, cajera, fecha), flag de excepción con motivo, tabla de productos pedidos (inmutables D16), timeline de auditoría y acciones según estado (Incluir en OC, Devolver).</div>
+        </a>
+        <a class="link-card" href="supervisor/oc-lista.html">
+          <div class="card-head">
+            <span class="card-title">Lista de OCs</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/oc</div>
+          <div class="desc">Listado histórico de OCs con filtros (búsqueda, proveedor, rango de fechas, multi-select de estado) y paginación. Click en fila lleva al editor (si abierta) o al detalle read-only (si cerrada).</div>
         </a>
         <a class="link-card" href="supervisor/oc-nueva.html">
           <div class="card-head">
@@ -320,6 +353,30 @@
           <div class="path">/supervisor/oc/:id/cerrar</div>
           <div class="desc">Confirmación de cierre: checklist de validación, resumen económico, desglose por producto, generación PDF/Excel y link wa.me prellenado.</div>
         </a>
+        <a class="link-card" href="supervisor/oc-detalle.html?id=oc-0039">
+          <div class="card-head">
+            <span class="card-title">Detalle OC cerrada</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/oc/:id</div>
+          <div class="desc">Vista read-only de una OC cerrada/enviada. Resumen económico, desglose por producto y acciones según estado (marcar enviada, registrar Compra, cerrar con faltante). Panel auditoría con timeline.</div>
+        </a>
+        <a class="link-card" href="supervisor/compra-lista.html">
+          <div class="card-head">
+            <span class="card-title">Lista de Compras</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/compra</div>
+          <div class="desc">Listado de Compras con filtros (búsqueda, proveedor, rango de fechas, multi-select de estado). Alerta prominente si hay compras con error de sincronización.</div>
+        </a>
+        <a class="link-card" href="supervisor/compra-nueva.html">
+          <div class="card-head">
+            <span class="card-title">Nueva Compra</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/compra/nueva</div>
+          <div class="desc">Paso previo a verificar: elegir la OC origen (cerrada / enviada / parcial) para precargar líneas, o usar "Sin OC vinculada" para casos excepcionales.</div>
+        </a>
         <a class="link-card" href="supervisor/compra-verificar.html">
           <div class="card-head">
             <span class="card-title">Verificar Compra</span>
@@ -327,6 +384,14 @@
           </div>
           <div class="path">/supervisor/compra/:id/verificar</div>
           <div class="desc">Carga física del comprobante contra la OC. Planilla con cantidad y costo real editables, estado por línea, agregar productos fuera de OC con justificación, decisión final parcial vs con faltante.</div>
+        </a>
+        <a class="link-card" href="supervisor/catalogo.html">
+          <div class="card-head">
+            <span class="card-title">Catálogo / Stock</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/supervisor/catalogo</div>
+          <div class="desc">Consulta de stock por producto. Buscador grande (código o descripción), card con info del producto + tabla de stock por cada uno de los 10 locales + depósito central, timestamp y botón refresh.</div>
         </a>
       </div>
     </div>
@@ -346,20 +411,112 @@
           <div class="path">/admin/dashboard</div>
           <div class="desc">Vista mobile-first con KPIs del mes (OPs, OCs, gasto, stock muerto evitado), alertas activas, ajuste por cajera, excepciones, reposición desde central y timeline de actividad. Bottombar en mobile, sidebar en desktop.</div>
         </a>
-        <div class="link-card pending">
+        <a class="link-card" href="admin/reportes/op-vs-compra-vs-venta.html">
           <div class="card-head">
-            <span class="card-title">Reportes</span>
+            <span class="card-title">OP vs Compra vs Venta</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
           </div>
-          <div class="path">/admin/reportes</div>
-          <div class="desc">Reportes detallados: OPs vs Compras vs Ventas, comportamiento por cajera, stock muerto por producto, serie temporal.</div>
-        </div>
-        <div class="link-card pending">
+          <div class="path">/admin/reportes/op-vs-compra-vs-venta</div>
+          <div class="desc">El reporte madre. Selector de período + filtros (producto, local, cajera), 4 KPIs (pedido, comprado, vendido, stock muerto evitado), tabla por producto con ratios y señal visual verde/ámbar/roja.</div>
+        </a>
+        <a class="link-card" href="admin/reportes/op-fuera-protocolo.html">
           <div class="card-head">
-            <span class="card-title">Configuración</span>
+            <span class="card-title">OPs fuera de protocolo</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
           </div>
-          <div class="path">/admin/config</div>
-          <div class="desc">Parámetros globales: día fijo de OP, locales, proveedores (ABM), cajeras activas/inactivas, usuarios del sistema.</div>
-        </div>
+          <div class="path">/admin/reportes/op-fuera-protocolo</div>
+          <div class="desc">OPs cargadas fuera del día habitual por cajera. KPI total + delta vs período anterior. Lista expandible con motivos. Cajeras con 3+ excepciones marcadas en ámbar.</div>
+        </a>
+        <a class="link-card" href="admin/reportes/reposicion-central.html">
+          <div class="card-head">
+            <span class="card-title">Reposición desde central</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/reportes/reposicion-central</div>
+          <div class="desc">Gs ahorrados reponiendo desde central en lugar de comprar. KPI hero + spark, gráfico de tendencia mensual (SVG inline) y tabla detallada por producto.</div>
+        </a>
+        <a class="link-card" href="admin/reportes/stock-muerto.html">
+          <div class="card-head">
+            <span class="card-title">Stock muerto</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/reportes/stock-muerto</div>
+          <div class="desc">Candidatos a sacar del catálogo. KPI de valor inmovilizado, tabla con stock total, última venta, días sin rotar y valor en Gs. Filtro "+30 días" y botón "Marcar para revisión".</div>
+        </a>
+        <a class="link-card" href="admin/reportes/devoluciones.html">
+          <div class="card-head">
+            <span class="card-title">Devoluciones</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/reportes/devoluciones</div>
+          <div class="desc">Devoluciones de OPs por cajera. KPI total + delta, split corregidas vs pendientes. Timeline expandible con la nota del supervisor en cada caso (verde=corregida, ámbar=pendiente).</div>
+        </a>
+        <a class="link-card" href="admin/config/locales.html">
+          <div class="card-head">
+            <span class="card-title">Config · Locales</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/config/locales</div>
+          <div class="desc">ABM de los 10 locales de la cadena. Tabla con código, dirección, ciudad, teléfono, cajeras asignadas y estado. Modal compartido para alta y edición.</div>
+        </a>
+        <a class="link-card" href="admin/config/cajeras.html">
+          <div class="card-head">
+            <span class="card-title">Config · Cajeras</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/config/cajeras</div>
+          <div class="desc">ABM de cajeras con filtro por local, reset de contraseña (envía temporal por email), activación/desactivación. 1 cajera por local.</div>
+        </a>
+        <a class="link-card" href="admin/config/proveedores.html">
+          <div class="card-head">
+            <span class="card-title">Config · Proveedores</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/config/proveedores</div>
+          <div class="desc">ABM de proveedores (nombre, RUC, contacto, OCs del último mes, estado). Link a historial filtrado de OCs. D31: alta solo acá, no inline.</div>
+        </a>
+        <a class="link-card" href="admin/config/parametros.html">
+          <div class="card-head">
+            <span class="card-title">Config · Parámetros</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/admin/config/parametros</div>
+          <div class="desc">Parámetros globales agrupados: día fijo OP, mín. motivo excepción (D29), snapshot max (D33), validaciones de Compra (D37/D38), umbrales de alertas y email admin.</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ============================ COMÚN / ERRORES ============================ -->
+    <div class="group">
+      <div class="group-head">
+        <h2>Común · Acceso y errores</h2>
+        <span class="pill">Cross-rol</span>
+      </div>
+      <div class="cards">
+        <a class="link-card" href="logout.html">
+          <div class="card-head">
+            <span class="card-title">Logout</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/logout</div>
+          <div class="desc">Pantalla simple centrada con spinner. Limpia `multicompra:user` y drafts de `localStorage`, redirige a login a los 500ms.</div>
+        </a>
+        <a class="link-card" href="sin-permiso.html">
+          <div class="card-head">
+            <span class="card-title">Sin permiso</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/sin-permiso</div>
+          <div class="desc">Acceso denegado. Ícono de candado, mensaje claro y botón "Volver al inicio" que redirige según rol leído de `localStorage`. Link secundario a logout.</div>
+        </a>
+        <a class="link-card" href="404.html">
+          <div class="card-head">
+            <span class="card-title">404 · No encontrada</span>
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </div>
+          <div class="path">/404</div>
+          <div class="desc">Pantalla de error con número grande. Botón "Volver al inicio" con ruta según rol. Link de soporte al admin.</div>
+        </a>
       </div>
     </div>
 
