@@ -342,15 +342,121 @@
     .audit-popover-close:hover { background: var(--bg-elev-2); color: var(--text-strong); }
 
     .table th.col-pidio,
-    .table td.col-pidio { width: 70px; }
+    .table td.col-pidio { width: 100px; }
+    .table th.col-sugerido,
+    .table td.col-sugerido { width: 78px; }
     .table th.col-stocklocal,
     .table td.col-stocklocal { width: 90px; }
     .table th.col-exc,
     .table td.col-exc { width: 78px; }
     .table th.col-decision,
-    .table td.col-decision { min-width: 340px; }
+    .table td.col-decision { min-width: 360px; }
     .table th.col-audit,
     .table td.col-audit { width: 48px; text-align: center; }
+
+    /* =====================================================================
+       D40 — Columna "Sugerido" + chips de sobre/sub pedido + botón "Usar sug"
+       ===================================================================== */
+
+    /* Celda "Pidió" con chip al lado */
+    .pidio-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .pidio-num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .chip-sugmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 6px;
+      height: 16px;
+      border-radius: var(--radius-pill);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      line-height: 1;
+    }
+    .chip-sugmark svg { width: 9px; height: 9px; }
+    .chip-sobre {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border-color: var(--warning);
+    }
+    .chip-sub {
+      background: var(--info-soft);
+      color: var(--info-text);
+      border-color: var(--info);
+    }
+    /* Sugerido value en grupo y sub-fila: mono, a la derecha */
+    .sug-val {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-strong);
+    }
+    .sug-dash { color: var(--text-subtle); }
+
+    /* Botón "Usar sugerido" dentro del segmento Comprar */
+    .btn-usar-sug {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 5px;
+      height: 18px;
+      margin-left: 2px;
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: 3px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elev);
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .btn-usar-sug svg { width: 9px; height: 9px; }
+    .btn-usar-sug:hover:not(:disabled) {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      border-color: var(--warning);
+    }
+    .btn-usar-sug:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .decision-btn[aria-checked="true"] .btn-usar-sug {
+      background: rgba(255,255,255,0.2);
+      color: #ffffff;
+      border-color: rgba(255,255,255,0.4);
+    }
+    .decision-btn[aria-checked="true"] .btn-usar-sug:hover:not(:disabled) {
+      background: rgba(255,255,255,0.35);
+    }
+    .decision-btn[aria-checked="true"] .btn-usar-sug:disabled {
+      opacity: 0.4;
+    }
+
+    /* Chip "Sugerido aplicado" en grupo */
+    .group-sug-ok {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px var(--sp-2);
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid var(--success);
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+    }
+    .group-sug-ok svg { width: 11px; height: 11px; }
   </style>
 </head>
 <body>
@@ -520,7 +626,8 @@
                 <input type="checkbox" id="chk-all" aria-label="Seleccionar todos los pedidos" />
               </th>
               <th class="sticky-col sticky-col-2">Local · OP</th>
-              <th class="col-num col-pidio">Pidió</th>
+              <th class="col-num col-pidio" title="Cantidad pedida por la cajera">Pidió</th>
+              <th class="col-num col-sugerido" title="Sugerido por el sistema base según rotación y stock">Sug.</th>
               <th class="col-num col-stocklocal">Stock local</th>
               <th class="col-num col-exc">Excedente</th>
               <th class="col-decision">Decisión</th>
@@ -591,10 +698,19 @@
      Scripts — lógica V3
      ================================================================= -->
 <script type="module">
-  import { oc, fmtGs } from '../shared/mock-data.js';
+  import { oc, fmtGs, parametros } from '../shared/mock-data.js';
   import { initSidebarClickOutside } from '../shared/ui.js';
 
   const tbody = document.getElementById('tabla-body');
+
+  // D40: helpers de configuración (umbral + flag de default sugerido)
+  function umbralSobrepedidoPct() {
+    const v = parametros && parametros.oc && parametros.oc.umbralSobrepedidoPct;
+    return (typeof v === 'number' && v >= 0) ? v : 20;
+  }
+  function usarSugeridoComoDefault() {
+    return !!(parametros && parametros.oc && parametros.oc.usarSugeridoComoDefaultComprar);
+  }
 
   // ==================================================================
   // Íconos SVG inline para refuerzo por daltonismo (Decisión 23)
@@ -638,6 +754,32 @@
   // ==================================================================
   // Render
   // ==================================================================
+  // Suma de sugeridos del sistema para los locales que pidieron este producto.
+  // Si ninguno tiene sugerido, devuelve null (se muestra "—").
+  function sugeridoGrupo(grupo) {
+    let hayAlguno = false;
+    let total = 0;
+    grupo.pedidos.forEach(p => {
+      if (p.sugerido != null) {
+        hayAlguno = true;
+        total += p.sugerido;
+      }
+    });
+    return hayAlguno ? total : null;
+  }
+
+  // D40: "Sugerido aplicado" — chip verde en la master si todos los pedidos
+  // del grupo están en "Comprar" con sugerido disponible y la cantidad
+  // comprar coincide con el sugerido (confianza total en el algoritmo).
+  function grupoSugeridoAplicado(grupo) {
+    if (!grupo.pedidos.length) return false;
+    return grupo.pedidos.every(p =>
+      p.decision === 'comprar' &&
+      p.sugerido != null &&
+      p.cantidadComprar === p.sugerido
+    );
+  }
+
   function groupRowHTML(grupo) {
     const totalComprar = totalAComprar(grupo);
     const reponer = totalAReponer(grupo);
@@ -650,20 +792,72 @@
 
     const stockCritStyle = grupo.stockCentral <= 0 ? ' style="color: var(--danger);"' : '';
 
+    const sugTotal = sugeridoGrupo(grupo);
+    const sugHTML = sugTotal != null
+      ? `<span class="sug-val" data-sug-total="${grupo.productoId}">${sugTotal}</span>`
+      : `<span class="sug-dash" data-sug-total="${grupo.productoId}">—</span>`;
+
+    const sugOK = grupoSugeridoAplicado(grupo);
+    const sugOKHTML = sugOK
+      ? `<span class="group-sug-ok" data-sug-ok="${grupo.productoId}" title="Todos los pedidos usan el sugerido del sistema">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+           Sugerido aplicado
+         </span>` : '';
+
     return `
       <tr class="group-row" data-product-id="${grupo.productoId}" data-alert="${alerta}">
-        <td colspan="7">
+        <td colspan="8">
           <div class="group-inner">
             <span class="group-name">${grupo.nombre}</span>
             <span class="group-code">· cód. ${grupo.barras}</span>
             <span class="group-field">Stock central: <strong${stockCritStyle}>${grupo.stockCentral}</strong></span>
             <span class="group-field">Costo unit.: <strong>${fmtGs(grupo.costoEstimado)}</strong></span>
+            <span class="group-field" title="Suma de sugeridos del sistema por los locales que pidieron">Sugerido total: <strong>${sugHTML}</strong></span>
             ${alertaHTML}
+            ${sugOKHTML}
             <span class="group-field total-comprar">Total a comprar: <strong data-total-comprar="${grupo.productoId}">${totalComprar}</strong></span>
           </div>
         </td>
       </tr>
     `;
+  }
+
+  // D40: clasifica el pedido vs. sugerido.
+  //   'sobre' → pidió > sugerido * (1 + umbral/100)
+  //   'sub'   → pidió < sugerido * (1 - (umbral/2)/100)
+  //   'ok' / 'no-sug'
+  function evaluarPedidoVsSugerido(p) {
+    if (p.sugerido == null) return 'no-sug';
+    const pct = umbralSobrepedidoPct() / 100;
+    const techoSobre = p.sugerido * (1 + pct);
+    const pisoSub = p.sugerido * (1 - pct / 2);
+    if (p.pidio > techoSobre) return 'sobre';
+    if (p.pidio < pisoSub) return 'sub';
+    return 'ok';
+  }
+
+  function chipSugeridoHTML(p) {
+    const estado = evaluarPedidoVsSugerido(p);
+    if (estado === 'sobre') {
+      return `<span class="chip-sugmark chip-sobre" title="Pidió ${p.pidio}, el sistema sugiere ${p.sugerido} para este local">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        Sobrepedido
+      </span>`;
+    }
+    if (estado === 'sub') {
+      return `<span class="chip-sugmark chip-sub" title="Pidió ${p.pidio}, el sistema sugiere ${p.sugerido} para este local (pidió de menos)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        Subpedido
+      </span>`;
+    }
+    return '';
+  }
+
+  function sugCellHTML(p) {
+    if (p.sugerido == null) {
+      return `<span class="sug-dash">—</span>`;
+    }
+    return `<span class="sug-val">${p.sugerido}</span>`;
   }
 
   function pedidoRowHTML(p, grupo) {
@@ -673,6 +867,23 @@
     const centralDisabled = centralHab ? '' : 'disabled';
     const rowClass = decisionRowClass(p);
     const editedClass = edited ? ' row--edited' : '';
+
+    // Valor inicial del input "comprar":
+    //   - si la decisión es 'comprar' → cantidadComprar actual
+    //   - si no → valor hipotético para mostrar (sugerido si existe, sino fallback)
+    const valorComprarVisible = (p.decision === 'comprar')
+      ? p.cantidadComprar
+      : (p.sugerido != null ? p.sugerido : (faltante || p.pidio));
+
+    // Botón "Usar sugerido" solo si hay sugerido y la decisión es "comprar"
+    const mostrarBtnUsar = (p.decision === 'comprar' && p.sugerido != null);
+    const btnUsarDisabled = (mostrarBtnUsar && p.cantidadComprar === p.sugerido) ? 'disabled' : '';
+    const btnUsarHTML = mostrarBtnUsar
+      ? `<button type="button" class="btn-usar-sug" data-action="usar-sug" ${btnUsarDisabled}
+                 title="${btnUsarDisabled ? 'Ya está en el sugerido (' + p.sugerido + ')' : 'Usar el sugerido del sistema (' + p.sugerido + ')'}">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+           sug ${p.sugerido}
+         </button>` : '';
 
     return `
       <tr class="pedido-row ${rowClass}${editedClass}" role="row"
@@ -693,7 +904,13 @@
             </div>
           </div>
         </td>
-        <td class="col-num col-pidio">${p.pidio}</td>
+        <td class="col-num col-pidio">
+          <span class="pidio-wrap">
+            <span class="pidio-num">${p.pidio}</span>
+            ${chipSugeridoHTML(p)}
+          </span>
+        </td>
+        <td class="col-num col-sugerido">${sugCellHTML(p)}</td>
         <td class="col-num col-stocklocal">${p.stockLocal}</td>
         <td class="col-num col-exc">${excedenteHTML(p.excedente)}</td>
         <td class="col-decision">
@@ -726,10 +943,11 @@
               <input type="number"
                      class="input-comprar"
                      min="0" step="1"
-                     value="${p.decision === 'comprar' ? p.cantidadComprar : faltante || p.pidio}"
+                     value="${valorComprarVisible}"
                      data-action="edit-qty"
                      aria-label="Cantidad a comprar"
                      ${p.decision !== 'comprar' ? 'tabindex="-1"' : ''} />
+              ${btnUsarHTML}
             </button>
           </div>
         </td>
@@ -806,6 +1024,21 @@
         } else if (!alerta && existing) {
           existing.remove();
         }
+
+        // D40: chip "Sugerido aplicado" en la master
+        const sugOK = grupoSugeridoAplicado(g);
+        const existingSugOK = groupTr.querySelector('.group-sug-ok');
+        if (sugOK && !existingSugOK) {
+          const totalField = groupTr.querySelector('.group-field.total-comprar');
+          const okEl = document.createElement('span');
+          okEl.className = 'group-sug-ok';
+          okEl.dataset.sugOk = g.productoId;
+          okEl.title = 'Todos los pedidos usan el sugerido del sistema';
+          okEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Sugerido aplicado`;
+          totalField.parentNode.insertBefore(okEl, totalField);
+        } else if (!sugOK && existingSugOK) {
+          existingSugOK.remove();
+        }
       }
     });
 
@@ -831,14 +1064,15 @@
     const prevDecision = p.decision;
     p.decision = value;
 
-    if (value === 'comprar') {
-      // Decisión 27: si venía de "repone_central" y el local tenía excedente
-      // (excedente >= 0, o sea stock_local >= pidio), el default es 0.
-      // Obliga a Shirley a subir manualmente si quiere comprar.
-      if (prevDecision === 'repone_central' && p.excedente >= 0) {
+    if (value === 'comprar' && prevDecision !== 'comprar') {
+      // D40 (reemplaza la regla de D27): al cambiar a "Comprar",
+      //   - si hay sugerido del sistema para este pedido → usarlo de default
+      //   - si no → 0 (fallback original de D27)
+      // La config `usarSugeridoComoDefaultComprar` permite apagar el comportamiento.
+      if (usarSugeridoComoDefault() && p.sugerido != null) {
+        p.cantidadComprar = p.sugerido;
+      } else {
         p.cantidadComprar = 0;
-      } else if (!p.cantidadComprar || p.cantidadComprar <= 0) {
-        p.cantidadComprar = Math.max(p.pidio - p.stockLocal, 0) || p.pidio;
       }
     }
 
@@ -866,6 +1100,20 @@
 
     if (action === 'set-decision') {
       setDecision(tr, btn.dataset.value);
+    } else if (action === 'usar-sug') {
+      // D40 — botón "sug N" dentro del segmento Comprar.
+      // Aplica el sugerido como cantidad a comprar y marca la fila como editada
+      // (salvo que ya coincidiera, en cuyo caso el botón está disabled y no entra).
+      e.stopPropagation();
+      const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
+      const p = grupo && grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+      if (!p || p.sugerido == null) return;
+      p.decision = 'comprar';
+      p.cantidadComprar = p.sugerido;
+      const nueva = nuevoTr(pedidoRowHTML(p, grupo));
+      tr.replaceWith(nueva);
+      recomputar();
+      toggleBulk();
     }
   });
 
@@ -1089,6 +1337,9 @@
         if (action === 'no_necesita') {
           p.decision = 'no_necesita';
         } else if (action === 'comprar_todo') {
+          // Bulk "Comprar todo lo pedido" mantiene la semántica original
+          // (llevar cantidad = pedido, ignora sugerido). D40 aplica solo al
+          // cambio fino por pedido; el bulk es explícito del supervisor.
           p.decision = 'comprar';
           p.cantidadComprar = p.pidio;
         } else if (action === 'repone_si_alcanza') {

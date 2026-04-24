@@ -155,6 +155,30 @@
               <span class="param-row-hint">Si está encendido, cada línea donde cantidad_recibida ≠ cantidad_esperada requiere motivo tipificado. Decisión 38.</span>
             </div>
 
+            <div class="param-row">
+              <div class="param-row-head">
+                <label class="param-row-label" for="p-sug-default">Usar sugerido del sistema como default al cambiar a "Comprar"</label>
+                <div class="param-control">
+                  <label class="switch">
+                    <input type="checkbox" id="p-sug-default" name="usarSugeridoComoDefaultComprar" />
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <span class="param-row-hint">Si está encendido, al cambiar un pedido a "Comprar" la cantidad arranca con el sugerido del sistema base (calculado por rotación y stock). Si el producto × local no tiene historial, arranca en 0. Decisión 40.</span>
+            </div>
+
+            <div class="param-row">
+              <div class="param-row-head">
+                <label class="param-row-label" for="p-umbral-sobre">Umbral de alerta "sobrepedido"</label>
+                <div class="param-control">
+                  <input class="input" id="p-umbral-sobre" type="number" min="0" max="200" step="5" name="umbralSobrepedidoPct" />
+                  <span class="text-xs text-muted">%</span>
+                </div>
+              </div>
+              <span class="param-row-hint">Cuando el pedido de la cajera supera al sugerido del sistema por más de este porcentaje, aparece el chip ámbar "Sobrepedido" en la planilla de OC. El chip "Subpedido" (azul) se dispara con la mitad de este umbral hacia abajo. Decisión 40: default 20%.</span>
+            </div>
+
           </div>
         </section>
 
@@ -234,6 +258,8 @@
       document.getElementById('p-snapshot').value          = parametros.oc.snapshotMaxMinutos;
       document.getElementById('p-valida-total').checked    = !!parametros.oc.validarTotalFacturaVsLineas;
       document.getElementById('p-justif-dif').checked      = !!parametros.oc.exigirJustificacionLineaDiferencia;
+      document.getElementById('p-sug-default').checked     = !!parametros.oc.usarSugeridoComoDefaultComprar;
+      document.getElementById('p-umbral-sobre').value      = (parametros.oc.umbralSobrepedidoPct != null ? parametros.oc.umbralSobrepedidoPct : 20);
 
       document.getElementById('p-ops-viejas').value        = parametros.alertas.opsViejasUmbralDias;
       document.getElementById('p-excep-cajera').value      = parametros.alertas.excepcionesCajeraUmbral;

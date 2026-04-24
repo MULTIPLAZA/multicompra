@@ -245,92 +245,149 @@ export const locales = [
 // `stockPorLocal`: stock actual en cada local (snapshot que trae el SP junto
 // con stockCentral cuando se abre la OC). Se usa para que el supervisor vea
 // cuánto tiene cada local que pidió el producto.
+// `sugeridoPorLocal` (D40): cantidad sugerida por el sistema base del cliente,
+// calculada estadísticamente según rotación, ventas y stock actual. Ancla para
+// que Shirley decida sin partir de cero. Un valor `null` o ausente significa
+// "el sistema base no tiene historial suficiente" → la UI muestra "—" y no
+// dispara alerta de sobre/sub pedido para ese local.
+// Distribución sembrada:
+//   ~60% normal (sugerido ≈ pedido ± 15%)
+//   ~20% sobrepedido (cajera pidió de más: sugerido << pedido)
+//   ~10% subpedido (cajera pidió de menos: sugerido >> pedido)
+//   ~10% sin historial (sugerido null en los locales relevantes)
 // =========================================================================
 export const productos = [
-  // p01 — central OK, locales con pedidos razonables
+  // p01 — NORMAL (sugerido ≈ pedido): SHM pidió 10 → sug 10; VM pidió 8 → sug 9
   { id: 'p01', barras: '7840001000017', nombre: 'Cargador USB-C 20W Premium',           stockCentral: 45,  costo:  38000, precio:  65000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 3,  'loc-04': 4,  'loc-05': 2,  'loc-06': 1,  'loc-07': 2,  'loc-08': 3,  'loc-09': 1,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 3,  'loc-04': 4,  'loc-05': 2,  'loc-06': 1,  'loc-07': 2,  'loc-08': 3,  'loc-09': 1,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 10, 'loc-02': 9,  'loc-03': 8,  'loc-04': 6,  'loc-05': 7,  'loc-06': 6,  'loc-07': 8,  'loc-08': 5,  'loc-09': 6,  'loc-10': 7 } },
 
-  // p02 — CASO CLARO: SL pide 15 y tiene 45 (ya cubierto), los otros sí necesitan
+  // p02 — SOBREPEDIDO: SL pidió 15 pero tiene 45 → sugerido 2 (chip ámbar "sobrepedido")
+  //       SHM pidió 12 → sug 10 (normal), VM pidió 25 → sug 22 (normal)
   { id: 'p02', barras: '7840001000024', nombre: 'Cable Lightning 1m reforzado',          stockCentral: 120, costo:  18000, precio:  35000,
-    stockPorLocal: { 'loc-01': 8,  'loc-02': 3,  'loc-03': 6,  'loc-04': 45, 'loc-05': 4,  'loc-06': 7,  'loc-07': 5,  'loc-08': 9,  'loc-09': 2,  'loc-10': 6 } },
+    stockPorLocal: { 'loc-01': 8,  'loc-02': 3,  'loc-03': 6,  'loc-04': 45, 'loc-05': 4,  'loc-06': 7,  'loc-07': 5,  'loc-08': 9,  'loc-09': 2,  'loc-10': 6 },
+    sugeridoPorLocal: { 'loc-01': 10, 'loc-02': 22, 'loc-03': 18, 'loc-04': 2,  'loc-05': 15, 'loc-06': 14, 'loc-07': 16, 'loc-08': 12, 'loc-09': 18, 'loc-10': 14 } },
 
+  // p03 — NORMAL: SHM pidió 6 → sug 5; LAM pidió 4 → sug 4
   { id: 'p03', barras: '7840001000031', nombre: 'Auricular Bluetooth TWS Pro',           stockCentral:  8,  costo: 120000, precio: 220000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 5,  'loc-02': 3,  'loc-03': 4,  'loc-04': 3,  'loc-05': 4,  'loc-06': 3,  'loc-07': 3,  'loc-08': 3,  'loc-09': 3,  'loc-10': 4 } },
 
-  // p04 — CASO "COMPRAR O NADA": stock central en 0 → único camino es comprar
+  // p04 — NORMAL: SHM pidió 8 → sug 7; VM pidió 6 → sug 6; SL pidió 4 → sug 5
   { id: 'p04', barras: '7840001000048', nombre: 'Funda silicona iPhone 13',              stockCentral:  0,  costo:  25000, precio:  55000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 0,  'loc-04': 3,  'loc-05': 1,  'loc-06': 0,  'loc-07': 2,  'loc-08': 1,  'loc-09': 0,  'loc-10': 3 } },
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 0,  'loc-04': 3,  'loc-05': 1,  'loc-06': 0,  'loc-07': 2,  'loc-08': 1,  'loc-09': 0,  'loc-10': 3 },
+    sugeridoPorLocal: { 'loc-01': 7,  'loc-02': 6,  'loc-03': 5,  'loc-04': 5,  'loc-05': 4,  'loc-06': 5,  'loc-07': 6,  'loc-08': 5,  'loc-09': 4,  'loc-10': 5 } },
 
+  // p05 — SUBPEDIDO: CDE pidió 15 → sug 25 (chip azul "subpedido")
   { id: 'p05', barras: '7840001000055', nombre: 'Funda silicona iPhone 14',              stockCentral: 62,  costo:  25000, precio:  55000,
-    stockPorLocal: { 'loc-01': 4,  'loc-02': 2,  'loc-03': 3,  'loc-04': 5,  'loc-05': 2,  'loc-06': 3,  'loc-07': 4,  'loc-08': 1,  'loc-09': 3,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 4,  'loc-02': 2,  'loc-03': 3,  'loc-04': 5,  'loc-05': 2,  'loc-06': 3,  'loc-07': 4,  'loc-08': 1,  'loc-09': 3,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 8,  'loc-02': 9,  'loc-03': 25, 'loc-04': 10, 'loc-05': 8,  'loc-06': 7,  'loc-07': 9,  'loc-08': 7,  'loc-09': 7,  'loc-10': 8 } },
 
+  // p06 — NORMAL: SHM pidió 40 → sug 42; SL pidió 30 → sug 28
   { id: 'p06', barras: '7840001000062', nombre: 'Vidrio templado iPhone 13/14',          stockCentral: 300, costo:   8000, precio:  20000,
-    stockPorLocal: { 'loc-01': 15, 'loc-02': 20, 'loc-03': 10, 'loc-04': 12, 'loc-05': 8,  'loc-06': 18, 'loc-07': 6,  'loc-08': 14, 'loc-09': 9,  'loc-10': 11 } },
+    stockPorLocal: { 'loc-01': 15, 'loc-02': 20, 'loc-03': 10, 'loc-04': 12, 'loc-05': 8,  'loc-06': 18, 'loc-07': 6,  'loc-08': 14, 'loc-09': 9,  'loc-10': 11 },
+    sugeridoPorLocal: { 'loc-01': 42, 'loc-02': 35, 'loc-03': 38, 'loc-04': 28, 'loc-05': 30, 'loc-06': 32, 'loc-07': 36, 'loc-08': 30, 'loc-09': 28, 'loc-10': 34 } },
 
-  // p07 — CASO MIXTO: VM pide 30 y tiene 35 (ya está), LAM pide 20 y tiene 4 (sí falta)
+  // p07 — NORMAL: VM pidió 30 → sug 28 (dentro del umbral aunque tiene stock);
+  //       LAM pidió 20 → sug 22
   { id: 'p07', barras: '7840001000079', nombre: 'Vidrio templado Samsung A54',           stockCentral: 210, costo:   9000, precio:  22000,
-    stockPorLocal: { 'loc-01': 7,  'loc-02': 35, 'loc-03': 5,  'loc-04': 10, 'loc-05': 4,  'loc-06': 9,  'loc-07': 12, 'loc-08': 8,  'loc-09': 6,  'loc-10': 11 } },
+    stockPorLocal: { 'loc-01': 7,  'loc-02': 35, 'loc-03': 5,  'loc-04': 10, 'loc-05': 4,  'loc-06': 9,  'loc-07': 12, 'loc-08': 8,  'loc-09': 6,  'loc-10': 11 },
+    sugeridoPorLocal: { 'loc-01': 25, 'loc-02': 28, 'loc-03': 22, 'loc-04': 18, 'loc-05': 22, 'loc-06': 20, 'loc-07': 24, 'loc-08': 20, 'loc-09': 18, 'loc-10': 22 } },
 
+  // p08 — NORMAL: CDE pidió 8 → sug 7
   { id: 'p08', barras: '7840001000086', nombre: 'Soporte auto magnético',                stockCentral:  4,  costo:  22000, precio:  45000,
-    stockPorLocal: { 'loc-01': 0,  'loc-02': 1,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 0,  'loc-09': 2,  'loc-10': 1 } },
+    stockPorLocal: { 'loc-01': 0,  'loc-02': 1,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 0,  'loc-09': 2,  'loc-10': 1 },
+    sugeridoPorLocal: { 'loc-01': 4,  'loc-02': 3,  'loc-03': 7,  'loc-04': 4,  'loc-05': 3,  'loc-06': 4,  'loc-07': 4,  'loc-08': 5,  'loc-09': 3,  'loc-10': 4 } },
 
+  // p09 — NORMAL: SHM pidió 4 → sug 4; LAM pidió 3 → sug 3
   { id: 'p09', barras: '7840001000093', nombre: 'Power Bank 10000mAh',                   stockCentral: 35,  costo:  65000, precio: 120000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 3,  'loc-03': 1,  'loc-04': 4,  'loc-05': 1,  'loc-06': 2,  'loc-07': 1,  'loc-08': 3,  'loc-09': 2,  'loc-10': 4 } },
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 3,  'loc-03': 1,  'loc-04': 4,  'loc-05': 1,  'loc-06': 2,  'loc-07': 1,  'loc-08': 3,  'loc-09': 2,  'loc-10': 4 },
+    sugeridoPorLocal: { 'loc-01': 4,  'loc-02': 5,  'loc-03': 4,  'loc-04': 3,  'loc-05': 3,  'loc-06': 4,  'loc-07': 4,  'loc-08': 3,  'loc-09': 3,  'loc-10': 5 } },
 
+  // p10 — NORMAL: CDE pidió 12 → sug 13
   { id: 'p10', barras: '7840001000109', nombre: 'Adaptador OTG USB-C a USB',             stockCentral: 88,  costo:  12000, precio:  28000,
-    stockPorLocal: { 'loc-01': 5,  'loc-02': 6,  'loc-03': 3,  'loc-04': 4,  'loc-05': 5,  'loc-06': 2,  'loc-07': 6,  'loc-08': 4,  'loc-09': 3,  'loc-10': 5 } },
+    stockPorLocal: { 'loc-01': 5,  'loc-02': 6,  'loc-03': 3,  'loc-04': 4,  'loc-05': 5,  'loc-06': 2,  'loc-07': 6,  'loc-08': 4,  'loc-09': 3,  'loc-10': 5 },
+    sugeridoPorLocal: { 'loc-01': 10, 'loc-02': 12, 'loc-03': 13, 'loc-04': 8,  'loc-05': 9,  'loc-06': 8,  'loc-07': 10, 'loc-08': 9,  'loc-09': 8,  'loc-10': 10 } },
 
-  // p11 — CASO STOCK CENTRAL INSUFICIENTE: 3 locales piden y quieren "repone central",
-  //       pero central tiene solo 4 unidades → debe dispararse alerta en encabezado
+  // p11 — SOBREPEDIDO en CDE (pidió 3, sug 1). SHM 5→sug 4, VM 4→sug 4 (normales).
+  //       Queda como ejemplo de sobrepedido leve cuando central está apretado.
   { id: 'p11', barras: '7840001000116', nombre: 'Cable USB-C a USB-C 2m',                stockCentral:  4,  costo:  22000, precio:  45000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 1,  'loc-04': 3,  'loc-05': 0,  'loc-06': 2,  'loc-07': 1,  'loc-08': 2,  'loc-09': 1,  'loc-10': 0 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 1,  'loc-04': 3,  'loc-05': 0,  'loc-06': 2,  'loc-07': 1,  'loc-08': 2,  'loc-09': 1,  'loc-10': 0 },
+    sugeridoPorLocal: { 'loc-01': 4,  'loc-02': 4,  'loc-03': 1,  'loc-04': 2,  'loc-05': 3,  'loc-06': 2,  'loc-07': 3,  'loc-08': 2,  'loc-09': 3,  'loc-10': 3 } },
 
-  // p12 — CASO STOCK NEGATIVO (inconsistencia que puede pasar en el sistema base)
+  // p12 — SUBPEDIDO: CDE pidió 6, sug 12 (chip azul)
   { id: 'p12', barras: '7840001000123', nombre: 'Funda flip Samsung A14',                stockCentral: -2,  costo:  28000, precio:  58000,
-    stockPorLocal: { 'loc-01': 0,  'loc-02': 1,  'loc-03': 0,  'loc-04': 0,  'loc-05': 1,  'loc-06': 0,  'loc-07': 1,  'loc-08': 0,  'loc-09': 2,  'loc-10': 0 } },
+    stockPorLocal: { 'loc-01': 0,  'loc-02': 1,  'loc-03': 0,  'loc-04': 0,  'loc-05': 1,  'loc-06': 0,  'loc-07': 1,  'loc-08': 0,  'loc-09': 2,  'loc-10': 0 },
+    sugeridoPorLocal: { 'loc-01': 4,  'loc-02': 3,  'loc-03': 12, 'loc-04': 3,  'loc-05': 3,  'loc-06': 3,  'loc-07': 4,  'loc-08': 3,  'loc-09': 3,  'loc-10': 4 } },
 
+  // p13 — NORMAL: SHM pidió 3 → sug 3; LAM pidió 2 → sug 2
   { id: 'p13', barras: '7840001000130', nombre: 'Parlante Bluetooth portátil 5W',        stockCentral: 22,  costo:  85000, precio: 160000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 3,  'loc-04': 1,  'loc-05': 2,  'loc-06': 0,  'loc-07': 1,  'loc-08': 3,  'loc-09': 1,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 1,  'loc-03': 3,  'loc-04': 1,  'loc-05': 2,  'loc-06': 0,  'loc-07': 1,  'loc-08': 3,  'loc-09': 1,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 3,  'loc-02': 3,  'loc-03': 4,  'loc-04': 2,  'loc-05': 2,  'loc-06': 3,  'loc-07': 3,  'loc-08': 2,  'loc-09': 2,  'loc-10': 3 } },
 
-  // p14 — CASO CLARO: VM pide 60 y tiene 180 (stock muerto obvio en el local)
-  //       SL también pide 40 y tiene 20 (sí necesita)
+  // p14 — SOBREPEDIDO FUERTE: VM pidió 60, sug 3 (tiene 180 de stock → cajera se excedió)
+  //       SL pidió 40, sug 35 (normal dentro del umbral).
   { id: 'p14', barras: '7840001000147', nombre: 'Mica hidrogel universal',               stockCentral: 500, costo:   4000, precio:  12000,
-    stockPorLocal: { 'loc-01': 30, 'loc-02':180, 'loc-03': 25, 'loc-04': 20, 'loc-05': 18, 'loc-06': 35, 'loc-07': 22, 'loc-08': 28, 'loc-09': 24, 'loc-10': 40 } },
+    stockPorLocal: { 'loc-01': 30, 'loc-02':180, 'loc-03': 25, 'loc-04': 20, 'loc-05': 18, 'loc-06': 35, 'loc-07': 22, 'loc-08': 28, 'loc-09': 24, 'loc-10': 40 },
+    sugeridoPorLocal: { 'loc-01': 40, 'loc-02': 3,  'loc-03': 35, 'loc-04': 35, 'loc-05': 30, 'loc-06': 40, 'loc-07': 35, 'loc-08': 35, 'loc-09': 30, 'loc-10': 42 } },
 
+  // p15 — NORMAL: CDE pidió 6 → sug 6
   { id: 'p15', barras: '7840001000154', nombre: 'Cargador coche doble USB 30W',          stockCentral: 55,  costo:  32000, precio:  62000,
-    stockPorLocal: { 'loc-01': 3,  'loc-02': 4,  'loc-03': 2,  'loc-04': 5,  'loc-05': 3,  'loc-06': 4,  'loc-07': 2,  'loc-08': 3,  'loc-09': 5,  'loc-10': 4 } },
+    stockPorLocal: { 'loc-01': 3,  'loc-02': 4,  'loc-03': 2,  'loc-04': 5,  'loc-05': 3,  'loc-06': 4,  'loc-07': 2,  'loc-08': 3,  'loc-09': 5,  'loc-10': 4 },
+    sugeridoPorLocal: { 'loc-01': 5,  'loc-02': 4,  'loc-03': 6,  'loc-04': 4,  'loc-05': 4,  'loc-06': 5,  'loc-07': 5,  'loc-08': 4,  'loc-09': 3,  'loc-10': 5 } },
 
+  // p16 — NORMAL: SL pidió 5 → sug 5
   { id: 'p16', barras: '7840001000161', nombre: 'Funda rígida iPhone 15 Pro',            stockCentral: 40,  costo:  35000, precio:  70000,
-    stockPorLocal: { 'loc-01': 2,  'loc-02': 3,  'loc-03': 1,  'loc-04': 4,  'loc-05': 2,  'loc-06': 1,  'loc-07': 3,  'loc-08': 2,  'loc-09': 1,  'loc-10': 3 } },
+    stockPorLocal: { 'loc-01': 2,  'loc-02': 3,  'loc-03': 1,  'loc-04': 4,  'loc-05': 2,  'loc-06': 1,  'loc-07': 3,  'loc-08': 2,  'loc-09': 1,  'loc-10': 3 },
+    sugeridoPorLocal: { 'loc-01': 4,  'loc-02': 4,  'loc-03': 5,  'loc-04': 5,  'loc-05': 4,  'loc-06': 4,  'loc-07': 3,  'loc-08': 4,  'loc-09': 4,  'loc-10': 4 } },
 
+  // p17 — SIN HISTORIAL: sin sugeridoPorLocal → la UI muestra "—" para todos los locales
+  //       (Producto nuevo del catálogo; el sistema base aún no acumuló ventas.)
   { id: 'p17', barras: '7840001000178', nombre: 'Aro de luz selfie clip',                stockCentral: 12,  costo:  28000, precio:  55000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 2,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 2,  'loc-04': 1,  'loc-05': 0,  'loc-06': 1,  'loc-07': 2,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 },
+    sugeridoPorLocal: null },
 
+  // p18 — NORMAL: SHM pidió 5 → sug 5
   { id: 'p18', barras: '7840001000185', nombre: 'Memoria MicroSD 64GB',                  stockCentral: 25,  costo:  48000, precio:  85000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 1,  'loc-04': 3,  'loc-05': 0,  'loc-06': 2,  'loc-07': 1,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 1,  'loc-04': 3,  'loc-05': 0,  'loc-06': 2,  'loc-07': 1,  'loc-08': 0,  'loc-09': 1,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 5,  'loc-02': 4,  'loc-03': 4,  'loc-04': 3,  'loc-05': 3,  'loc-06': 3,  'loc-07': 3,  'loc-08': 4,  'loc-09': 3,  'loc-10': 4 } },
 
+  // p19 — NORMAL: CDE pidió 4 → sug 4
   { id: 'p19', barras: '7840001000192', nombre: 'Memoria MicroSD 128GB',                 stockCentral: 18,  costo:  75000, precio: 135000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 1 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 1 },
+    sugeridoPorLocal: { 'loc-01': 3,  'loc-02': 2,  'loc-03': 4,  'loc-04': 2,  'loc-05': 2,  'loc-06': 3,  'loc-07': 2,  'loc-08': 2,  'loc-09': 2,  'loc-10': 3 } },
 
-  // p20 — CASO CLARO: SHM pide 20 y tiene 60 (ya está cubierto)
+  // p20 — SOBREPEDIDO: SHM pidió 20 pero tiene 60 → sug 5 (chip ámbar)
+  //       LAM pidió 15 → sug 14 (normal)
   { id: 'p20', barras: '7840001000208', nombre: 'Pop socket liso colores',               stockCentral: 150, costo:   6000, precio:  18000,
-    stockPorLocal: { 'loc-01': 60, 'loc-02': 12, 'loc-03': 18, 'loc-04': 8,  'loc-05': 10, 'loc-06': 14, 'loc-07': 16, 'loc-08': 11, 'loc-09': 9,  'loc-10': 13 } },
+    stockPorLocal: { 'loc-01': 60, 'loc-02': 12, 'loc-03': 18, 'loc-04': 8,  'loc-05': 10, 'loc-06': 14, 'loc-07': 16, 'loc-08': 11, 'loc-09': 9,  'loc-10': 13 },
+    sugeridoPorLocal: { 'loc-01': 5,  'loc-02': 14, 'loc-03': 12, 'loc-04': 12, 'loc-05': 14, 'loc-06': 14, 'loc-07': 14, 'loc-08': 12, 'loc-09': 12, 'loc-10': 14 } },
 
+  // p21 — NORMAL: SHM pidió 15 → sug 16 (aparece en op-pendiente, no en OC);
+  //       SL pidió 30 → sug 28
   { id: 'p21', barras: '7840001000215', nombre: 'Cable micro USB 1m',                    stockCentral: 240, costo:  10000, precio:  25000,
-    stockPorLocal: { 'loc-01': 12, 'loc-02': 15, 'loc-03': 10, 'loc-04': 14, 'loc-05': 8,  'loc-06': 11, 'loc-07': 9,  'loc-08': 13, 'loc-09': 7,  'loc-10': 12 } },
+    stockPorLocal: { 'loc-01': 12, 'loc-02': 15, 'loc-03': 10, 'loc-04': 14, 'loc-05': 8,  'loc-06': 11, 'loc-07': 9,  'loc-08': 13, 'loc-09': 7,  'loc-10': 12 },
+    sugeridoPorLocal: { 'loc-01': 16, 'loc-02': 18, 'loc-03': 22, 'loc-04': 28, 'loc-05': 20, 'loc-06': 18, 'loc-07': 22, 'loc-08': 20, 'loc-09': 16, 'loc-10': 18 } },
 
+  // p22 — NORMAL: CDE pidió 4 → sug 4
   { id: 'p22', barras: '7840001000222', nombre: 'Funda billetera Samsung S23',           stockCentral:  9,  costo:  42000, precio:  85000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 0,  'loc-03': 1,  'loc-04': 2,  'loc-05': 0,  'loc-06': 1,  'loc-07': 0,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 },
+    sugeridoPorLocal: { 'loc-01': 3,  'loc-02': 3,  'loc-03': 4,  'loc-04': 3,  'loc-05': 3,  'loc-06': 3,  'loc-07': 3,  'loc-08': 3,  'loc-09': 2,  'loc-10': 4 } },
 
+  // p23 — SIN HISTORIAL: sin sugeridoPorLocal → "—" en todos los locales.
   { id: 'p23', barras: '7840001000239', nombre: 'Reloj smartwatch T500',                 stockCentral: 14,  costo:  95000, precio: 175000,
-    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 0,  'loc-04': 1,  'loc-05': 2,  'loc-06': 0,  'loc-07': 1,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 } },
+    stockPorLocal: { 'loc-01': 1,  'loc-02': 2,  'loc-03': 0,  'loc-04': 1,  'loc-05': 2,  'loc-06': 0,  'loc-07': 1,  'loc-08': 1,  'loc-09': 0,  'loc-10': 2 },
+    sugeridoPorLocal: null },
 
+  // p24 — SOBREPEDIDO: SL pidió 50 → sug 10 (chip ámbar: cajera se entusiasmó)
   { id: 'p24', barras: '7840001000246', nombre: 'Cinta limpiadora pantalla x10',         stockCentral: 380, costo:   3000, precio:   8000,
-    stockPorLocal: { 'loc-01': 20, 'loc-02': 25, 'loc-03': 18, 'loc-04': 22, 'loc-05': 15, 'loc-06': 24, 'loc-07': 19, 'loc-08': 21, 'loc-09': 17, 'loc-10': 20 } },
+    stockPorLocal: { 'loc-01': 20, 'loc-02': 25, 'loc-03': 18, 'loc-04': 22, 'loc-05': 15, 'loc-06': 24, 'loc-07': 19, 'loc-08': 21, 'loc-09': 17, 'loc-10': 20 },
+    sugeridoPorLocal: { 'loc-01': 25, 'loc-02': 22, 'loc-03': 24, 'loc-04': 10, 'loc-05': 22, 'loc-06': 26, 'loc-07': 22, 'loc-08': 24, 'loc-09': 20, 'loc-10': 24 } },
 
+  // p25 — SUBPEDIDO: CDE pidió 30 → sug 45 (chip azul); LAM pidió 20 → sug 22 (normal)
   { id: 'p25', barras: '7840001000253', nombre: 'Adhesivo anti-polvo parlante iPhone',   stockCentral: 95,  costo:   5000, precio:  14000,
-    stockPorLocal: { 'loc-01': 8,  'loc-02': 6,  'loc-03': 4,  'loc-04': 7,  'loc-05': 5,  'loc-06': 9,  'loc-07': 6,  'loc-08': 5,  'loc-09': 4,  'loc-10': 7 } },
+    stockPorLocal: { 'loc-01': 8,  'loc-02': 6,  'loc-03': 4,  'loc-04': 7,  'loc-05': 5,  'loc-06': 9,  'loc-07': 6,  'loc-08': 5,  'loc-09': 4,  'loc-10': 7 },
+    sugeridoPorLocal: { 'loc-01': 14, 'loc-02': 12, 'loc-03': 45, 'loc-04': 14, 'loc-05': 22, 'loc-06': 16, 'loc-07': 14, 'loc-08': 14, 'loc-09': 12, 'loc-10': 16 } },
 
   // p26/p27 — NO aparecen en ninguna OP ni en la OC (catálogo ampliado).
   // Se usan como candidatos para "productos fuera de OC" en la pantalla
@@ -470,6 +527,14 @@ function decisionSugerida(pidio, stockLocal, stockCentral) {
   return { decision: 'comprar', cantidad: faltante };
 }
 
+// Helper para leer el sugerido por local (D40). Devuelve null si el sistema
+// base no tiene historial para ese producto × local.
+export function getSugeridoPorLocal(producto, localId) {
+  if (!producto || !producto.sugeridoPorLocal) return null;
+  const v = producto.sugeridoPorLocal[localId];
+  return (v == null) ? null : v;
+}
+
 function construirPedidos() {
   const pedidos = [];
   const productosUsados = new Set();
@@ -482,6 +547,7 @@ function construirPedidos() {
       const stockLocal = (p.stockPorLocal && p.stockPorLocal[op.localId] != null)
         ? p.stockPorLocal[op.localId] : 0;
       const sugerido = decisionSugerida(ln.cantidad, stockLocal, p.stockCentral);
+      const sugeridoSistema = getSugeridoPorLocal(p, op.localId);
       pedidos.push({
         opId: op.id,
         localId: op.localId,
@@ -490,6 +556,7 @@ function construirPedidos() {
         productoId: p.id,
         pidio: ln.cantidad,
         stockLocal,
+        sugerido: sugeridoSistema,       // D40: sugerido del sistema base (o null)
         excedente: stockLocal - ln.cantidad,
         decision: sugerido.decision,
         cantidadComprar: sugerido.cantidad,
@@ -1387,7 +1454,9 @@ export const parametros = {
   oc: {
     snapshotMaxMinutos: 30,              // D33
     validarTotalFacturaVsLineas: true,   // D37 - bloquea al cerrar si no coincide
-    exigirJustificacionLineaDiferencia: true // D38
+    exigirJustificacionLineaDiferencia: true, // D38
+    usarSugeridoComoDefaultComprar: true,     // D40 - default al cambiar a "Comprar" = sugerido
+    umbralSobrepedidoPct: 20                  // D40 - % de tolerancia antes de marcar "sobrepedido"
   },
   alertas: {
     opsViejasUmbralDias: 7,

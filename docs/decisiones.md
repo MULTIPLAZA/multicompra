@@ -283,6 +283,8 @@ Clases de fila: `row--decision-no`, `row--decision-central`, `row--decision-comp
 **Decisión:** **B.** El default es 0. Shirley decide manualmente subir la cantidad si realmente quiere comprar algo.
 **Razón:** Si había excedente, el local ya tiene suficiente. Forzar que Shirley suba manualmente evita "comprar por inercia" — si la cantidad quedara en lo pedido por la cajera, un click descuidado terminaría comprando algo que no hacía falta. Con 0 el default es siempre el seguro; lo explícito es el cambio.
 
+**Revisada por D40 (2026-04-22):** el default al cambiar a "Comprar" ahora es **el sugerido del sistema base** si existe para ese producto × local; si no existe, sigue siendo **0**. El 0 anterior queda como fallback para el caso "sin historial". La regla aplica independientemente del estado previo (ya no se distingue entre "venía de repone_central con excedente" y otros casos): el sugerido siempre es una mejor ancla que 0. Se puede desactivar desde `admin/config/parametros` (toggle "Usar sugerido del sistema como default al cambiar a Comprar"), en cuyo caso vuelve al 0 puro de esta decisión original.
+
 ## 28. 2026-04-23 — Buscador de productos: startsWith por código, includes por descripción
 **Contexto:** En los buscadores de productos (cajera/op-nueva y el modal "Agregar fuera de OC" en compra-verificar) se puede matchear el código de barra con `includes` o `startsWith`.
 **Decisión:** `startsWith` para el **código de barra**, `includes` para la **descripción**.
@@ -378,6 +380,48 @@ Fallback:
 - **Supuesto**: todos los productos del catálogo central tienen `codigoBarra` cargado. **Pendiente Producto**: confirmar cuántos productos del catálogo real tienen código; si hay % significativo sin código, el fallback pasa a ser más importante que secundario.
 - **Supuesto**: los lectores de los locales emiten Enter al final del código. **Pendiente Arquitecto**: verificar modelos de lectores en uso; si alguno emite Tab en vez de Enter, hay que soportar ambas.
 - **Pendiente**: cuándo aparece un producto escaneado que sí existe en el sistema base pero aún no está en el catálogo cacheado de MultiCompra → ¿refetch on-demand? Se trata en la fase de arquitectura de caché.
+
+## 40. 2026-04-22 — Columna "Sugerido" en planilla de OC (ancla del sistema base + chips + default)
+**Contexto:** Shirley decide pedido por pedido con tres datos: lo que pidió la cajera, el stock local y el stock central. Pero le falta una cuarta pieza clave: la **opinión del sistema base del cliente** sobre cuánto debería pedir ese local según rotación histórica, ventas recientes y stock actual. Sin esa ancla estadística, Shirley decide por instinto o corrige los pedidos "a ojo". Diego pidió que esa opinión (el "sugerido") viva como columna visible en la planilla y que además sirva como default inteligente cuando Shirley cambia una fila a "Comprar".
+
+El humano confirmó dos puntos:
+1. **Granularidad**: el sugerido es por producto × local (cada local tiene su propio sugerido calculado según SU rotación, no el promedio).
+2. **Default al cambiar a "Comprar"**: si existe sugerido para ese producto × local, usarlo como valor inicial; si no existe, caer a 0 (revisa y actualiza D27).
+
+**Opciones consideradas:**
+- **A. Sin sugerido.** Status quo: Shirley decide sin ancla. Descartada — pierde la oportunidad de capitalizar el cálculo estadístico que el sistema base ya hace.
+- **B. Columna visible read-only + chips de alerta.** El sugerido aparece como columna al lado de "Pidió"; si el pedido de la cajera diverge significativamente, chip ámbar "sobrepedido" o azul "subpedido" al lado del valor pedido. La cajera sigue pidiendo como siempre, Shirley ve la divergencia.
+- **C. Usar sugerido como default al cambiar a "Comprar".** Al togglear una fila a "Comprar", el input arranca con el sugerido en vez de 0 (o en vez de `pedido - stock_local` como era). Acelera el flujo común ("confío en el algoritmo") y deja manual el caso excepcional.
+
+**Decisión: B + C combinados.**
+
+Detalles del diseño:
+- **Columna "Sug."** entre "Pidió" y "Stock local". Mono, alineada a la derecha. Valor numérico si el sistema tiene sugerido para ese producto × local; guion "—" si no. En la fila agrupadora (master) muestra la **suma de sugeridos** de los locales que pidieron ese producto (o "—" si ninguno tiene historial).
+- **Chips al lado de "Pidió"**:
+  - **"Sobrepedido"** (ámbar) cuando `pedido > sugerido × (1 + umbral/100)`. Default umbral 20%.
+  - **"Subpedido"** (azul) cuando `pedido < sugerido × (1 − (umbral/2)/100)` — mitad del umbral hacia abajo, criterio más laxo porque pedir de menos es menos grave que pedir de más (no genera stock muerto).
+  - Sin chip cuando no hay sugerido o cuando el pedido está dentro de la banda.
+  - Tooltip en cada chip con el valor del sugerido y la explicación.
+- **Default al cambiar decisión a "Comprar"**: si hay sugerido → input arranca en sugerido. Si no hay → arranca en 0 (D27 original como fallback). La regla aplica en cualquier transición hacia "Comprar", no solo desde "Repone central".
+- **Botón rápido "sug N"** (con ícono ↺) dentro del segmento "Comprar" cuando la decisión ya es "Comprar" y hay sugerido disponible. Un click lleva el input al sugerido y marca la fila como editada (borde ámbar D23). Si ya está igual al sugerido, el botón queda `disabled` con tooltip "Ya está en el sugerido (N)".
+- **Chip verde "Sugerido aplicado"** en la fila agrupadora cuando **todos** los pedidos del grupo están en "Comprar" con cantidad = sugerido. Señal rápida de "confié 100% en el algoritmo para este producto".
+- **Configuración global en `admin/config/parametros`**:
+  - Toggle "Usar sugerido del sistema como default al cambiar a Comprar" (default: encendido).
+  - Input numérico "Umbral de alerta 'sobrepedido'" en % (default: 20).
+- **Dato mock**: cada producto tiene un objeto `sugeridoPorLocal` con una entrada por local (o `null` si el sistema no tiene historial). Cobertura sembrada: ~60% normal (sugerido ≈ pedido ±15%), ~20% sobrepedido (cajera se entusiasmó), ~10% subpedido (cajera se quedó corta), ~10% sin historial (chip "—", sin alertas).
+
+**Razón:**
+- **Ancla sin imposición.** La columna muestra una opinión fuerte del sistema sin obligar a Shirley a seguirla. Mantiene el principio "el humano decide" (D4) y agrega un insumo objetivo que hoy falta.
+- **Los chips exponen divergencias importantes, no ruido.** Con umbral del 20% + banda asimétrica (laxo hacia subpedido), solo aparecen cuando hay algo real que revisar; los pedidos razonables no meten ruido visual.
+- **El default acelera el flujo común.** En la mayoría de los casos Shirley va a confiar en el sugerido (por eso existe el algoritmo). Arrancar en sugerido ahorra un click y un tipeo por fila; tocar solo las excepciones es exactamente el patrón "confirmar lo razonable, editar lo raro".
+- **Dos dimensiones ortogonales respetadas (D23).** Los chips de sobre/sub pedido viven al lado de "Pidió", separados del fondo de decisión y del borde lateral ámbar (edición manual). Se suman sin colisionar.
+- **Configurabilidad.** Diego puede apagar el default (para forzar a Shirley a decidir cada cantidad en frío) o ajustar el umbral si la sensibilidad no es la correcta para su rubro.
+
+**Supuestos y pendientes:**
+- **Supuesto**: el sistema base del cliente expone el sugerido por producto × local a través de `SPMultiCompra` (acción por definir). Puede venir en el mismo bulk que el snapshot de stock o en una acción separada. **Pendiente Arquitecto** cuando llegue la doc del SP.
+- **Supuesto**: el sugerido no cambia mientras Shirley arma la OC — es un snapshot tomado junto con el de stock. Si pasa mucho tiempo, al refrescar stock también se refresca el sugerido.
+- **Supuesto**: el umbral del 20% es uniforme para todos los productos. **Pendiente Producto**: confirmar si rubros distintos (accesorios caros de rotación lenta vs. commodities de rotación alta) ameritan umbrales distintos por categoría. De ser así, se agrega campo `umbralPct` por producto en el catálogo.
+- **Pendiente Producto**: ¿el sugerido también tiene que aparecer en la pantalla de la cajera al cargar su OP, para que ya vea "el sistema te sugiere X"? Por ahora NO (alcance D40 es solo la planilla de OC del supervisor), pero podría aumentar la calidad de las OPs y reducir las correcciones posteriores. Se evalúa en decisión separada si se quiere sumar.
 
 ---
 
