@@ -1216,6 +1216,23 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         procesarCodigo(scanInput.value);
+      } else if (e.key === ' ' || e.code === 'Space') {
+        // Atajo: barra espaciadora abre el buscador por descripción.
+        // Útil cuando la cajera no encuentra el código (lectura fallida o
+        // etiqueta dañada) y prefiere buscar por nombre del producto.
+        // Si el input ya tenía algo tipeado (un código no encontrado o un
+        // término), lo trasladamos al buscador para no perder lo escrito.
+        e.preventDefault();
+        const trasladar = scanInput.value.trim() || lastCodigoNoEncontrado || '';
+        scanInput.value = '';
+        // Asegurar que el panel del fallback esté visible
+        if (!fallbackWrap.classList.contains('visible')) {
+          fallbackWrap.classList.add('visible');
+        }
+        searchInput.value = trasladar;
+        // Disparar el render de resultados con lo que ya había tipeado
+        searchInput.dispatchEvent(new Event('input'));
+        setTimeout(() => searchInput.focus(), 30);
       } else if (e.key === 'Escape') {
         scanInput.value = '';
         limpiarFeedback();
@@ -1489,15 +1506,6 @@
         // Si la lista está visible y hay un resaltado, lo agrega
         if (visible && elegirActivo()) {
           e.preventDefault();
-        }
-      } else if (e.key === ' ' || e.code === 'Space') {
-        // Espacio agrega el resaltado SOLO si el cursor está al final del input
-        // (para no romper el escribir espacios en medio del término de búsqueda)
-        const atEnd = searchInput.selectionStart === searchInput.value.length
-                   && searchInput.selectionEnd === searchInput.value.length;
-        if (visible && atEnd) {
-          // Espacio "decisivo": termina la búsqueda y agrega
-          if (elegirActivo()) e.preventDefault();
         }
       } else if (e.key === 'Escape') {
         searchInput.value = '';
