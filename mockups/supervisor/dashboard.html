@@ -318,17 +318,7 @@
       <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
     </div>
 
-    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema claro / oscuro" title="Cambiar tema">
-      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="4"/>
-        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-      </svg>
-      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
-
-    <div class="user-chip" tabindex="0" aria-label="Usuaria Shirley">
+    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
       <span class="avatar" aria-hidden="true">SH</span>
       <span>Hola Shirley</span>
     </div>
@@ -533,7 +523,7 @@
      ================================================================= -->
 <script type="module">
   import { opsPendientes, productos, locales } from '../shared/mock-data.js';
-  import { initSidebarClickOutside } from '../shared/ui.js';
+  import { initSidebarClickOutside, initAvatarMenu } from '../shared/ui.js';
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
@@ -877,14 +867,15 @@
   initSidebarClickOutside();
 
   // =====================================================================
-  // Theme toggle
+  // Menú avatar unificado (tema + logout)
   // =====================================================================
-  const THEME_KEY = 'multicompra:theme';
-  document.getElementById('btn-theme').addEventListener('click', () => {
-    const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-    const next = curr === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  initAvatarMenu({
+    avatarBtnSelector: '#avatar-btn',
+    logoutHref: '../logout.html',
+    perfilHref: null,   // no hay pantalla de perfil supervisor todavía
+    userName: 'Shirley',
+    userRole: 'supervisor',
+    userLocal: null,
   });
 
   // =====================================================================

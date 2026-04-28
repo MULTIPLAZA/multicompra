@@ -376,11 +376,7 @@
       <span class="logo-text">MultiCompra</span>
     </div>
     <div class="admin-title">Reporte · OP vs Compra vs Venta</div>
-    <button type="button" id="btn-theme" class="theme-toggle" aria-label="Cambiar tema">
-      <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <div class="user-chip" tabindex="0">
+    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
       <span class="avatar">DG</span>
       <span class="user-name">Diego</span>
     </div>
@@ -522,6 +518,7 @@
 
   <script type="module">
     import { productos, reporteOpvsCompravsVenta, fmtGs } from '../../shared/mock-data.js';
+    import { initAvatarMenu } from '../../shared/ui.js';
 
     const prodById = new Map(productos.map(p => [p.id, p]));
 
@@ -606,12 +603,14 @@
       });
     });
 
-    // Theme
-    document.getElementById('btn-theme').addEventListener('click', () => {
-      const curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-      const next = curr === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
+    // Menú avatar unificado
+    initAvatarMenu({
+      avatarBtnSelector: '#avatar-btn',
+      logoutHref: '../../logout.html',
+      perfilHref: null,
+      userName: 'Diego',
+      userRole: 'admin',
+      userLocal: null,
     });
   </script>
 
