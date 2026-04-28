@@ -339,6 +339,7 @@
 
 <script type="module">
   import { ocsHistorico, oc as ocActual, ops, auditoria, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   const ESTADO_BADGE = {
@@ -352,10 +353,40 @@
     anulada:                { cls: 'badge-anulada',              txt: 'Anulada' }
   };
 
+  // ─── Mergear OCs reales (las creadas desde oc-nueva) con el mock ────────
+  let ocsReales = [];
+  try {
+    const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
+    ocsReales = arr.map(oc => ({
+      id: oc.id,
+      numero: oc.id,
+      proveedorId: oc.proveedorId,
+      proveedorNombre: oc.proveedorNombre,
+      proveedor: { nombre: oc.proveedorNombre, ruc: '', contacto: '' },
+      fecha: oc.fecha,
+      fechaCreacion: oc.fecha,
+      estado: oc.estado || 'abierta',
+      lineas: oc.lineas || [],
+      total: oc.totalGs || 0,
+      totalGs: oc.totalGs || 0,
+      productosCount: (oc.lineas || []).length,
+      unidadesCount: (oc.lineas || []).reduce((s, l) => s + l.cantidad, 0),
+      opsIncluidas: oc.opIds || [],
+      creadaPor: oc.creadaPor || 'Supervisor',
+      _real: true,
+      _ocOriginal: oc
+    }));
+  } catch (_) {}
+
+  const todasLasOCs = [...ocsReales, ...ocsHistorico];
+
   // Resolver OC por ?id=
   const params = new URLSearchParams(window.location.search);
-  const ocId = (params.get('id') || 'oc-0039').toLowerCase();
-  const ocMeta = ocsHistorico.find(o => o.id.toLowerCase() === ocId) || ocsHistorico[3];
+  const ocIdRaw = params.get('id') || 'oc-0039';
+  const ocId = ocIdRaw.toLowerCase();
+  const ocMeta = todasLasOCs.find(o => o.id.toLowerCase() === ocId)
+              || todasLasOCs.find(o => (o.numero || '').toLowerCase() === ocId)
+              || ocsHistorico[3];
 
   // Cabecera
   document.getElementById('breadcrumb-id').textContent = ocMeta.numero;

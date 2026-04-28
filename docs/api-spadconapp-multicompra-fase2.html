@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MULTICOMPRA — Fase 2 — Spec para Carlos</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+         color: #1e293b; line-height: 1.55; font-size: 11pt; margin: 0; padding: 0; }
+  h1 { font-size: 26pt; color: #0f766e; margin: 0 0 4px 0; letter-spacing: -0.5px; }
+  h1 + .subtitle { color: #64748b; font-size: 12pt; margin-bottom: 28px; }
+  h2 { font-size: 16pt; color: #0f766e; margin-top: 32px; margin-bottom: 10px;
+       border-bottom: 2px solid #14b8a6; padding-bottom: 6px; page-break-after: avoid; }
+  h3 { font-size: 13pt; color: #0f172a; margin-top: 18px; margin-bottom: 6px; }
+  h4 { font-size: 11pt; color: #0f766e; margin-top: 14px; margin-bottom: 4px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 22px; }
+  strong { color: #0f172a; }
+  code { font-family: "Consolas", monospace; background: #f1f5f9; padding: 1px 5px;
+         border-radius: 3px; font-size: 9.5pt; color: #0f766e; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: 6px;
+        font-family: "Consolas", monospace; font-size: 9.5pt; line-height: 1.45;
+        overflow-x: auto; page-break-inside: avoid; margin: 10px 0; }
+  pre code { background: transparent; color: #e2e8f0; padding: 0; }
+  .box { border-left: 4px solid #14b8a6; background: #f0fdfa; padding: 10px 14px;
+         margin: 10px 0; border-radius: 0 6px 6px 0; page-break-inside: avoid; }
+  .box.warn { border-left-color: #f59e0b; background: #fffbeb; }
+  .box.q { border-left-color: #9333ea; background: #faf5ff; }
+  .box .box-title { font-weight: 700; margin-bottom: 4px; font-size: 10.5pt; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10pt;
+          page-break-inside: avoid; }
+  th { background: #0f766e; color: white; text-align: left; padding: 7px 9px; font-weight: 600; }
+  td { border: 1px solid #e2e8f0; padding: 7px 9px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .cover { height: 100vh; display: flex; flex-direction: column;
+           justify-content: center; align-items: flex-start; page-break-after: always; }
+  .cover .brand { font-size: 11pt; color: #64748b; letter-spacing: 3px; text-transform: uppercase; }
+  .cover h1 { font-size: 42pt; margin: 16px 0 6px 0; line-height: 1.05; }
+  .cover .big-subtitle { font-size: 16pt; color: #334155; margin-bottom: 36px; }
+  .cover .meta { color: #64748b; font-size: 11pt; line-height: 1.9; }
+  .cover .meta strong { color: #0f172a; }
+  .op-tag { display: inline-block; background: #0f766e; color: white;
+            font-family: "Consolas", monospace; padding: 4px 10px; border-radius: 4px;
+            font-size: 11pt; font-weight: 700; margin: 6px 0 14px 0; }
+  .footer-note { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0;
+                 color: #64748b; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="brand">MultiCompra · NODO</div>
+  <h1>Fase 2<br>MULTICOMPRA<br>en SpAdconApp</h1>
+  <div class="big-subtitle">2 nuevos reportes para cerrar el ciclo OP → OC → Compra</div>
+  <div class="meta">
+    <strong>Para:</strong> Carlos Cardozo<br>
+    <strong>De:</strong> Emiliano Vitale (NODO)<br>
+    <strong>Fecha:</strong> 28 de abril de 2026<br>
+    <strong>Continuación de:</strong> <code>api-spadconapp-multicompra.pdf</code>
+  </div>
+</section>
+
+<section>
+<h2>1) Contexto rápido</h2>
+
+<p>En la fase 1 ya implementaste 6 reportes <code>MULTICOMPRA_*</code> que andan perfecto. La PWA ya levanta locales, productos, stock, proveedores y autentica usuarios. Ahora tenemos demo end-to-end: la cajera arma la OP, el supervisor la aprueba, consolida en OC.</p>
+
+<p>Lo que falta para cerrar el ciclo:</p>
+<ol>
+  <li><strong>Registrar la compra</strong> cuando llegue la mercadería del proveedor.</li>
+  <li><strong>Notificarle al ERP</strong> de Diego que entró stock para que actualice su sistema.</li>
+</ol>
+
+<div class="box">
+  <div class="box-title">Diseño elegido</div>
+  Las OP/OC <em>nuestras</em> viven en Supabase (no las guardamos en SQL Server porque son entidades nuevas que el ERP no necesita conocer). Pero <strong>cuando se registra una Compra</strong>, ahí sí necesitamos avisarle al ERP para que actualice el stock central. Es el único punto de "escritura" que necesitamos del lado del SP.
+</div>
+</section>
+
+<section style="page-break-before: always;">
+
+<h2>2) <code>MULTICOMPRA_COMPRA_REGISTRAR</code></h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_COMPRA_REGISTRAR'</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Cuando llega la mercadería al depósito central, la supervisora abre la OC en MultiCompra, tilda lo que llegó vs lo pedido, y confirma. En ese momento la PWA llama a este reporte para que <strong>se registre la entrada de stock</strong> en el sistema de Diego. La factura del proveedor también se carga acá.</p>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<p>A diferencia de los reportes anteriores, este recibe muchos parámetros + un JSON con las líneas:</p>
+
+<table>
+  <tr><th style="width: 28%;">Parámetro</th><th style="width: 22%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_COMPRA_REGISTRAR'</code></td></tr>
+  <tr><td><code>@OCNumero</code></td><td><code>varchar(50)</code></td><td>El número de la OC nuestra (ej: <code>OC-loc-K3M5N</code>)</td></tr>
+  <tr><td><code>@IDProveedor</code></td><td><code>int</code></td><td>El ID del proveedor en tu sistema</td></tr>
+  <tr><td><code>@IDDeposito</code></td><td><code>int</code></td><td>Depósito donde entra la mercadería (normalmente el central)</td></tr>
+  <tr><td><code>@FacturaNumero</code></td><td><code>varchar(50)</code></td><td>Número de factura del proveedor</td></tr>
+  <tr><td><code>@FechaRecepcion</code></td><td><code>datetime</code></td><td>Fecha de recepción (default: GETDATE())</td></tr>
+  <tr><td><code>@UsuarioRecibe</code></td><td><code>int</code></td><td>ID del usuario que verifica la mercadería</td></tr>
+  <tr><td><code>@Lineas</code></td><td><code>nvarchar(max)</code></td><td>JSON array con <code>[{ "IDItem":1, "CantidadRecibida":10, "CostoUnitario":7000 }, ...]</code></td></tr>
+  <tr><td><code>@Observaciones</code></td><td><code>nvarchar(500)</code></td><td>Texto libre (opcional)</td></tr>
+</table>
+
+<h4>¿Qué tiene que hacer el SP?</h4>
+
+<ol>
+  <li>Validar que el proveedor exista y esté activo. Si no, devolver error.</li>
+  <li>Insertar registro en la tabla de <code>Compra</code> de tu sistema (lo que aplique en ADCON2).</li>
+  <li>Para cada línea del JSON, insertar en <code>DetalleCompra</code> y aumentar el stock en el depósito indicado.</li>
+  <li>Actualizar el costo del producto si cambió (con la lógica de "ActualizarCosto" que ya tenés).</li>
+  <li>Devolver el ID interno de la Compra para que MultiCompra lo guarde.</li>
+</ol>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>ok</code></td><td><code>bit</code></td><td><code>1</code></td><td>1 si todo OK, 0 si falló</td></tr>
+  <tr><td><code>idCompra</code></td><td><code>int</code></td><td><code>15847</code></td><td>El ID de la compra creada en tu sistema (para auditar)</td></tr>
+  <tr><td><code>numeroCompra</code></td><td><code>varchar</code></td><td><code>C-001-001-12345</code></td><td>Número que tu sistema le asigna</td></tr>
+  <tr><td><code>totalGs</code></td><td><code>decimal</code></td><td><code>1250000</code></td><td>Total calculado</td></tr>
+  <tr><td><code>productosActualizados</code></td><td><code>int</code></td><td><code>18</code></td><td>Cantidad de productos cuyo stock se actualizó</td></tr>
+  <tr><td><code>mensaje</code></td><td><code>varchar(200)</code></td><td><code>Compra registrada y stock actualizado</code></td><td>Texto descriptivo</td></tr>
+</table>
+
+<h4>Boceto T-SQL</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_COMPRA_REGISTRAR' Begin
+
+    Declare @vIdCompra      int = 0
+    Declare @vNumeroCompra  varchar(50) = ''
+    Declare @vTotalGs       decimal(14,2) = 0
+    Declare @vCantProd      int = 0
+    Declare @vOk            bit = 0
+    Declare @vMensaje       varchar(200) = ''
+
+    Begin Try
+        Begin Transaction
+
+        -- 1) Validar proveedor
+        If Not Exists (Select 1 From Proveedor Where IDProveedor = @IDProveedor And Activo = 1) Begin
+            Set @vMensaje = 'Proveedor inválido o inactivo'
+            GoTo CompraCerrar
+        End
+
+        -- 2) Insertar Compra
+        Insert Into Compra (IDProveedor, FechaCompra, FacturaNumero,
+                            IDUsuarioRecibe, Observaciones, IDDeposito)
+        Values (@IDProveedor, IsNull(@FechaRecepcion, GetDate()), @FacturaNumero,
+                @UsuarioRecibe, @Observaciones, @IDDeposito)
+
+        Set @vIdCompra = Scope_Identity()
+        Set @vNumeroCompra = 'C-' + Right('00000' + Cast(@vIdCompra As varchar), 5)
+
+        -- 3) Insertar líneas y actualizar stock
+        Declare @lineas table (
+            IDItem int, CantidadRecibida int, CostoUnitario decimal(14,2)
+        )
+        Insert Into @lineas
+        Select IDItem, CantidadRecibida, CostoUnitario
+        From OpenJson(@Lineas)
+        With (
+            IDItem int '$.IDItem',
+            CantidadRecibida int '$.CantidadRecibida',
+            CostoUnitario decimal(14,2) '$.CostoUnitario'
+        )
+
+        -- Detalle
+        Insert Into DetalleCompra (IDTransaccion, IDItem, Cantidad, CostoUnitario)
+        Select @vIdCompra, IDItem, CantidadRecibida, CostoUnitario From @lineas
+
+        -- Stock (asumiendo tabla StockDeposito o similar)
+        -- Aca viene la logica que vos sabes mejor: actualizar stock por
+        -- (IDItem, IDDeposito) sumando CantidadRecibida.
+
+        -- Actualizar costo del producto si corresponde
+        Update I
+        Set Costo = L.CostoUnitario
+        From Item I Inner Join @lineas L On I.IDItem = L.IDItem
+        Where I.ActualizarCosto = 1
+
+        Set @vTotalGs = (Select Sum(CantidadRecibida * CostoUnitario) From @lineas)
+        Set @vCantProd = (Select Count(*) From @lineas)
+        Set @vOk = 1
+        Set @vMensaje = 'Compra registrada y stock actualizado'
+
+        Commit Transaction
+    End Try
+    Begin Catch
+        If @@TranCount &gt; 0 Rollback Transaction
+        Set @vMensaje = 'Error: ' + Error_Message()
+    End Catch
+
+    CompraCerrar:
+    Select 'ok' = @vOk, 'idCompra' = @vIdCompra,
+           'numeroCompra' = @vNumeroCompra, 'totalGs' = @vTotalGs,
+           'productosActualizados' = @vCantProd, 'mensaje' = @vMensaje
+
+End</code></pre>
+
+<div class="box q">
+  <div class="box-title">Preguntas</div>
+  <ol>
+    <li>¿Cómo se llama exactamente la tabla de Compra y la de DetalleCompra en ADCON2?</li>
+    <li>¿Cómo se actualiza el stock por (IDItem, IDDeposito)? Si es vía un SP existente, podemos llamarlo desde acá.</li>
+    <li>¿Querés que también dispare automáticamente el <code>MULTICOMPRA_RECALCULO_STOCK</code> al final, o lo manejamos del lado PWA?</li>
+  </ol>
+</div>
+
+</section>
+
+<section style="page-break-before: always;">
+
+<h2>3) <code>MULTICOMPRA_OP_GUARDAR</code> (opcional, baja prioridad)</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_OP_GUARDAR'</div>
+
+<h4>¿Para qué serviría?</h4>
+
+<p>Hoy las OPs se guardan SOLO en MultiCompra (Supabase). Si por algún motivo querés que también queden registradas en el ERP de Diego (para reportes históricos cruzados con ventas), este endpoint las copia.</p>
+
+<div class="box warn">
+  <div class="box-title">Decidí si vale la pena</div>
+  Si las OPs son "intención de pedido" y solo importa el resultado final (la Compra registrada), <strong>no hace falta esto</strong>. Si querés trazabilidad cruzada con tu sistema, sí. Mi recomendación: dejar las OPs en Supabase y solo loggear la Compra final en el ERP.
+</div>
+
+<h4>Spec si decidimos hacerlo</h4>
+
+<table>
+  <tr><th>Parámetro</th><th>Tipo</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td><code>'MULTICOMPRA_OP_GUARDAR'</code></td></tr>
+  <tr><td><code>@OPNumero</code></td><td><code>varchar(50)</code></td><td>El ID legible de la OP (ej: <code>OP-loc-X9Y2Z</code>)</td></tr>
+  <tr><td><code>@IDDeposito</code></td><td><code>int</code></td><td>Depósito que pidió</td></tr>
+  <tr><td><code>@IDUsuarioCajera</code></td><td><code>int</code></td><td>Cajera que la armó</td></tr>
+  <tr><td><code>@FechaEnvio</code></td><td><code>datetime</code></td><td>Cuándo se envió a la supervisora</td></tr>
+  <tr><td><code>@Estado</code></td><td><code>varchar(20)</code></td><td><code>'enviada'</code> | <code>'aprobada'</code> | <code>'cerrada'</code> | etc.</td></tr>
+  <tr><td><code>@Lineas</code></td><td><code>nvarchar(max)</code></td><td>JSON con <code>[{ "IDItem", "Cantidad" }]</code></td></tr>
+</table>
+
+<p>Devolvería: <code>ok</code>, <code>idOPLog</code>, <code>mensaje</code>.</p>
+
+<p>Implementación: insertar en una tabla nueva <code>OPHistorial</code> (que crearías en ADCON2) con el espejo de la OP. Solo para auditar.</p>
+
+</section>
+
+<section>
+
+<h2>4) Próximos pasos</h2>
+
+<ol>
+  <li>Vos: implementás <code>MULTICOMPRA_COMPRA_REGISTRAR</code> (lo crítico). Pasame las preguntas que te queden y armamos juntos.</li>
+  <li>Yo: armo el cliente Supabase para guardar OPs y OCs (ya está stub listo).</li>
+  <li>Validamos en demo con Diego que el flujo cierra completo: cajera pide → supervisora aprueba → consolida en OC → llega mercadería → se registra y el stock del ERP se actualiza.</li>
+  <li>Si Diego pide auditoría cruzada, hacemos también <code>MULTICOMPRA_OP_GUARDAR</code>.</li>
+</ol>
+
+<p class="footer-note">
+  Documento generado el 28 de abril de 2026 · MultiCompra Fase 2 ·
+  NODO · <code>github.com/MULTIPLAZA/multicompra</code>
+</p>
+
+</section>
+
+</body>
+</html>

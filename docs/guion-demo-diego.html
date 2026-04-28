@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Guion de demo — Diego</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+         color: #1e293b; line-height: 1.55; font-size: 10.5pt; margin: 0; padding: 0; }
+  h1 { font-size: 22pt; color: #0f766e; margin: 0 0 4px 0; letter-spacing: -0.5px; }
+  h1 + .sub { color: #64748b; font-size: 11pt; margin-bottom: 20px; }
+  h2 { font-size: 14pt; color: #0f766e; margin-top: 22px; margin-bottom: 8px;
+       border-bottom: 2px solid #14b8a6; padding-bottom: 5px; page-break-after: avoid; }
+  h3 { font-size: 12pt; color: #0f172a; margin-top: 14px; margin-bottom: 4px; }
+  p { margin: 6px 0; }
+  ol, ul { margin: 6px 0 6px 22px; }
+  li { margin: 3px 0; }
+  strong { color: #0f172a; }
+  code { font-family: "Consolas", monospace; background: #f1f5f9; padding: 1px 5px;
+         border-radius: 3px; font-size: 9pt; color: #0f766e; }
+  .box { border-left: 4px solid #14b8a6; background: #f0fdfa; padding: 8px 12px;
+         margin: 8px 0; border-radius: 0 5px 5px 0; page-break-inside: avoid; }
+  .box.warn { border-left-color: #f59e0b; background: #fffbeb; }
+  .box.say { border-left-color: #9333ea; background: #faf5ff; }
+  .box .box-title { font-weight: 700; margin-bottom: 4px; font-size: 10pt; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9.5pt;
+          page-break-inside: avoid; }
+  th { background: #0f766e; color: white; text-align: left; padding: 6px 8px; font-weight: 600; }
+  td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .step {
+    background: white; border: 1px solid #e2e8f0;
+    border-left: 4px solid #0f766e; border-radius: 5px;
+    padding: 10px 14px; margin: 10px 0;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    display: inline-block; background: #0f766e; color: white;
+    width: 24px; height: 24px; border-radius: 50%; text-align: center;
+    line-height: 24px; font-weight: 700; margin-right: 8px;
+    font-size: 10pt;
+  }
+  .step-title { display: inline-block; font-weight: 700; font-size: 11pt; color: #0f172a; }
+  .step-action { color: #475569; font-size: 9.5pt; margin-top: 4px; }
+  .step-say {
+    background: #faf5ff; border-left: 3px solid #9333ea;
+    padding: 6px 10px; margin-top: 6px; font-style: italic;
+    color: #4c1d95; font-size: 9.5pt;
+  }
+  .step-tech {
+    background: #f1f5f9; padding: 4px 8px; margin-top: 4px;
+    font-family: "Consolas", monospace; font-size: 8.5pt; color: #475569;
+    border-radius: 3px;
+  }
+  .cover { height: 100vh; display: flex; flex-direction: column;
+           justify-content: center; align-items: flex-start; page-break-after: always; }
+  .cover .brand { font-size: 11pt; color: #64748b; letter-spacing: 3px; text-transform: uppercase; }
+  .cover h1 { font-size: 38pt; margin: 14px 0 6px 0; line-height: 1.05; }
+  .cover .big-sub { font-size: 14pt; color: #334155; margin-bottom: 30px; }
+  .footer-note { margin-top: 26px; padding-top: 10px; border-top: 1px solid #e2e8f0;
+                 color: #64748b; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="brand">MultiCompra · NODO</div>
+  <h1>Guion<br>de demo</h1>
+  <div class="big-sub">Para mostrarle a Diego la app andando en vivo</div>
+  <div style="color:#64748b;line-height:1.9;">
+    <strong>URL:</strong> <code style="background:#f0fdfa;color:#0f766e;padding:2px 8px;">https://multicompra.pages.dev/login</code><br>
+    <strong>Usuario:</strong> RICARDO &nbsp; · &nbsp; <strong>Clave:</strong> 12345<br>
+    <strong>Duración estimada:</strong> 8-10 minutos
+  </div>
+</section>
+
+<section>
+
+<h2>Cómo arrancar</h2>
+
+<ol>
+  <li>Antes de empezar, abrí el navegador y entrá a <code>https://multicompra.pages.dev/login</code> ya, así Cloudflare cachea el bundle. Si tarda 1 segundo es por la primera carga; en la demo va a ser instantáneo.</li>
+  <li>Si nunca te logueaste, en la pantalla de login aparece arriba el campo "Usuario" (no email). Si querés mostrar el flujo de demo sin pegarle al ERP, abajo hay 3 cards (Carolina, Shirley, Diego). Pero la idea es que mostrés el flujo REAL.</li>
+  <li>Tené el WhatsApp con el manual PDF abierto por si Diego pregunta algo y querés mandarle el detalle.</li>
+</ol>
+
+<div class="box warn">
+  <div class="box-title">Importante antes de la demo</div>
+  Si Diego ya tiene un usuario en el ERP, mejor pedile la clave de uno de sus usuarios reales (cajera o supervisora). Así la demo se hace con SU data, no con el RICARDO de prueba. Si no, RICARDO/12345 está perfecto.
+</div>
+
+</section>
+
+<h2>Parte 1 — La cajera arma su pedido</h2>
+
+<div class="step">
+  <div><span class="step-num">1</span><span class="step-title">Login</span></div>
+  <div class="step-action">Tipear <code>RICARDO</code> y <code>12345</code> y darle Entrar.</div>
+  <div class="step-say">"Diego, esto es lo que ve cualquier cajera tuya cuando abre la app. Le pide su usuario, el mismo que ya usa en tu sistema."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">2</span><span class="step-title">Elegir local</span></div>
+  <div class="step-action">Aparece dropdown con tus 22 depósitos. Elegir <strong>MULTIPLAZA</strong> o <strong>KIWI SHOP</strong> (los más reconocibles).</div>
+  <div class="step-say">"Como una persona puede atender en distintos locales según el día, le preguntamos en cuál está hoy. La lista se trae en vivo de tu sistema, son tus 22 depósitos activos."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">3</span><span class="step-title">Pantalla de carga</span></div>
+  <div class="step-action">Aparece el splash con barra de progreso. Espera ~7 segundos. Verás los chips ponerse verdes con los conteos: Locales (22), Proveedores (83), Productos (13.372), Stock (27.987).</div>
+  <div class="step-say">"Esto que ves cargando es la app sincronizándose con TU sistema en tiempo real. Bajó tus 13.372 productos y el stock de cada uno en cada depósito. Pasa una sola vez al iniciar sesión."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">4</span><span class="step-title">Dashboard de la cajera</span></div>
+  <div class="step-action">Mostrar el saludo "Hola Ricardo · MULTIPLAZA · DEP MULTIPLAZA". Click en "Cargar pedido nuevo".</div>
+  <div class="step-say">"Acá Ricardo ya entró. La pantalla es simple a propósito porque la cajera no tiene mucho tiempo. Lo único que tiene que hacer es armar su pedido."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">5</span><span class="step-title">Escanear productos reales</span></div>
+  <div class="step-action">En el input grande arriba, tipear <code>00001000</code> y Enter. <br>Después <code>00001001</code> y Enter. <br>Después <code>00001005</code> y Enter.</div>
+  <div class="step-say">"En vez de tipear, en el local real Ricardo pasa el láser por cada producto. Acá cada Enter representa un beep del lector. Mirá cómo aparecen tus productos: Glass iPhone 6 6s, Glass iPhone 5g 5c 5s, Cargador Samsung 1m. Son TUS productos, con tus precios y costos."</div>
+  <div class="step-tech">Si pegás un código que no existe, aparece error. Probar con <code>9999999</code> para mostrar el flujo de "solicitar alta".</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">6</span><span class="step-title">Buscar por descripción</span></div>
+  <div class="step-action">En el input principal, apretar <strong>barra espaciadora</strong> (sin tipear nada). Se abre el buscador. Tipear <code>cargador</code>. Aparece la lista. <br>Mostrar las flechas ↓/↑ y dar Enter para agregar.</div>
+  <div class="step-say">"Si la etiqueta del producto está dañada y no escanea, la cajera aprieta espacio y busca por nombre. Las flechas eligen, Enter agrega."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">7</span><span class="step-title">Ajustar cantidades</span></div>
+  <div class="step-action">En cada fila de la tabla, usar los botones − y + para subir/bajar cantidades.</div>
+  <div class="step-say">"Para cada producto, elige cuántas unidades quiere. Si pidió por error, lo borra. Es eso, no hay misterio."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">8</span><span class="step-title">Enviar pedido</span></div>
+  <div class="step-action">Click en <strong>"Enviar pedido"</strong>. Aparece confirmación con el ID de la OP. Vuelve al dashboard.</div>
+  <div class="step-say">"Listo, Ricardo terminó. Tu sistema ahora tiene una OP esperando que la supervisora la revise."</div>
+</div>
+
+<h2>Parte 2 — La supervisora aprueba</h2>
+
+<div class="step">
+  <div><span class="step-num">9</span><span class="step-title">Cambiar de usuario</span></div>
+  <div class="step-action">Avatar arriba a la derecha → Cerrar sesión. Volver al login. Click en <strong>botón demo "Entrar como Shirley"</strong>.</div>
+  <div class="step-say">"Ahora me pongo en el lugar de Shirley, que está en el depósito central."</div>
+  <div class="step-tech">Nota: en la versión final cada supervisora va a tener su login real. Por ahora uso el botón demo para no necesitar dos usuarios reales en la base.</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">10</span><span class="step-title">Dashboard del supervisor</span></div>
+  <div class="step-action">La OP que Ricardo recién mandó aparece <strong>arriba</strong> de la lista, en azul ("Enviada").</div>
+  <div class="step-say">"Acá Shirley ve TODOS los pedidos de TODOS los locales. La que Ricardo recién mandó aparece arriba con su nombre, su local y los productos. Si una OP es vieja (más de 7 días sin tocar) le sale un chip rojo de alerta."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">11</span><span class="step-title">Ver detalle</span></div>
+  <div class="step-action">Click en la OP de Ricardo → se abre el detalle.</div>
+  <div class="step-say">"Acá ve cada producto con tu costo, tu precio, y el stock que ese local tiene HOY. Si el producto ya está en stock en el local, ¿para qué pedir más? Eso es lo que evita el stock muerto."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">12</span><span class="step-title">Aprobar</span></div>
+  <div class="step-action">Click en <strong>botón verde "Aprobar"</strong>. Toast de confirmación. Vuelve al dashboard.</div>
+  <div class="step-say">"Aprobada. Si en cambio quisiera devolverle el pedido a Ricardo para que lo reajuste, le pone una nota mínima de 20 caracteres y le explica por qué. Toda esa comunicación queda registrada."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">13</span><span class="step-title">Verificar que la OP desapareció</span></div>
+  <div class="step-action">Mostrar el dashboard del supervisor. La OP de Ricardo ya no está en pendientes (porque fue aprobada).</div>
+</div>
+
+<h2>Parte 3 — Consolidar en OC</h2>
+
+<div class="step">
+  <div><span class="step-num">14</span><span class="step-title">Crear nueva OC</span></div>
+  <div class="step-action">Sidebar → "Compras" → "OC nueva". Aparece la lista de OPs aprobadas. Tildar 1-2.</div>
+  <div class="step-say">"Cuando junta varias OPs de distintos locales que necesitan los mismos productos, las consolida en UNA orden de compra al proveedor."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">15</span><span class="step-title">Elegir proveedor</span></div>
+  <div class="step-action">Dropdown de proveedores → elegir uno (cualquiera de los 83 reales). Mostrar el resumen lateral con el total estimado.</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">16</span><span class="step-title">Armar la OC</span></div>
+  <div class="step-action">Click en <strong>"Armar OC y abrir planilla"</strong>. Confirma. Te lleva al listado de OCs.</div>
+  <div class="step-say">"Ya quedó la orden de compra. Cuando llegue la mercadería del proveedor, Shirley va a abrir esta OC, tildar lo que llegó, y eso queda registrado como Compra. En ese momento el stock de tu sistema se actualiza solo."</div>
+</div>
+
+<div class="step">
+  <div><span class="step-num">17</span><span class="step-title">Verla en el listado</span></div>
+  <div class="step-action">En oc-lista, la OC nueva aparece arriba con el ID generado, proveedor, cantidad de productos y total.</div>
+</div>
+
+<h2>Parte 4 — Cerrar la conversación</h2>
+
+<div class="box say">
+  <div class="box-title">Resumen para Diego</div>
+  "Lo que viste es el ciclo completo: cajera arma, supervisora aprueba, consolida en OC al proveedor. Lo que YA está conectado a tu sistema: usuarios, locales, productos, stock, proveedores. Lo que falta para producción: registrar la Compra cuando llega la mercadería para que tu sistema actualice el stock central solo (eso es 1 endpoint más que Carlos tiene que sumar al SP), y migrar las OPs/OCs a una base externa para que se vean entre dispositivos. Después de eso podemos ir a producción cuando quieras."
+</div>
+
+<h2>Preguntas que probablemente haga Diego (y cómo responder)</h2>
+
+<table>
+  <tr><th style="width: 40%;">Pregunta</th><th>Respuesta</th></tr>
+  <tr>
+    <td>¿Las cajeras pueden ver el pedido de otros locales?</td>
+    <td>No. Cada cajera ve solo sus propios pedidos. Solo la supervisora ve todo.</td>
+  </tr>
+  <tr>
+    <td>¿Si una cajera se equivoca y manda dos veces lo mismo?</td>
+    <td>Cada OP tiene un ID único. La supervisora ve las dos y puede devolver una con nota. Todo queda auditado.</td>
+  </tr>
+  <tr>
+    <td>¿Cómo manejo cajeras nuevas?</td>
+    <td>Las das de alta en TU sistema (como hoy). MultiCompra las toma de ahí automáticamente.</td>
+  </tr>
+  <tr>
+    <td>¿Funciona en celular?</td>
+    <td>Sí, todo responsive. La pantalla de la cajera está pensada para tablet/celular del local; la del supervisor para PC porque tiene más datos.</td>
+  </tr>
+  <tr>
+    <td>¿Y si se cae internet?</td>
+    <td>El borrador de OP queda en el dispositivo, así que no se pierde. Cuando vuelve internet, se manda. Datos del catálogo quedan cacheados 1 hora.</td>
+  </tr>
+  <tr>
+    <td>¿Cuánto sale?</td>
+    <td>(Decisión tuya — es momento de hablar de pricing si la demo va bien)</td>
+  </tr>
+  <tr>
+    <td>¿Cuándo está lista para producción?</td>
+    <td>Faltan 2 cosas: que Carlos agregue 1 endpoint para registrar compra (1-2 días), y migrar OPs/OCs a base externa (3-5 días). Después listo. Total ≈ 1 semana de trabajo.</td>
+  </tr>
+</table>
+
+<p class="footer-note">
+  Guion generado el 28 de abril de 2026 · MultiCompra · NODO ·
+  Llevátelo impreso o abrí el PDF en otro dispositivo durante la demo.
+</p>
+
+</body>
+</html>
