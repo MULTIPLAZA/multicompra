@@ -406,8 +406,60 @@
 </div>
 
 <script type="module">
-  import { productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import {
+    isCargado,
+    getProductos as _getProductos,
+    getLocales as _getLocales,
+    getStockProducto,
+    getStockTotal
+  } from '../shared/data.js';
+  import { solicitudesAltaProducto } from '../shared/mock-data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Guard: si no hay cache cargada, mandar al login ──────────────────
+  if (!isCargado()) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    window.location.href = '../login.html?next=' + next;
+    throw new Error('Cache vacía — redirigiendo a login');
+  }
+
+  // ─── Adapter: transformar el shape de la API al shape que ya espera   ─
+  //     esta pantalla (heredado de mock-data.js).
+  //     - producto.barras       = codigo de la API
+  //     - producto.nombre       = descripcion de la API
+  //     - producto.stockCentral = stock total (sumatoria de todos los depósitos)
+  //     - producto.stockPorLocal[locId] = existencia en ese depósito
+  //     - local.codigo          = primeras 3 letras del nombre del depósito
+  const _locales   = _getLocales();
+  const _productos = _getProductos();
+
+  const locales = _locales.map(l => {
+    const base = (l.Sucursal && l.Sucursal !== l.nombre)
+      ? `${l.Sucursal} · ${l.nombre}`
+      : l.nombre;
+    const codigo = (l.nombre || l.Sucursal || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase();
+    return {
+      id: l.id,
+      nombre: base,
+      codigo,
+      activo: l.activo
+    };
+  });
+
+  const productos = _productos.map(p => ({
+    id: p.id,
+    barras: p.codigo || '',
+    nombre: p.descripcion || '',
+    categoria: p.categoria || '',
+    costo: Number(p.costo) || 0,
+    precio: Number(p.precio) || 0,
+    stockCentral: getStockTotal(p.id),
+    stockPorLocal: locales.reduce((acc, l) => {
+      acc[l.id] = getStockProducto(l.id, p.id);
+      return acc;
+    }, {}),
+    idProveedor: p.idProveedor
+  }));
 
   // =====================================================================
   // Buscador con dropdown

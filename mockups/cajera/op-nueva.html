@@ -873,8 +873,53 @@
 
   <!-- ===================== Script ===================== -->
   <script type="module">
-    import { productos, cajeraActual, proveedores } from '../shared/mock-data.js';
+    import {
+      isCargado,
+      getProductos as _getProductos,
+      getProveedores as _getProveedores,
+      getStockTotal,
+      buscarProductos
+    } from '../shared/data.js';
     import { initAvatarMenu } from '../shared/ui.js';
+
+    // ─── Guard: si no hay cache cargada, mandar al login ────────────────
+    if (!isCargado()) {
+      const next = encodeURIComponent(location.pathname + location.search);
+      window.location.href = '../login.html?next=' + next;
+      throw new Error('Cache vacía — redirigiendo a login');
+    }
+
+    // ─── Cajera desde localStorage (no del mock) ────────────────────────
+    const userRaw = localStorage.getItem('multicompra:user');
+    if (!userRaw) {
+      window.location.href = '../login.html';
+      throw new Error('No hay user — redirigiendo a login');
+    }
+    const userObj = JSON.parse(userRaw);
+    const cajeraActual = {
+      id: userObj.id,
+      nombre: userObj.nombre,
+      iniciales: userObj.iniciales,
+      rol: userObj.rol,
+      localId: userObj.localId,
+      localNombre: userObj.localNombre,
+      localSucursal: userObj.localSucursal || ''
+    };
+
+    // ─── Adapter: shape mock-compatible para los productos reales ────────
+    //     - id, barras, nombre, costo, precio, stockCentral
+    const _productos = _getProductos();
+    const productos = _productos.map(p => ({
+      id: p.id,
+      barras: String(p.codigo || ''),
+      nombre: p.descripcion || '',
+      categoria: p.categoria || '',
+      costo: Number(p.costo) || 0,
+      precio: Number(p.precio) || 0,
+      stockCentral: getStockTotal(p.id),
+      idProveedor: p.idProveedor
+    }));
+    const proveedores = _getProveedores();
 
     // Código del último producto no encontrado (para pre-llenar el modal de alta)
     let lastCodigoNoEncontrado = '';
@@ -897,23 +942,21 @@
     // --------- Estado de la OP (borrador en memoria + localStorage) ---------
     const DRAFT_KEY = 'multicompra:draft:op';
 
-    // Seed inicial: demostrar "borrador editable" con 3-4 productos, 1 con cantidad > 1
-    const seedLineas = [
-      { productoId: 'p01', cantidad: 3 },  // Cargador USB-C 20W Premium — cantidad > 1
-      { productoId: 'p02', cantidad: 1 },  // Cable Lightning 1m
-      { productoId: 'p06', cantidad: 1 },  // Vidrio templado iPhone
-      { productoId: 'p09', cantidad: 1 }   // Power Bank 10000mAh
-    ];
-
     function cargarDraft() {
       try {
         const raw = localStorage.getItem(DRAFT_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.lineas)) return parsed;
+          if (parsed && Array.isArray(parsed.lineas)) {
+            // Filtrar líneas cuyo productoId no exista en el catálogo cargado
+            // (ej: el draft tenía IDs del mock 'p01' que no están en la API real).
+            const validIds = new Set(productos.map(p => p.id));
+            parsed.lineas = parsed.lineas.filter(l => validIds.has(l.productoId));
+            return parsed;
+          }
         }
       } catch (e) {}
-      return { lineas: seedLineas.slice(), excepcion: false, motivo: '' };
+      return { lineas: [], excepcion: false, motivo: '' };
     }
     function guardarDraft() {
       try {

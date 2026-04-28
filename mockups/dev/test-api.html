@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tester API · MultiCompra</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-alt: #1e293b;
+    --bg-card: #1e293b;
+    --bg-card-hover: #273449;
+    --border: #334155;
+    --border-strong: #475569;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    --primary: #14b8a6;
+    --primary-hover: #0f766e;
+    --primary-fg: #f0fdfa;
+    --success: #22c55e;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --code-bg: #0b1220;
+    --code-fg: #cbd5e1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  header {
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  header h1 .accent { color: var(--primary); }
+  header .sub {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  header .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .health-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.2s;
+  }
+  .health-dot.ok { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .health-dot.error { background: var(--error); box-shadow: 0 0 8px var(--error); }
+  .health-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  .config-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .config-bar h2 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .config-grid {
+    display: grid;
+    grid-template-columns: 2fr 3fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .field input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+  }
+  .field input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+    border-color: var(--primary);
+  }
+  .btn {
+    background: var(--primary);
+    color: var(--primary-fg);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--primary-hover); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn.btn-secondary:hover { background: var(--bg-card-hover); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: "Consolas", monospace;
+    letter-spacing: -0.3px;
+  }
+  .card-desc {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .card-actions {
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .card-actions input {
+    flex: 0 0 130px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: "Consolas", monospace;
+    font-size: 12px;
+  }
+  .card-actions input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+  .card-stats {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    min-height: 30px;
+  }
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat strong { color: var(--text); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge.ok { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+  .badge.error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+  .badge.loading { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+  .badge.idle { background: var(--bg); color: var(--text-muted); }
+  .response {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 12px 14px;
+    margin: 0;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    max-height: 320px;
+    overflow: auto;
+    white-space: pre;
+    border-top: 1px solid var(--border);
+    flex: 1;
+    min-height: 100px;
+  }
+  .response:empty::before {
+    content: "Hacé click en \"Probar\" para ver la respuesta…";
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: normal;
+  }
+
+  /* Syntax highlighting básico para JSON */
+  .response .key { color: #7dd3fc; }
+  .response .str { color: #86efac; }
+  .response .num { color: #fbbf24; }
+  .response .bool { color: #f472b6; }
+  .response .null { color: #94a3b8; }
+
+  /* Footer */
+  footer {
+    margin-top: 32px;
+    padding: 20px 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer code { color: var(--primary); }
+
+  @media (max-width: 700px) {
+    .config-grid { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span class="accent">⚡</span> Tester API · MultiCompra</h1>
+    <div class="sub">Probar las 6 operaciones <code style="color:var(--primary);font-family:Consolas,monospace;">MULTICOMPRA_*</code> contra <code style="color:var(--text);font-family:Consolas,monospace;">SpAdconApp</code></div>
+  </div>
+  <div class="header-right">
+    <span id="health-label" style="font-size:12px;color:var(--text-dim);">Sin probar</span>
+    <span class="health-dot" id="health-dot"></span>
+    <button class="btn btn-secondary btn-sm" id="btn-test-wrapper" title="Probar el wrapper shared/api.js">Probar wrapper</button>
+    <button class="btn btn-secondary btn-sm" id="btn-test-all">Probar todas</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Configuración endpoint + token -->
+  <section class="config-bar">
+    <h2>Configuración del endpoint</h2>
+    <div class="config-grid">
+      <div class="field">
+        <label for="cfg-url">URL</label>
+        <input type="text" id="cfg-url" value="https://nodoapi.ddns.net/sql">
+      </div>
+      <div class="field">
+        <label for="cfg-token">Bearer token</label>
+        <input type="text" id="cfg-token" value="e739a79537c4a57bde2c91e3118baa3232d12555370b0140146d265903397a9d">
+      </div>
+      <button class="btn btn-secondary" id="btn-save-cfg">Guardar</button>
+    </div>
+  </section>
+
+  <!-- Visor de resultados del wrapper -->
+  <section id="wrapper-panel" class="config-bar" hidden>
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+      Resultados del wrapper shared/api.js
+      <button class="btn btn-secondary btn-sm" id="btn-copy-wrapper">Copiar</button>
+    </h2>
+    <pre id="wrapper-output" style="background:var(--code-bg);color:var(--code-fg);padding:12px;border-radius:4px;font-family:'Consolas',monospace;font-size:12px;line-height:1.5;margin:0;max-height:400px;overflow:auto;white-space:pre-wrap;"></pre>
+  </section>
+
+  <!-- Cards de operaciones -->
+  <section class="grid">
+
+    <!-- AUTH -->
+    <div class="card" data-op="AUTH">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_AUTH</div>
+          <div class="card-desc">Login: validar usuario + clave</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <input type="text" placeholder="Usuario" data-input="usuario" value="RICARDO">
+        <input type="text" placeholder="Clave" data-input="clave" value="12345">
+        <button class="btn btn-sm" data-test="AUTH">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+    <!-- LOCALES -->
+    <div class="card" data-op="LOCALES">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_LOCALES</div>
+          <div class="card-desc">Lista de depósitos (cada uno = un "local")</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" data-test="LOCALES">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+    <!-- PROVEEDORES -->
+    <div class="card" data-op="PROVEEDORES">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_PROVEEDORES</div>
+          <div class="card-desc">Lista de proveedores activos</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" data-test="PROVEEDORES">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+    <!-- PRODUCTOS -->
+    <div class="card" data-op="PRODUCTOS">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_PRODUCTOS</div>
+          <div class="card-desc">Catálogo completo (con idProveedor por producto)</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" data-test="PRODUCTOS">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+    <!-- RECALCULO_STOCK -->
+    <div class="card" data-op="RECALCULO_STOCK">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_RECALCULO_STOCK</div>
+          <div class="card-desc">Refresca el snapshot de existencias (correr antes de STOCK)</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" data-test="RECALCULO_STOCK">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+    <!-- STOCK -->
+    <div class="card" data-op="STOCK">
+      <div class="card-header">
+        <div>
+          <div class="card-title">MULTICOMPRA_STOCK</div>
+          <div class="card-desc">Matriz de existencias (idDeposito × idProducto)</div>
+        </div>
+        <span class="badge idle" data-badge>—</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" data-test="STOCK">Probar</button>
+      </div>
+      <div class="card-stats" data-stats></div>
+      <pre class="response" data-response></pre>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  <div>Servir con <code>python -m http.server 8011 --directory mockups</code> y abrir <code>http://localhost:8011/dev/test-api.html</code></div>
+  <div style="margin-top:6px;">MultiCompra · NODO · v0.1</div>
+</footer>
+
+<script>
+  const STORAGE_KEY = 'multicompra:test-api:cfg';
+
+  // Restaurar config guardada
+  (function restoreCfg(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (saved.url) document.getElementById('cfg-url').value = saved.url;
+      if (saved.token) document.getElementById('cfg-token').value = saved.token;
+    } catch (_) {}
+  })();
+
+  document.getElementById('btn-save-cfg').addEventListener('click', () => {
+    const cfg = {
+      url: document.getElementById('cfg-url').value.trim(),
+      token: document.getElementById('cfg-token').value.trim()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    flashHealth('ok', 'Configuración guardada');
+  });
+
+  function flashHealth(state, label) {
+    const dot = document.getElementById('health-dot');
+    const lbl = document.getElementById('health-label');
+    dot.className = 'health-dot ' + state;
+    lbl.textContent = label;
+    setTimeout(() => { /* mantener */ }, 1500);
+  }
+
+  // Definición de las 6 operaciones — cada una arma su SP string
+  const ops = {
+    AUTH: (card) => {
+      const u = card.querySelector('[data-input="usuario"]').value.trim();
+      const c = card.querySelector('[data-input="clave"]').value.trim();
+      return `Exec SpAdconApp @Reporte='MULTICOMPRA_AUTH', @Usuario='${u}', @Clave='${c}'`;
+    },
+    LOCALES:        () => `Exec SpAdconApp @Reporte='MULTICOMPRA_LOCALES'`,
+    PROVEEDORES:    () => `Exec SpAdconApp @Reporte='MULTICOMPRA_PROVEEDORES'`,
+    PRODUCTOS:      () => `Exec SpAdconApp @Reporte='MULTICOMPRA_PRODUCTOS'`,
+    RECALCULO_STOCK:() => `Exec SpAdconApp @Reporte='MULTICOMPRA_RECALCULO_STOCK'`,
+    STOCK:          () => `Exec SpAdconApp @Reporte='MULTICOMPRA_STOCK'`
+  };
+
+  // Ejecutar una operación
+  async function runOp(opName) {
+    const card = document.querySelector(`[data-op="${opName}"]`);
+    const badge = card.querySelector('[data-badge]');
+    const statsEl = card.querySelector('[data-stats]');
+    const responseEl = card.querySelector('[data-response]');
+    const btn = card.querySelector('[data-test]');
+
+    const url = document.getElementById('cfg-url').value.trim();
+    const token = document.getElementById('cfg-token').value.trim();
+    if (!url || !token) {
+      badge.className = 'badge error'; badge.textContent = 'Sin config';
+      responseEl.textContent = 'Faltan URL o token';
+      return;
+    }
+
+    const sp = ops[opName](card);
+    btn.disabled = true;
+    badge.className = 'badge loading'; badge.textContent = 'Probando…';
+    statsEl.innerHTML = '';
+    responseEl.textContent = '';
+
+    const t0 = performance.now();
+    let response, text, json, sizeBytes = 0;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sp })
+      });
+      text = await response.text();
+      sizeBytes = new Blob([text]).size;
+      try { json = JSON.parse(text); } catch (_) { json = null; }
+    } catch (err) {
+      const ms = Math.round(performance.now() - t0);
+      badge.className = 'badge error'; badge.textContent = 'Error red';
+      statsEl.innerHTML = `<span class="stat"><strong>${ms}ms</strong></span><span class="stat" style="color:var(--error);">${err.message}</span>`;
+      responseEl.textContent = err.message + '\n\n¿CORS bloqueado? ¿URL accesible?';
+      btn.disabled = false;
+      flashHealth('error', opName + ' falló');
+      return;
+    }
+    const ms = Math.round(performance.now() - t0);
+
+    // Status badge
+    if (response.ok && json) {
+      badge.className = 'badge ok'; badge.textContent = 'HTTP ' + response.status;
+    } else if (response.ok) {
+      badge.className = 'badge error'; badge.textContent = 'JSON inválido';
+    } else {
+      badge.className = 'badge error'; badge.textContent = 'HTTP ' + response.status;
+    }
+
+    // Stats
+    const stats = [];
+    stats.push(`<span class="stat"><strong>${ms}ms</strong></span>`);
+    stats.push(`<span class="stat"><strong>${formatBytes(sizeBytes)}</strong></span>`);
+    if (Array.isArray(json)) {
+      stats.push(`<span class="stat"><strong>${json.length.toLocaleString('es-PY')}</strong> registros</span>`);
+    } else if (json && typeof json === 'object') {
+      stats.push(`<span class="stat">objeto</span>`);
+    }
+    statsEl.innerHTML = stats.join('');
+
+    // Response (con truncado si es muy grande)
+    let pretty;
+    if (json !== null && json !== undefined) {
+      const str = JSON.stringify(json, null, 2);
+      // Si es array de >50, mostrar solo los primeros 20
+      if (Array.isArray(json) && json.length > 50) {
+        pretty = `// Mostrando primeros 20 de ${json.length.toLocaleString('es-PY')} registros\n` +
+                  JSON.stringify(json.slice(0, 20), null, 2) +
+                  `\n\n// ... ${(json.length - 20).toLocaleString('es-PY')} más (no mostrados)`;
+      } else if (str.length > 50000) {
+        pretty = str.slice(0, 50000) + '\n\n// ... truncado (' + str.length + ' chars)';
+      } else {
+        pretty = str;
+      }
+    } else {
+      pretty = text || '(sin respuesta)';
+    }
+    responseEl.innerHTML = highlightJson(pretty);
+
+    btn.disabled = false;
+    flashHealth(response.ok && json ? 'ok' : 'error', opName + (response.ok ? ' OK' : ' falló'));
+  }
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/(1024*1024)).toFixed(2) + ' MB';
+  }
+
+  // Resaltado JSON simple
+  function highlightJson(str) {
+    return str
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/("(\\.|[^"\\])*"\s*:)/g, '<span class="key">$1</span>')
+      .replace(/(:\s*)("(\\.|[^"\\])*")/g, '$1<span class="str">$2</span>')
+      .replace(/(:\s*)(-?\d+\.?\d*)/g, '$1<span class="num">$2</span>')
+      .replace(/(:\s*)(true|false)/g, '$1<span class="bool">$2</span>')
+      .replace(/(:\s*)(null)/g, '$1<span class="null">$2</span>');
+  }
+
+  // Wire buttons
+  document.querySelectorAll('[data-test]').forEach(btn => {
+    btn.addEventListener('click', () => runOp(btn.dataset.test));
+  });
+
+  document.getElementById('btn-test-all').addEventListener('click', async () => {
+    const order = ['LOCALES', 'PROVEEDORES', 'AUTH', 'PRODUCTOS', 'RECALCULO_STOCK', 'STOCK'];
+    for (const op of order) {
+      await runOp(op);
+    }
+  });
+</script>
+
+<!-- Probar el wrapper shared/api.js -->
+<script type="module">
+  import {
+    setApiConfig, apiAuth, apiLocales, apiProveedores,
+    apiProductos, apiRecalculoStock, apiStock, indexarStock, ApiError
+  } from '../shared/api.js';
+
+  document.getElementById('btn-test-wrapper').addEventListener('click', async () => {
+    // Sincronizar config del visual con el wrapper
+    setApiConfig({
+      url:   document.getElementById('cfg-url').value.trim(),
+      token: document.getElementById('cfg-token').value.trim()
+    });
+
+    const dot = document.getElementById('health-dot');
+    const lbl = document.getElementById('health-label');
+    dot.className = 'health-dot loading';
+    lbl.textContent = 'Probando wrapper…';
+
+    const tests = [
+      ['apiAuth(RICARDO)',  () => apiAuth({ usuario: 'RICARDO', clave: '12345' })],
+      ['apiAuth(ELEN)',     () => apiAuth({ usuario: 'ELEN',    clave: '12345' })],
+      ['apiAuth(claveMala)',() => apiAuth({ usuario: 'RICARDO', clave: 'xxx' })],
+      ['apiLocales()',      () => apiLocales()],
+      ['apiProveedores()',  () => apiProveedores()],
+      ['apiProductos()',    () => apiProductos()],
+      ['apiRecalculoStock()', () => apiRecalculoStock()],
+      ['apiStock()',        () => apiStock()]
+    ];
+
+    const results = [];
+    for (const [name, fn] of tests) {
+      const t0 = performance.now();
+      try {
+        const out = await fn();
+        const ms = Math.round(performance.now() - t0);
+        const summary = Array.isArray(out)
+          ? `[array de ${out.length}]`
+          : (typeof out === 'object'
+              ? JSON.stringify(out).slice(0, 200)
+              : String(out));
+        const line = `✓ ${name.padEnd(26)} (${ms}ms)  ${summary}`;
+        results.push(line);
+        console.log('[wrapper test]', name, ms + 'ms', out);
+      } catch (err) {
+        const ms = Math.round(performance.now() - t0);
+        const code = err instanceof ApiError ? err.code : 'JS_ERROR';
+        const detalle = err.detalle ? ' | detalle: ' + err.detalle : '';
+        const line = `✗ ${name.padEnd(26)} (${ms}ms)  [${code}] ${err.message}${detalle}`;
+        results.push(line);
+        console.error('[wrapper test FAIL]', name, err);
+      }
+    }
+
+    // Probar también indexarStock con el último resultado
+    try {
+      const stock = await apiStock();
+      const idx = indexarStock(stock);
+      const keys = Object.keys(idx);
+      results.push(`✓ indexarStock()             idx tiene ${keys.length} depósitos`);
+      if (keys.length) {
+        const dep = keys[0];
+        const prods = Object.keys(idx[dep]);
+        results.push(`  ejemplo: dep ${dep} tiene ${prods.length} productos`);
+      }
+    } catch (err) {
+      results.push(`✗ indexarStock()             ${err.message}`);
+    }
+
+    const allOk = results.every(r => r.startsWith('✓') || r.startsWith('  '));
+    dot.className = 'health-dot ' + (allOk ? 'ok' : 'error');
+    lbl.textContent = allOk ? 'Wrapper OK' : 'Wrapper con errores';
+
+    // Mostrar resultados en panel (no en alert) para que se puedan ver y copiar
+    const panel = document.getElementById('wrapper-panel');
+    const output = document.getElementById('wrapper-output');
+    output.textContent = results.join('\n');
+    panel.hidden = false;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('btn-copy-wrapper').addEventListener('click', () => {
+    const txt = document.getElementById('wrapper-output').textContent;
+    navigator.clipboard.writeText(txt).then(
+      () => alert('Copiado'),
+      () => alert('Falló copiar — seleccioná manualmente')
+    );
+  });
+</script>
+
+</body>
+</html>

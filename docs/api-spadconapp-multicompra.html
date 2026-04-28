@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Operaciones MULTICOMPRA para SpAdconApp — Pedido para Carlos</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 26pt;
+    color: #0f766e;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+  }
+  h1 + .subtitle {
+    color: #64748b;
+    font-size: 12pt;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: 16pt;
+    color: #0f766e;
+    margin-top: 32px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #14b8a6;
+    padding-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 13pt;
+    color: #0f172a;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11.5pt;
+    color: #0f766e;
+    margin-top: 16px;
+    margin-bottom: 4px;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 24px; padding: 0; }
+  li { margin: 4px 0; }
+  strong { color: #0f172a; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10pt;
+    color: #0f766e;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    margin: 10px 0;
+  }
+  pre code {
+    background: transparent;
+    color: #e2e8f0;
+    padding: 0;
+    font-size: 9.5pt;
+  }
+  .box {
+    border-left: 4px solid #14b8a6;
+    background: #f0fdfa;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    page-break-inside: avoid;
+  }
+  .box.warn {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+  }
+  .box.danger {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+  }
+  .box.q {
+    border-left-color: #9333ea;
+    background: #faf5ff;
+  }
+  .box .box-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 10.5pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #0f766e;
+    color: white;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+  }
+  td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    page-break-after: always;
+    padding-left: 4mm;
+  }
+  .cover .brand {
+    font-size: 12pt;
+    color: #64748b;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 42pt;
+    margin: 20px 0 10px 0;
+    line-height: 1.05;
+  }
+  .cover .big-subtitle {
+    font-size: 16pt;
+    color: #334155;
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    color: #64748b;
+    font-size: 11pt;
+    line-height: 1.9;
+  }
+  .cover .meta strong { color: #0f172a; }
+  .toc {
+    page-break-after: always;
+  }
+  .toc ol { list-style: none; margin-left: 0; padding-left: 0; }
+  .toc li {
+    padding: 6px 0;
+    border-bottom: 1px dotted #cbd5e1;
+  }
+  .toc .n {
+    display: inline-block;
+    width: 36px;
+    color: #0f766e;
+    font-weight: 700;
+  }
+  .op-section {
+    page-break-before: always;
+  }
+  .op-tag {
+    display: inline-block;
+    background: #0f766e;
+    color: white;
+    font-family: "Consolas", monospace;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 6px 0 14px 0;
+  }
+  .footer-note {
+    margin-top: 40px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 9.5pt;
+  }
+  .estado-tag {
+    display: inline-block;
+    font-size: 9pt;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+    font-weight: 600;
+  }
+  .estado-tag.todo { background: #fef3c7; color: #92400e; }
+  .estado-tag.spec { background: #d1fae5; color: #065f46; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- PORTADA                                                       -->
+<!-- ============================================================ -->
+<section class="cover">
+  <div class="brand">MultiCompra · NODO</div>
+  <h1>Operaciones<br>MULTICOMPRA<br>para <code style="font-size:36pt;background:#f0fdfa;color:#0f766e;padding:2px 12px;">SpAdconApp</code></h1>
+  <div class="big-subtitle">Lo que necesitamos del SP para que la PWA funcione</div>
+  <div class="meta">
+    <strong>Para:</strong> Carlos Cardozo<br>
+    <strong>De:</strong> Emiliano Vitale (NODO)<br>
+    <strong>Fecha:</strong> 28 de abril de 2026<br>
+    <strong>Versión:</strong> 1.0
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ÍNDICE                                                        -->
+<!-- ============================================================ -->
+<section class="toc">
+  <h2>Índice</h2>
+  <ol>
+    <li><span class="n">1.</span> ¿Qué es MultiCompra y por qué te llega esto?</li>
+    <li><span class="n">2.</span> Cómo se conecta la PWA con el SP</li>
+    <li><span class="n">3.</span> Convención de nombres de reportes</li>
+    <li><span class="n">4.</span> <code>MULTICOMPRA_AUTH</code> — Login de usuarios</li>
+    <li><span class="n">5.</span> <code>MULTICOMPRA_LOCALES</code> — Lista de sucursales</li>
+    <li><span class="n">6.</span> <code>MULTICOMPRA_PROVEEDORES</code> — Lista de proveedores</li>
+    <li><span class="n">7.</span> <code>MULTICOMPRA_PRODUCTOS</code> — Catálogo de productos</li>
+    <li><span class="n">8.</span> <code>MULTICOMPRA_RECALCULO_STOCK</code> — Recalcular snapshot de existencias</li>
+    <li><span class="n">9.</span> <code>MULTICOMPRA_STOCK</code> — Matriz completa de existencias</li>
+    <li><span class="n">10.</span> Preguntas pendientes consolidadas</li>
+    <li><span class="n">11.</span> Próximos pasos</li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<!-- 1. INTRO                                                      -->
+<!-- ============================================================ -->
+<section>
+
+<h2>1) ¿Qué es MultiCompra y por qué te llega esto?</h2>
+
+<p><strong>MultiCompra</strong> es una PWA (aplicación web instalable) que estamos haciendo para Diego. Sirve para que la cadena de locales (18 sucursales según ya vimos en el SP) maneje el flujo de:</p>
+
+<ol>
+  <li>Las cajeras de cada local arman <strong>Órdenes de Pedido (OP)</strong> de lo que necesitan reponer.</li>
+  <li>El supervisor en el depósito central las consolida en <strong>Órdenes de Compra (OC)</strong> a proveedores.</li>
+  <li>Cuando llega la mercadería, se registra como <strong>Compra</strong>.</li>
+</ol>
+
+<p>Las OP, OC y Compras se guardan en una base nueva (<strong>Supabase</strong>, aparte). Pero todo lo demás — usuarios, locales, productos, stock, costos — ya existe en el sistema de Diego (base <code>ADCON2</code> en SQL Server).</p>
+
+<div class="box">
+  <div class="box-title">En criollo</div>
+  La PWA necesita <em>preguntarle</em> a tu SP cosas como "¿este usuario y clave son válidos?", "¿qué productos hay?", "¿cuánto stock tiene este producto en MULTIPLAZA?". Vos no tenés que escribir un SP nuevo: solo <strong>agregar ramas <code>If @Reporte = '...'</code></strong> al <code>SpAdconApp</code> que ya existe.
+</div>
+
+<p>Este documento es la lista de esas ramas, qué le va a mandar la PWA en cada caso y qué necesitamos que devuelva.</p>
+
+<h2>2) Cómo se conecta la PWA con el SP</h2>
+
+<p>La PWA habla con tu agente APISQL exactamente como dice tu manual:</p>
+
+<pre><code>POST https://nodoapi.ddns.net/sql
+Authorization: Bearer e739a795...
+Content-Type: application/json
+
+{
+  "sp": "Exec SpAdconApp @Reporte='MULTICOMPRA_AUTH', @Usuario='shirley', @Clave='1234'"
+}</code></pre>
+
+<p>El agente devuelve un array JSON con el resultado del último <code>SELECT</code> del SP. Por eso, dentro de cada rama nueva que agregues, debe haber <strong>un único <code>SELECT</code> al final</strong> con las columnas que la PWA espera.</p>
+
+<div class="box warn">
+  <div class="box-title">Ojo con los errores controlados</div>
+  Para casos como "credenciales inválidas", "producto no encontrado", "usuario inactivo", etc., <strong>NO uses RAISERROR ni THROW</strong>. Devolvé una fila normal con una columna <code>ok = 0</code> y otra <code>mensaje = '...'</code>. Así el frontend lo maneja como respuesta normal sin tener que parsear errores de SQL Server.
+</div>
+
+<h2>3) Convención de nombres de reportes</h2>
+
+<p>Para no chocar con tus reportes existentes (<code>VENTASXDIA</code>, <code>KONTAR_PRODUCTOS</code>, etc.) y para que sea fácil identificar cuáles son nuestros, todos los reportes nuevos empiezan con el prefijo <code>MULTICOMPRA_</code>:</p>
+
+<table>
+  <tr>
+    <th style="width: 40%;">Reporte</th>
+    <th style="width: 20%;">Estado</th>
+    <th>Para qué sirve</th>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_AUTH</code></td>
+    <td><span class="estado-tag spec">Especificado</span></td>
+    <td>Validar usuario + clave al hacer login</td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_LOCALES</code></td>
+    <td><span class="estado-tag spec" style="background:#0f766e;color:white;">✓ Confirmado por Carlos</span></td>
+    <td>Lista de depósitos (un depósito = un "local" en MultiCompra)</td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_PROVEEDORES</code></td>
+    <td><span class="estado-tag spec">Especificado</span></td>
+    <td>Lista de proveedores activos</td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_PRODUCTOS</code></td>
+    <td><span class="estado-tag spec" style="background:#0f766e;color:white;">✓ Confirmado por Carlos</span></td>
+    <td>Catálogo completo + último proveedor por producto (para armar OC por proveedor)</td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_RECALCULO_STOCK</code></td>
+    <td><span class="estado-tag spec" style="background:#0f766e;color:white;">✓ Confirmado por Carlos</span></td>
+    <td>Recalcula la tabla snapshot de existencias (proceso pesado, se ejecuta cada X minutos)</td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_STOCK</code></td>
+    <td><span class="estado-tag spec" style="background:#0f766e;color:white;">✓ Confirmado por Carlos</span></td>
+    <td>Lee la matriz completa: <code>IDDeposito, IDProducto, Existencia</code></td>
+  </tr>
+  <tr>
+    <td><code>MULTICOMPRA_COMPRA_REGISTRAR</code></td>
+    <td><span class="estado-tag todo">Después</span></td>
+    <td>Cuando se confirma una compra real, registrar el ingreso al stock. La definimos cuando AUTH y las consultas estén andando.</td>
+  </tr>
+</table>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. AUTH                                                       -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>4) <code>MULTICOMPRA_AUTH</code> — Login de usuarios</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_AUTH'</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Cuando una cajera, supervisora o admin abre la PWA, lo primero que ve es una pantalla de login con campo "Usuario" y "Clave". Cuando le da Enter, la PWA llama a este reporte. Si el usuario y clave son válidos, la PWA guarda los datos del usuario (nombre, rol, local asignado) y le muestra el menú correspondiente a su rol.</p>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_AUTH'</code></td></tr>
+  <tr><td><code>@Usuario</code></td><td><code>varchar(50)</code></td><td>Login que escribió la persona</td></tr>
+  <tr><td><code>@Clave</code></td><td><code>varchar(100)</code></td><td>Clave en texto plano (la PWA la manda por HTTPS)</td></tr>
+</table>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<p>Una sola fila con estas columnas (los <strong>nombres</strong> tienen que ser exactos, el orden no importa):</p>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo (éxito)</th><th>Notas</th></tr>
+  <tr><td><code>ok</code></td><td><code>bit</code></td><td><code>1</code></td><td>1 si login válido, 0 si no</td></tr>
+  <tr><td><code>id</code></td><td><code>int</code></td><td><code>12</code></td><td>PK del usuario en tu tabla</td></tr>
+  <tr><td><code>nombre</code></td><td><code>varchar</code></td><td><code>Shirley González</code></td><td>Nombre completo para mostrar</td></tr>
+  <tr><td><code>rol</code></td><td><code>varchar(20)</code></td><td><code>supervisor</code></td><td>Solo 3 valores: <code>cajera</code>, <code>supervisor</code>, <code>admin</code></td></tr>
+  <tr><td><code>mensaje</code></td><td><code>varchar(100)</code></td><td><code>(vacío)</code></td><td>Mensaje de error si ok=0</td></tr>
+</table>
+
+<h4>Ejemplos de respuesta</h4>
+
+<p><strong>Caso éxito:</strong></p>
+<pre><code>[{
+  "ok": 1, "id": 12, "nombre": "Shirley González", "rol": "supervisor", "mensaje": ""
+}]</code></pre>
+
+<p><strong>Caso clave incorrecta:</strong></p>
+<pre><code>[{
+  "ok": 0, "id": 0, "nombre": "", "rol": "", "mensaje": "Usuario o clave incorrectos"
+}]</code></pre>
+
+<p><strong>Caso usuario inactivo:</strong></p>
+<pre><code>[{
+  "ok": 0, "id": 0, "nombre": "", "rol": "", "mensaje": "Usuario inactivo"
+}]</code></pre>
+
+<div class="box warn">
+  <div class="box-title">⚡ Actualización 28-abr-2026</div>
+  Se quitaron los campos <code>idLocal</code> y <code>nombreLocal</code> del response: la tabla de usuarios del ERP de Diego <strong>no guarda asignación de usuario a local/depósito</strong>. La PWA tendrá que manejar de otra forma a qué local pertenece la sesión (ver sección 11).
+</div>
+
+<h4>Boceto T-SQL (adaptalo al schema real)</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_AUTH' Begin
+
+    Declare @vId      int           = 0
+    Declare @vNombre  varchar(100)  = ''
+    Declare @vRol     varchar(20)   = ''
+    Declare @vOk      bit           = 0
+    Declare @vMensaje varchar(100)  = ''
+    Declare @vActivo  bit           = 0
+
+    Select Top 1
+        @vId     = U.IDUsuario,
+        @vNombre = U.Nombre,
+        @vRol    = U.Rol,
+        @vActivo = U.Activo
+    From Usuario U
+    Where U.Usuario = @Usuario
+      And U.Clave   = @Clave
+
+    If @vId = 0 Begin
+        Set @vMensaje = 'Usuario o clave incorrectos'
+    End
+    Else If @vActivo = 0 Begin
+        Set @vMensaje = 'Usuario inactivo'
+        Set @vId = 0
+    End
+    Else Begin
+        Set @vOk = 1
+        -- Mapear el rol original a uno de los 3 valores que espera MultiCompra
+        Set @vRol = Case Upper(@vRol)
+            When 'CAJERA'        Then 'cajera'
+            When 'CAJERO'        Then 'cajera'
+            When 'VENDEDOR'      Then 'cajera'
+            When 'VENDEDOR 1'    Then 'cajera'
+            When 'SUPERVISOR'    Then 'supervisor'
+            When 'SUPERVISORA'   Then 'supervisor'
+            When 'GERENTE'       Then 'supervisor'
+            When 'ADMIN'         Then 'admin'
+            When 'ADMINISTRADOR' Then 'admin'
+            Else Lower(@vRol)
+        End
+    End
+
+    Select
+        'ok'      = Cast(@vOk as bit),
+        'id'      = @vId,
+        'nombre'  = @vNombre,
+        'rol'     = @vRol,
+        'mensaje' = @vMensaje
+
+End</code></pre>
+
+<div class="box q">
+  <div class="box-title">Preguntas para vos sobre AUTH</div>
+  <ol>
+    <li>¿El login va contra la tabla <code>Usuario</code> o <code>Vendedor</code>? Las cajeras y supervisoras, ¿usan el mismo login que ya usan en el ERP?</li>
+    <li>¿La clave está en texto plano o hasheada? Si es hash, ¿qué algoritmo (SHA256, MD5)?</li>
+    <li><strong>(actualizado)</strong> Listado completo de valores reales de la columna del rol — ya vimos "VENDEDOR 1", pero pueden haber otros (CAJERA, SUPERVISOR, ADMIN, GERENTE, etc.). Para completar el CASE de mapeo a <code>cajera</code> / <code>supervisor</code> / <code>admin</code>.</li>
+    <li><span style="text-decoration:line-through; color:#94a3b8;">~~¿La tabla de usuarios tiene IDDeposito?~~</span> <strong>Resuelto:</strong> Carlos confirmó que no existe la asignación usuario→local en el ERP. Los campos <code>idLocal</code>/<code>nombreLocal</code> se quitaron del response.</li>
+  </ol>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. LOCALES                                                    -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>5) <code>MULTICOMPRA_LOCALES</code> — Lista de locales (depósitos)</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_LOCALES'</div>
+
+<div class="box warn">
+  <div class="box-title">⚡ Actualizado por Carlos (28-abr-2026)</div>
+  En el modelo del ERP, una <strong>Sucursal</strong> puede tener uno o varios <strong>Depósitos</strong>. La unidad operativa de MultiCompra es el <strong>Depósito</strong>, no la Sucursal. O sea: cada "local" en la PWA = un Depósito en SQL Server. La Sucursal queda como agrupador/contexto.
+</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>La PWA necesita saber cuáles son los locales (depósitos) activos para poblar el dropdown de "destino" cuando se hace una OP, mostrar a qué locales se distribuye una OC, calcular stock por local, etc. Se llama una vez al iniciar sesión y se cachea.</p>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_LOCALES'</code></td></tr>
+</table>
+
+<p>No hace falta ningún otro parámetro.</p>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<p>Una fila por cada depósito, con estas columnas:</p>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>int</code></td><td><code>1</code></td><td><code>Deposito.IDDeposito</code></td></tr>
+  <tr><td><code>nombre</code></td><td><code>varchar</code></td><td><code>DEP MULTIPLAZA</code></td><td><code>Deposito.Descripcion</code></td></tr>
+  <tr><td><code>idSucursal</code></td><td><code>int</code></td><td><code>1</code></td><td><code>Deposito.IDSucursal</code></td></tr>
+  <tr><td><code>Sucursal</code></td><td><code>varchar</code></td><td><code>MULTIPLAZA</code></td><td><code>Sucursal.Descripcion</code> (mediante JOIN)</td></tr>
+  <tr><td><code>activo</code></td><td><code>bit</code></td><td><code>1</code></td><td><code>Deposito.Estado</code></td></tr>
+</table>
+
+<h4>Ejemplo de respuesta</h4>
+
+<pre><code>[
+  {"id": 1, "nombre": "DEP MULTIPLAZA", "idSucursal": 1, "Sucursal": "MULTIPLAZA", "activo": 1},
+  {"id": 2, "nombre": "DEP KIWI SHOP",  "idSucursal": 2, "Sucursal": "KIWI SHOP",  "activo": 1},
+  {"id": 3, "nombre": "DEP GONDOLA",    "idSucursal": 3, "Sucursal": "GONDOLA",    "activo": 1},
+  ...
+]</code></pre>
+
+<h4>T-SQL definitivo (lo pasó Carlos)</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_LOCALES' Begin
+
+    Select
+        'id'         = D.IDDeposito,
+        'nombre'     = D.Descripcion,
+        'idSucursal' = D.IDSucursal,
+        'Sucursal'   = S.Descripcion,
+        'activo'     = D.Estado
+    From Deposito D
+    Join Sucursal S On D.IDSucursal = S.IDSucursal
+
+End</code></pre>
+
+<div class="box">
+  <div class="box-title">Implicancias para el resto del documento</div>
+  <ul>
+    <li><strong>STOCK_PRODUCTO</strong> tiene que pivotar por <code>IDDeposito</code>, no por <code>IDSucursal</code>. Lo actualicé en su sección.</li>
+    <li><strong>AUTH</strong>: el usuario tendría que tener <code>IDDeposito</code> asignado (no <code>IDSucursal</code>) para saber a qué local pertenece. Confirmar con Carlos.</li>
+    <li>El frontend va a filtrar por <code>activo = 1</code> del lado JS, así también sabemos cuáles existen aunque estén deshabilitados.</li>
+  </ul>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. PROVEEDORES                                                -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>6) <code>MULTICOMPRA_PROVEEDORES</code> — Lista de proveedores</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_PROVEEDORES'</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Cuando una cajera arma una Orden de Pedido y un producto no aparece en el catálogo, puede sugerir un proveedor para comprarlo. También cuando el supervisor crea una Orden de Compra elige un proveedor de la lista. La PWA carga esta lista al iniciar sesión y la cachea.</p>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_PROVEEDORES'</code></td></tr>
+</table>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>int</code></td><td><code>7</code></td><td>PK del proveedor</td></tr>
+  <tr><td><code>nombre</code></td><td><code>varchar</code></td><td><code>ImportTech S.A.</code></td><td>Razón social</td></tr>
+  <tr><td><code>ruc</code></td><td><code>varchar(20)</code></td><td><code>80012345-6</code></td><td>Vacío si no tiene</td></tr>
+  <tr><td><code>contacto</code></td><td><code>varchar(100)</code></td><td><code>0981 123 456</code></td><td>Teléfono o nombre del contacto comercial. Vacío si no hay.</td></tr>
+  <tr><td><code>activo</code></td><td><code>bit</code></td><td><code>1</code></td><td>Filtrar activos = 1</td></tr>
+</table>
+
+<h4>Ejemplo de respuesta</h4>
+
+<pre><code>[
+  {"id": 1, "nombre": "ImportTech S.A.", "ruc": "80012345-6",
+   "contacto": "0981 123 456", "activo": 1},
+  {"id": 2, "nombre": "Distribuidora del Este", "ruc": "80098765-1",
+   "contacto": "Pedro Martínez", "activo": 1}
+]</code></pre>
+
+<h4>Boceto T-SQL</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_PROVEEDORES' Begin
+
+    Select
+        'id'       = P.IDProveedor,
+        'nombre'   = P.RazonSocial,            -- o P.Nombre
+        'ruc'      = IsNull(P.RUC, ''),        -- o RUC, NumeroDocumento
+        'contacto' = IsNull(P.Telefono, ''),   -- o el campo que aplique
+        'activo'   = 1
+    From Proveedor P
+    Where 1 = 1   -- agregar filtro de activo
+    Order By P.RazonSocial
+
+    GoTo Cerrar
+End</code></pre>
+
+<div class="box q">
+  <div class="box-title">Preguntas sobre PROVEEDORES</div>
+  <ol>
+    <li>¿Se llama <code>Proveedor</code> la tabla? ¿Cuáles son las columnas reales (PK, nombre, RUC, contacto, activo)?</li>
+    <li>¿Hay un solo campo de "contacto" o varios (teléfono, email, nombre persona)? Decime cuál preferís devolver.</li>
+  </ol>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. PRODUCTOS                                                  -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>7) <code>MULTICOMPRA_PRODUCTOS</code> — Catálogo de productos</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_PRODUCTOS'</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Es la lista maestra de productos que la PWA usa para autocompletar cuando una cajera escanea un código o escribe parte de la descripción. Esto es el catálogo "puro" (sin stock); el stock va en otro reporte aparte.</p>
+
+<p>Es el catálogo maestro que la PWA usa para autocompletar cuando una cajera escanea un código o escribe parte de la descripción. <strong>Incluye también el último proveedor que vendió cada producto</strong> — eso permite al supervisor armar las OC agrupadas por proveedor automáticamente.</p>
+
+<div class="box warn">
+  <div class="box-title">⚡ Actualizado por Carlos (28-abr-2026)</div>
+  Carlos pasó la rama definitiva con un detalle muy útil: usa <code>OUTER APPLY</code> para traer el <strong>último proveedor</strong> de cada producto (mirando la última Compra registrada). Con eso la PWA no necesita un reporte aparte para "¿de quién compro habitualmente esto?" — viene en el mismo catálogo.
+</div>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_PRODUCTOS'</code></td></tr>
+</table>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>int</code></td><td><code>1</code></td><td><code>Item.IDItem</code></td></tr>
+  <tr><td><code>codigo</code></td><td><code>varchar</code></td><td><code>00001005</code></td><td><code>Item.CodigoBarra</code></td></tr>
+  <tr><td><code>descripcion</code></td><td><code>varchar</code></td><td><code>Cargador Samsung 1m 2.0</code></td><td><code>Item.Descripcion</code></td></tr>
+  <tr><td><code>categoria</code></td><td><code>varchar</code></td><td><code>cargador</code></td><td><code>Clasificacion.Descripcion</code> (vía JOIN)</td></tr>
+  <tr><td><code>marca</code></td><td><code>varchar</code></td><td><code>(vacío)</code></td><td>Por ahora viene vacío. Si después se necesita se puede traer de <code>Marca.Descripcion</code>.</td></tr>
+  <tr><td><code>costo</code></td><td><code>decimal</code></td><td><code>7000</code></td><td><code>Item.Costo</code></td></tr>
+  <tr><td><code>precio</code></td><td><code>decimal</code></td><td><code>60000</code></td><td><code>Item.Precio</code></td></tr>
+  <tr><td><code>iva</code></td><td><code>varchar(5)</code></td><td><code>10</code></td><td><code>Item.IVA</code> (porcentaje)</td></tr>
+  <tr><td><code>activo</code></td><td><code>bit</code></td><td><code>1</code></td><td><code>Item.Estado</code></td></tr>
+  <tr><td><code>idProveedor</code></td><td><code>int / ''</code></td><td><code>7</code></td><td><strong>El último proveedor al que se le compró este producto</strong> (vía OUTER APPLY mirando la tabla Compra). Vacío <code>''</code> si nunca se compró.</td></tr>
+</table>
+
+<h4>Ejemplo de respuesta</h4>
+
+<pre><code>[
+  {"id": 1, "codigo": "123", "descripcion": "cargador samsung",
+   "categoria": "cargador", "marca": "", "costo": 7000,
+   "precio": 60000, "iva": "10", "activo": 1, "idProveedor": 7},
+  {"id": 2, "codigo": "00001000", "descripcion": "Glass Iphone 6 6s",
+   "categoria": "glass", "marca": "", "costo": 0,
+   "precio": 0, "iva": "10", "activo": 1, "idProveedor": ""},
+  ...
+]</code></pre>
+
+<h4>T-SQL definitivo (lo pasó Carlos)</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_PRODUCTOS' Begin
+
+    Select
+        'id'          = I.IDItem,
+        'codigo'      = I.CodigoBarra,
+        'descripcion' = I.Descripcion,
+        'categoria'   = IsNull(C.Descripcion, ''),
+        'marca'       = '',
+        'costo'       = IsNull(I.Costo, 0),
+        'precio'      = IsNull(I.Precio, 0),
+        'iva'         = IsNull(I.IVA, '10'),
+        'activo'      = I.Estado,
+        'idProveedor' = IsNull(UltimoProveedor.IDProveedor, '')
+    From Item I
+    Left Outer Join Clasificacion C On I.IDClasificacion = C.IDClasificacion
+    Left Outer Join Marca M         On I.IDMarca         = M.IDMarca
+    Outer Apply (
+        Select Top 1
+            'IDProveedor' = P.IDProveedor
+        From Detalle D
+        Join Compra CO    On D.IDTransaccion = CO.IDTransaccion
+        Join Proveedor P  On CO.IDProveedor   = P.IDProveedor
+        Where D.IDItem = I.IDItem
+        Order By CO.FechaCompra Desc, CO.IDTransaccion Desc
+    ) UltimoProveedor
+
+End</code></pre>
+
+<div class="box">
+  <div class="box-title">Por qué viene <code>idProveedor</code> en el catálogo</div>
+  Cuando el supervisor convierte varias OPs en OCs, MultiCompra puede agrupar automáticamente los productos por <code>idProveedor</code> y crear una OC por proveedor en lugar de una manual por cada uno. Sin este campo habría que hacer una llamada extra al backend por cada producto.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. RECALCULO_STOCK                                            -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>8) <code>MULTICOMPRA_RECALCULO_STOCK</code> — Recalcular snapshot de existencias</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_RECALCULO_STOCK'</div>
+
+<div class="box warn">
+  <div class="box-title">⚡ Diseño propuesto por Carlos (28-abr-2026)</div>
+  En vez de calcular existencia "al vuelo" cada vez que la PWA pide stock (lento y caro), se mantiene una <strong>tabla snapshot</strong> de existencia consolidada. Esta operación es la que <strong>actualiza</strong> ese snapshot. Después la PWA llama a <code>MULTICOMPRA_STOCK</code> que solo lee la tabla actualizada (rápido).
+</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Recalcula la existencia consolidada (sumando movimientos de Compra, Venta, Transferencia, Ajuste, etc.) y deja la tabla snapshot actualizada al momento. Lo va a llamar la PWA:</p>
+
+<ul>
+  <li>Cuando un usuario inicia sesión (para asegurar que ve datos frescos).</li>
+  <li>Después de registrar una compra (cuando implementemos <code>MULTICOMPRA_COMPRA_REGISTRAR</code>).</li>
+  <li>Periódicamente cada X minutos (configurable en frontend, ej. 15 min) si la sesión está abierta mucho tiempo.</li>
+</ul>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_RECALCULO_STOCK'</code></td></tr>
+</table>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<p>Una sola fila confirmando que el recálculo terminó (para que el frontend sepa que ya puede llamar a <code>MULTICOMPRA_STOCK</code>):</p>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>ok</code></td><td><code>bit</code></td><td><code>1</code></td><td>1 si terminó OK, 0 si falló</td></tr>
+  <tr><td><code>mensaje</code></td><td><code>varchar(200)</code></td><td><code>Recálculo OK</code></td><td>Texto descriptivo (puede incluir cantidad de filas, tiempo, etc.)</td></tr>
+  <tr><td><code>fechaRecalculo</code></td><td><code>datetime</code></td><td><code>2026-04-28T18:05:00</code></td><td>Timestamp del momento en que terminó</td></tr>
+</table>
+
+<h4>Ejemplo de respuesta</h4>
+
+<pre><code>[{
+  "ok": 1,
+  "mensaje": "Recálculo OK — 8421 productos × 18 depósitos en 2.3 segundos",
+  "fechaRecalculo": "2026-04-28T18:05:00"
+}]</code></pre>
+
+<div class="box">
+  <div class="box-title">Notas para Carlos</div>
+  <ul>
+    <li>La rama T-SQL la armás vos como te resulte más cómodo. Probablemente sea un <code>TRUNCATE TABLE StockSnapshot</code> seguido de un <code>INSERT INTO ... SELECT</code> con la suma de movimientos. O un <code>MERGE</code>.</li>
+    <li>Si el proceso es muy pesado para correrlo en cada login, podés agregar lógica tipo "si el último recálculo fue hace menos de 5 minutos, no hagas nada y devolvé OK con el timestamp anterior".</li>
+    <li>Si alguna vez falla a mitad, devolvé <code>ok = 0</code> y el mensaje del error en <code>mensaje</code> — sin levantar excepción de SQL.</li>
+  </ul>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. STOCK                                                      -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>9) <code>MULTICOMPRA_STOCK</code> — Matriz completa de existencias</h2>
+
+<div class="op-tag">@Reporte = 'MULTICOMPRA_STOCK'</div>
+
+<h4>¿Para qué sirve?</h4>
+
+<p>Devuelve <strong>la matriz completa de existencias</strong>: una fila por cada combinación depósito × producto donde haya stock distinto de cero. Con esto la PWA puede hacer cualquier "cruce" en memoria sin volver a llamar al backend (ej: mostrar grilla de productos por local, calcular faltantes, sugerir transferencias, etc.).</p>
+
+<p>Se llama después de <code>MULTICOMPRA_RECALCULO_STOCK</code> para tener datos frescos.</p>
+
+<h4>¿Qué le manda la PWA?</h4>
+
+<table>
+  <tr><th style="width: 25%;">Parámetro</th><th style="width: 25%;">Tipo SQL</th><th>Descripción</th></tr>
+  <tr><td><code>@Reporte</code></td><td><code>varchar(50)</code></td><td>Siempre <code>'MULTICOMPRA_STOCK'</code></td></tr>
+</table>
+
+<h4>¿Qué tiene que devolver?</h4>
+
+<p>Las 3 columnas que pidió Carlos:</p>
+
+<table>
+  <tr><th>Columna</th><th>Tipo</th><th>Ejemplo</th><th>Notas</th></tr>
+  <tr><td><code>IDDeposito</code></td><td><code>int</code></td><td><code>1</code></td><td>FK a Deposito (el "local" en MultiCompra)</td></tr>
+  <tr><td><code>IDProducto</code></td><td><code>int</code></td><td><code>1</code></td><td>FK a Item (mismo IDItem que devuelve MULTICOMPRA_PRODUCTOS)</td></tr>
+  <tr><td><code>Existencia</code></td><td><code>decimal</code></td><td><code>8</code></td><td>Cantidad disponible</td></tr>
+</table>
+
+<div class="box">
+  <div class="box-title">¿Devolver solo &gt; 0 o todas las combinaciones?</div>
+  <strong>Recomendación: devolver solo filas con <code>Existencia &gt; 0</code></strong>. La PWA asume que todo lo que no aparece en la matriz está en 0. Esto reduce dramáticamente el tamaño del response (de ~180 mil filas a quizás 20-30 mil) y la PWA igual puede hacer todos los cruces porque conoce la lista completa de depósitos (de <code>MULTICOMPRA_LOCALES</code>) y de productos (de <code>MULTICOMPRA_PRODUCTOS</code>).
+</div>
+
+<h4>Ejemplo de respuesta</h4>
+
+<pre><code>[
+  {"IDDeposito": 1, "IDProducto": 1,    "Existencia": 8},
+  {"IDDeposito": 1, "IDProducto": 7,    "Existencia": 23},
+  {"IDDeposito": 1, "IDProducto": 145,  "Existencia": 2},
+  {"IDDeposito": 2, "IDProducto": 1,    "Existencia": 5},
+  {"IDDeposito": 2, "IDProducto": 12,   "Existencia": 18},
+  ...
+]</code></pre>
+
+<h4>Boceto T-SQL</h4>
+
+<pre><code>If @Reporte = 'MULTICOMPRA_STOCK' Begin
+
+    Select
+        'IDDeposito' = IDDeposito,
+        'IDProducto' = IDItem,
+        'Existencia' = Existencia
+    From StockSnapshot         -- nombre real de la tabla snapshot
+    Where Existencia &gt; 0       -- omitir filas en 0 para reducir tamaño
+    Order By IDDeposito, IDItem
+
+End</code></pre>
+
+<div class="box q">
+  <div class="box-title">Preguntas sobre STOCK</div>
+  <ol>
+    <li>¿Cómo se llama la tabla snapshot que va a actualizar <code>MULTICOMPRA_RECALCULO_STOCK</code>? ¿Existe ya o la creás nueva?</li>
+    <li>¿Filtramos por <code>Existencia &gt; 0</code> o queremos también las filas en 0? (Mi recomendación: filtrar.)</li>
+    <li>¿El concepto es "stock físico" o "stock disponible" (físico - reservas)? Si hay diferencia, ¿cuál preferís devolver?</li>
+  </ol>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. PREGUNTAS PENDIENTES                                       -->
+<!-- ============================================================ -->
+<section class="op-section">
+
+<h2>10) Preguntas pendientes consolidadas</h2>
+
+<p>Te junto todas las preguntas en una sola lista para que puedas responder de un saque:</p>
+
+<h3>✓ LOCALES — Resuelto</h3>
+<p>Carlos pasó la rama definitiva el 28-abr-2026. El "local" en MultiCompra es un Depósito (ver sección 5).</p>
+
+<h3>Sobre AUTH (login)</h3>
+<ol>
+  <li>¿El login va contra <code>Usuario</code> o <code>Vendedor</code>?</li>
+  <li>¿La clave está en texto plano o hasheada? Algoritmo si es hash.</li>
+  <li>¿Cómo se llama la columna del rol y qué valores reales tiene?</li>
+  <li>¿La tabla de usuarios tiene <code>IDDeposito</code> directo? Si solo tiene <code>IDSucursal</code>, decinos cómo derivar el depósito principal del usuario (¿tomamos el primer depósito de su sucursal?).</li>
+</ol>
+
+<h3>Sobre PROVEEDORES</h3>
+<ol>
+  <li>¿Pasanos directamente la rama T-SQL para <code>MULTICOMPRA_PROVEEDORES</code> con los nombres reales de columnas (mismo formato que hiciste con LOCALES). Es lo más rápido.</li>
+  <li>¿Qué campo usamos como "contacto" (teléfono, email, persona)?</li>
+</ol>
+
+<h3>✓ PRODUCTOS — Resuelto</h3>
+<p>Carlos pasó la rama definitiva el 28-abr-2026. Incluye <code>idProveedor</code> (último proveedor del producto) para armar OC agrupadas. Ver sección 7.</p>
+
+<h3>Sobre STOCK (RECALCULO_STOCK + STOCK)</h3>
+<ol>
+  <li>¿Cómo se llama la tabla snapshot que va a leer <code>MULTICOMPRA_STOCK</code> y actualizar <code>MULTICOMPRA_RECALCULO_STOCK</code>? ¿Existe ya o la creás?</li>
+  <li>¿Filtramos por <code>Existencia &gt; 0</code> o queremos también las filas en 0? (Mi recomendación: filtrar para que el response sea liviano.)</li>
+  <li>¿El concepto es "stock físico" o "stock disponible" (físico − reservas)?</li>
+  <li>¿Cuánto tarda más o menos un recálculo completo? Para decidir cada cuánto disparalo desde la PWA (5 min, 15 min, solo on-demand).</li>
+</ol>
+
+<div class="box">
+  <div class="box-title">Lo más rápido para vos</div>
+  Si te resulta más fácil, ya que pasaste la rama de LOCALES en 3 líneas, hacé lo mismo para las otras 4: pasanos directamente las ramas T-SQL con los nombres reales de tablas y columnas. Nosotros las pegamos al doc y armamos el frontend para consumir esas columnas. Es más rápido que responder pregunta por pregunta.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 10. PRÓXIMOS PASOS                                            -->
+<!-- ============================================================ -->
+<section>
+
+<h2>11) Próximos pasos</h2>
+
+<ol>
+  <li><strong>Vos:</strong> agregás las ramas que faltan al <code>SpAdconApp</code>. Estado actual:
+    <ul>
+      <li>✅ <code>MULTICOMPRA_LOCALES</code> — confirmado</li>
+      <li>✅ <code>MULTICOMPRA_PRODUCTOS</code> — confirmado</li>
+      <li>⏳ <code>MULTICOMPRA_AUTH</code> — falta (bloqueante para empezar a probar)</li>
+      <li>⏳ <code>MULTICOMPRA_PROVEEDORES</code> — falta</li>
+      <li>⏳ <code>MULTICOMPRA_RECALCULO_STOCK</code> — falta (lo propusiste vos)</li>
+      <li>⏳ <code>MULTICOMPRA_STOCK</code> — falta (lo propusiste vos)</li>
+    </ul>
+  </li>
+  <li><strong>Yo:</strong> mientras tanto armo una pantalla de prueba (<code>test-api.html</code>) que llama al endpoint con cada operación y muestra el resultado. Así apenas implementes una rama, validamos en segundos.</li>
+  <li><strong>Validamos juntos por WhatsApp/llamada</strong>, una operación a la vez. La más bloqueante es AUTH (sin login no podemos probar nada más).</li>
+  <li><strong>Cuando las 6 operaciones de lectura andan</strong>, te paso la spec de la última: <code>MULTICOMPRA_COMPRA_REGISTRAR</code> (cuando se confirma una compra real desde MultiCompra, registrar el ingreso de stock al sistema y disparar un recálculo).</li>
+</ol>
+
+<div class="box">
+  <div class="box-title">Cualquier cosa</div>
+  Si algo del documento no se entiende o querés que cambiemos algún nombre de columna / parámetro, decime nomás. Esto es un borrador para que nos pongamos de acuerdo, no un contrato cerrado.
+</div>
+
+<p class="footer-note">
+  Documento generado el 28 de abril de 2026 · NODO · MultiCompra v0.1 (mockups en validación) ·
+  Repositorio: <code>github.com/MULTIPLAZA/multicompra</code> ·
+  Archivo fuente Markdown: <code>docs/api-spadconapp-multicompra.md</code>
+</p>
+
+</section>
+
+</body>
+</html>
