@@ -477,8 +477,25 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
      Script
      ===================================================================== -->
 <script type="module">
-  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+  import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
+
+  // Leer usuario real desde localStorage (login real). Si no hay, fallback al mock.
+  let cajeraActual = cajeraMock;
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      cajeraActual = {
+        id: u.id,
+        nombre: u.nombre,
+        rol: u.rol,
+        iniciales: u.iniciales || (u.nombre || '?').slice(0, 2).toUpperCase(),
+        localId: u.localId,
+        localNombre: u.localNombre || cajeraMock.localNombre
+      };
+    }
+  } catch (_) {}
 
   // Saludo
   document.getElementById('hello-name').textContent = cajeraActual.nombre;

@@ -377,7 +377,7 @@
 
     <div class="screen-subheader">
       <div class="hello-block">
-        <span class="hello-name">Hola Shirley</span>
+        <span class="hello-name" id="hello-name">Hola</span>
         <span class="hello-date" id="hello-date">Miércoles 22 de abril de 2026</span>
       </div>
 
@@ -536,6 +536,21 @@
 <script type="module">
   import { opsPendientes, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
+  // queda con valores por default que muestran Shirley como en el mock.
+  let supervisorActual = { nombre: 'Shirley', rol: 'supervisor', iniciales: 'SH' };
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      supervisorActual = {
+        nombre: u.nombre || 'Supervisor',
+        rol: u.rol || 'supervisor',
+        iniciales: u.iniciales || (u.nombre || '?').slice(0, 2).toUpperCase()
+      };
+    }
+  } catch (_) {}
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
@@ -881,12 +896,15 @@
   // =====================================================================
   // Menú avatar unificado (tema + logout)
   // =====================================================================
+  // Saludo dinámico
+  document.getElementById('hello-name').textContent = 'Hola ' + supervisorActual.nombre;
+
   initAvatarMenu({
     avatarBtnSelector: '#avatar-btn',
     logoutHref: '../logout.html',
     perfilHref: null,   // no hay pantalla de perfil supervisor todavía
-    userName: 'Shirley',
-    userRole: 'supervisor',
+    userName: supervisorActual.nombre,
+    userRole: supervisorActual.rol,
     userLocal: null,
   });
 
