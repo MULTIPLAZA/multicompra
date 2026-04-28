@@ -1513,8 +1513,60 @@
       alert('Borrador guardado. Podés volver después a terminarla.');
     });
 
+    // ---- Enviar OP: persiste en localStorage para que el supervisor la vea ----
+    const OPS_KEY = 'multicompra:ops_enviadas';
+
     btnEnviar.addEventListener('click', () => {
-      alert('OP enviada a supervisor (mock). Ahora esta cajera queda bloqueada hasta que la procesen.');
+      if (state.lineas.length === 0) return;
+
+      const ahora = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const fechaStr = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())} ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`;
+
+      // Construir líneas con productos inline (así el supervisor no necesita
+      // recorrer el catálogo para mostrarlas)
+      const lineas = state.lineas.map(ln => {
+        const p = productos.find(x => x.id === ln.productoId) || {};
+        return {
+          productoId:     ln.productoId,
+          productoCodigo: p.barras || '',
+          productoNombre: p.nombre || '(producto desconocido)',
+          productoCosto:  p.costo  || 0,
+          productoPrecio: p.precio || 0,
+          idProveedor:    p.idProveedor || null,
+          cantidad:       ln.cantidad
+        };
+      });
+
+      const op = {
+        id:               'op-loc-' + Date.now().toString(36),
+        localId:          cajeraActual.localId,
+        localNombre:      cajeraActual.localNombre,
+        sucursal:         cajeraActual.localSucursal || cajeraActual.localNombre,
+        cajeraId:         cajeraActual.id,
+        cajera:           cajeraActual.nombre,
+        fecha:            fechaStr,
+        enviadaHace:      'recién',
+        estado:           'enviada',
+        esExcepcion:      !!state.excepcion,
+        motivoExcepcion:  state.excepcion ? (state.motivo || '').trim() : null,
+        esVieja:          false,
+        lineas
+      };
+
+      try {
+        const arr = JSON.parse(localStorage.getItem(OPS_KEY) || '[]');
+        arr.unshift(op);  // las más nuevas primero
+        localStorage.setItem(OPS_KEY, JSON.stringify(arr));
+      } catch (e) {
+        alert('No pude guardar la OP. Probá de nuevo.\n\n' + e.message);
+        return;
+      }
+
+      // Limpiar el draft y volver al dashboard
+      localStorage.removeItem(DRAFT_KEY);
+      alert(`OP ${op.id.toUpperCase()} enviada a Shirley.\n\n${lineas.length} productos · ${lineas.reduce((s, l) => s + l.cantidad, 0)} unidades totales.`);
+      window.location.href = 'dashboard.html';
     });
 
     // Render inicial

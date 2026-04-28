@@ -534,7 +534,7 @@
      Scripts
      ================================================================= -->
 <script type="module">
-  import { opsPendientes, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
@@ -551,6 +551,16 @@
       };
     }
   } catch (_) {}
+
+  // ─── Mergear OPs reales (las que la cajera envió) con las del mock ─────
+  const OPS_KEY = 'multicompra:ops_enviadas';
+  let opsReales = [];
+  try {
+    opsReales = JSON.parse(localStorage.getItem(OPS_KEY) || '[]');
+  } catch (_) {}
+
+  // Las reales primero (más recientes), después el mock (para que la demo se vea poblada)
+  const opsPendientes = [...opsReales, ...opsPendientesMock];
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
@@ -578,7 +588,24 @@
     }
   };
 
+  // Map de productos del mock + productos inline de las OPs reales.
+  // Las OPs reales traen { productoId, productoCodigo, productoNombre, ... } en
+  // cada línea, así que armamos un map combinado para que el render encuentre
+  // siempre nombre y código por id, sin importar de dónde vino la OP.
   const productoById = new Map(productos.map(p => [p.id, p]));
+  for (const op of opsReales) {
+    for (const l of op.lineas) {
+      if (!productoById.has(l.productoId) && l.productoNombre) {
+        productoById.set(l.productoId, {
+          id: l.productoId,
+          nombre: l.productoNombre,
+          barras: l.productoCodigo || '',
+          costo:  l.productoCosto  || 0,
+          precio: l.productoPrecio || 0
+        });
+      }
+    }
+  }
 
   // =====================================================================
   // Render header count + fecha
@@ -612,7 +639,11 @@
     const selected = state.selected.has(op.id);
     const vieja = esViejaCalc(op);
     const local = locales.find(l => l.id === op.localId);
-    const codigo = local ? local.codigo : '??';
+    // Si la OP es real (viene de la API del proveedor), localId es numérico y
+    // no está en el mock. Inferir el código de las primeras letras del nombre.
+    const codigo = local
+      ? local.codigo
+      : (op.localNombre || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase() || '??';
 
     const badges = [];
     if (op.esExcepcion) {
