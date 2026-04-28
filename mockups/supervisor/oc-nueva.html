@@ -1278,7 +1278,7 @@
     if (puede) {
       btn.classList.remove('disabled');
       btn.removeAttribute('aria-disabled');
-      btn.href = 'oc-editar.html';
+      btn.href = '#'; // el handler se encarga
       btn.removeAttribute('data-disabled-msg');
       btn.style.opacity = '';
       btn.style.pointerEvents = '';
@@ -1293,6 +1293,93 @@
       btn.setAttribute('data-disabled-msg', 'Falta: ' + faltan.join(' y '));
     }
   }
+
+  // =====================================================================
+  // Click "Armar OC y abrir planilla" — persiste la OC en localStorage
+  // y redirige al listado para que el supervisor vea su nueva OC arriba.
+  // =====================================================================
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#btn-armar');
+    if (!btn) return;
+    if (btn.getAttribute('aria-disabled') === 'true') {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+
+    const opIds = [...state.selectedOps];
+    const provId = state.selectedProveedor;
+    const prov = proveedorById.get(provId);
+    if (!opIds.length || !prov) return;
+
+    // Acumular líneas: { productoId, cantidad, costo, productoNombre, productoCodigo }
+    const lineasMap = new Map();
+    let totalGs = 0;
+    for (const opId of opIds) {
+      const op = opsPendientes.find(o => o.id === opId);
+      if (!op) continue;
+      for (const ln of op.lineas) {
+        const prod = productoById.get(ln.productoId);
+        if (!prod) continue;
+        const subtotal = (prod.costo || 0) * ln.cantidad;
+        totalGs += subtotal;
+        const acum = lineasMap.get(ln.productoId) || {
+          productoId: ln.productoId,
+          productoNombre: prod.nombre,
+          productoCodigo: prod.barras || '',
+          costo: prod.costo || 0,
+          cantidad: 0
+        };
+        acum.cantidad += ln.cantidad;
+        lineasMap.set(ln.productoId, acum);
+      }
+    }
+
+    // Construir OC
+    const ahora = new Date(), pad = (n) => String(n).padStart(2, '0');
+    const fechaStr = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())} ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`;
+    const ocId = 'OC-loc-' + Date.now().toString(36).toUpperCase();
+    const supervisorNombre = (() => {
+      try { return (JSON.parse(localStorage.getItem('multicompra:user') || '{}').nombre) || 'Supervisor'; }
+      catch (_) { return 'Supervisor'; }
+    })();
+    const ocNueva = {
+      id: ocId,
+      proveedorId: provId,
+      proveedorNombre: prov.nombre,
+      opIds,
+      lineas: [...lineasMap.values()],
+      totalGs,
+      fecha: fechaStr,
+      estado: 'abierta',
+      creadaPor: supervisorNombre
+    };
+
+    try {
+      const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
+      arr.unshift(ocNueva);
+      localStorage.setItem('multicompra:ocs_creadas', JSON.stringify(arr));
+    } catch (_) {}
+
+    // Marcar las OPs incluidas como 'en_oc' (para que no aparezcan más
+    // como pendientes en el dashboard del supervisor).
+    try {
+      const resol = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+      for (const opId of opIds) {
+        resol[opId] = {
+          estado: 'en_oc',
+          ocId,
+          supervisor: supervisorNombre,
+          fechaResolucion: fechaStr,
+          nota: null
+        };
+      }
+      localStorage.setItem('multicompra:ops_resoluciones', JSON.stringify(resol));
+    } catch (_) {}
+
+    alert(`OC ${ocId} creada con ${opIds.length} OPs (${[...lineasMap.values()].length} productos · Gs. ${totalGs.toLocaleString('es-PY')}).`);
+    window.location.href = 'oc-lista.html';
+  });
 
   function renderProveedorInfo() {
     const info = document.getElementById('proveedor-info');

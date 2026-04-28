@@ -564,11 +564,12 @@
     resoluciones = JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}');
   } catch (_) {}
 
-  // Filtrar OPs ya resueltas (aprobadas/devueltas) del listado de pendientes:
-  // si tiene una resolución, no aparece más en el panel del supervisor.
+  // Filtrar OPs ya resueltas (aprobadas/devueltas/en_oc) del listado de
+  // pendientes: si tiene una resolución, no aparece más en el panel del
+  // supervisor. en_oc significa que ya está incluida en una OC.
   function tieneResolucionFinal(opId) {
     const r = resoluciones[opId];
-    return r && (r.estado === 'aprobada' || r.estado === 'devuelta');
+    return r && (r.estado === 'aprobada' || r.estado === 'devuelta' || r.estado === 'en_oc');
   }
 
   // Las reales primero (más recientes), después el mock (para que la demo se vea poblada)
