@@ -873,8 +873,11 @@
 
   <!-- ===================== Script ===================== -->
   <script type="module">
-    import { productos, cajeraActual } from '../shared/mock-data.js';
+    import { productos, cajeraActual, proveedores } from '../shared/mock-data.js';
     import { initAvatarMenu } from '../shared/ui.js';
+
+    // Código del último producto no encontrado (para pre-llenar el modal de alta)
+    let lastCodigoNoEncontrado = '';
 
     // --------- Saludo ---------
     document.getElementById('hello-name').textContent = cajeraActual.nombre;
@@ -1142,6 +1145,7 @@
       // Búsqueda exacta por código de barra
       const prod = productos.find(p => p.barras === codigo);
       if (!prod) {
+        lastCodigoNoEncontrado = codigo;
         mostrarFeedback('err', `Producto no encontrado: ${codigo}`, true);
         beep(180, 180);
         // Limpiamos para que pueda re-tipear, y volvemos al scan
@@ -1175,12 +1179,122 @@
       }
     });
 
-    // CTA de "solicitar alta al supervisor" (decorativo)
+    // CTA de "solicitar alta al supervisor" → abre modal con código pre-llenado
     fbCta.addEventListener('click', () => {
-      alert('(Mock) Solicitud de alta de producto enviada al supervisor. Ya podés seguir escaneando.');
-      limpiarFeedback();
-      scanInput.focus();
+      abrirModalAlta(lastCodigoNoEncontrado || '');
     });
+
+    // =====================================================================
+    // Modal "Solicitar alta de producto" (D - flujo real)
+    // =====================================================================
+    const modalAltaBackdrop = document.getElementById('modal-alta-backdrop');
+    const modalAltaForm     = document.getElementById('form-alta');
+    const modalAltaCodigo   = document.getElementById('alta-codigo');
+    const modalAltaDesc     = document.getElementById('alta-descripcion');
+    const modalAltaCateg    = document.getElementById('alta-categoria');
+    const modalAltaProv     = document.getElementById('alta-proveedor');
+    const modalAltaMotivo   = document.getElementById('alta-motivo');
+    const modalAltaDescErr  = document.getElementById('alta-desc-error');
+    const modalAltaClose    = document.getElementById('modal-alta-close');
+    const modalAltaCancel   = document.getElementById('modal-alta-cancelar');
+    const modalAltaEnviar   = document.getElementById('modal-alta-enviar');
+    const SOLICITUDES_KEY   = 'multicompra:solicitudes_alta_producto';
+
+    function abrirModalAlta(codigoPrellenado) {
+      modalAltaCodigo.value = codigoPrellenado;
+      modalAltaDesc.value = '';
+      modalAltaCateg.value = '';
+      modalAltaProv.value = '';
+      modalAltaMotivo.value = '';
+      modalAltaDescErr.hidden = true;
+      modalAltaDesc.removeAttribute('aria-invalid');
+      modalAltaBackdrop.hidden = false;
+      // Foco en descripción (el código ya viene)
+      setTimeout(() => modalAltaDesc.focus(), 50);
+    }
+
+    function cerrarModalAlta() {
+      modalAltaBackdrop.hidden = true;
+      // Vuelve el foco al escaneo para seguir trabajando
+      setTimeout(() => scanInput.focus(), 30);
+    }
+
+    modalAltaClose.addEventListener('click', cerrarModalAlta);
+    modalAltaCancel.addEventListener('click', cerrarModalAlta);
+    modalAltaBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalAltaBackdrop) cerrarModalAlta();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modalAltaBackdrop.hidden) cerrarModalAlta();
+    });
+
+    // Limpia error al tipear
+    modalAltaDesc.addEventListener('input', () => {
+      if (modalAltaDesc.value.trim().length >= 10) {
+        modalAltaDescErr.hidden = true;
+        modalAltaDesc.removeAttribute('aria-invalid');
+      }
+    });
+
+    modalAltaEnviar.addEventListener('click', () => {
+      const desc = modalAltaDesc.value.trim();
+      if (desc.length < 10) {
+        modalAltaDescErr.hidden = false;
+        modalAltaDesc.setAttribute('aria-invalid', 'true');
+        modalAltaDesc.focus();
+        return;
+      }
+
+      const ahora = new Date();
+      const fechaStr = ahora.toISOString().slice(0, 10) + ' ' +
+                       ahora.toTimeString().slice(0, 5);
+      const solicitud = {
+        id: 'alt-loc-' + Date.now().toString(36),
+        fecha: fechaStr,
+        codigo: modalAltaCodigo.value.trim(),
+        descripcion: desc,
+        motivo: modalAltaMotivo.value.trim() || null,
+        categoria: modalAltaCateg.value || null,
+        proveedorSugerido: modalAltaProv.value || null,
+        cajeraId: cajeraActual.id,
+        cajera: cajeraActual.nombre,
+        local: cajeraActual.localNombre,
+        estado: 'pendiente',
+        notaSupervisor: null,
+        fechaResolucion: null
+      };
+
+      try {
+        const arr = JSON.parse(localStorage.getItem(SOLICITUDES_KEY) || '[]');
+        arr.push(solicitud);
+        localStorage.setItem(SOLICITUDES_KEY, JSON.stringify(arr));
+      } catch (e) {
+        showToast('No pude guardar la solicitud. Probá de nuevo.', 'error');
+        return;
+      }
+
+      cerrarModalAlta();
+      limpiarFeedback();
+      lastCodigoNoEncontrado = '';
+      scanInput.value = '';
+      showToast('Solicitud enviada al supervisor.', 'success');
+    });
+
+    // =====================================================================
+    // Toast helper (reusa .toast-container ya presente en el body)
+    // =====================================================================
+    const toastContainer = document.getElementById('toast-container');
+    function showToast(msg, tipo = 'success') {
+      const t = document.createElement('div');
+      t.className = 'toast toast-' + (tipo === 'error' ? 'error' : tipo === 'warning' ? 'warning' : 'success');
+      t.textContent = msg;
+      toastContainer.appendChild(t);
+      setTimeout(() => {
+        t.style.transition = 'opacity 200ms ease';
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 220);
+      }, 2400);
+    }
 
     // --------- Fallback: búsqueda por descripción (secundario) ---------
     const searchInput = document.getElementById('search-input');
@@ -1376,6 +1490,68 @@
       scanInput.focus();
     });
 </script>
+
+<!-- ===== Modal: Solicitar alta de producto ===== -->
+<div class="modal-backdrop" id="modal-alta-backdrop" hidden aria-modal="true" role="dialog" aria-labelledby="modal-alta-title">
+  <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-alta-title">Solicitar alta de producto</h2>
+      <button type="button" class="btn-icon" id="modal-alta-close" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="form-alta" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="alta-codigo">Codigo de barras</label>
+          <input type="text" id="alta-codigo" name="codigo" class="input" placeholder="Ej: 7840001234567" inputmode="numeric" autocomplete="off" />
+          <span class="form-hint">Ya viene pre-llenado con el codigo que no encontraste.</span>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="alta-descripcion">
+            Descripcion del producto
+            <span class="form-hint" style="font-weight:400; margin-left:4px;">(minimo 10 caracteres)</span>
+          </label>
+          <input type="text" id="alta-descripcion" name="descripcion" class="input" placeholder="Ej: Funda silicona Samsung S24 negro" maxlength="120" autocomplete="off" />
+          <span class="form-error" id="alta-desc-error" hidden>La descripcion necesita al menos 10 caracteres.</span>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="alta-categoria">Categoria</label>
+          <select id="alta-categoria" name="categoria" class="input">
+            <option value="">-- Sin categoria --</option>
+            <option value="Cables y cargadores">Cables y cargadores</option>
+            <option value="Auriculares">Auriculares</option>
+            <option value="Fundas y protectores">Fundas y protectores</option>
+            <option value="Vidrios templados">Vidrios templados</option>
+            <option value="Wearables">Wearables</option>
+            <option value="Accesorios varios">Accesorios varios</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="alta-proveedor">Proveedor sugerido</label>
+          <select id="alta-proveedor" name="proveedorSugerido" class="input">
+            <option value="">-- No se --</option>
+            <option value="prov-01">Distribuidora Celular Plus S.A.</option>
+            <option value="prov-02">Importadora AccesoTech S.R.L.</option>
+            <option value="prov-03">TechPoint Paraguay S.A.</option>
+            <option value="prov-04">MayoMovil Distribuciones</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="alta-motivo">Motivo (opcional)</label>
+          <textarea id="alta-motivo" name="motivo" class="input" rows="2" placeholder="¿Por que crees que deberia agregarse?" maxlength="200"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="modal-alta-cancelar">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="modal-alta-enviar">Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast container ===== -->
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
 </body>
 
