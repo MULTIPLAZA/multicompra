@@ -1443,6 +1443,92 @@ export const proveedoresConfig = [
 ];
 
 // =========================================================================
+// Solicitudes de alta de producto (cajera → supervisor)
+// Generadas desde op-nueva.html cuando un código no existe en el catálogo.
+// Estados: 'pendiente' | 'aprobado' | 'rechazado'
+// Pendientes: se leen desde localStorage key 'multicompra:solicitudes_alta_producto'.
+// Este array es el seed inicial para mostrar datos ya existentes en el mock
+// de supervisor/solicitudes-alta.html.
+// =========================================================================
+export const solicitudesAltaProducto = [
+  {
+    id: 'alt-001',
+    fecha: '2026-04-22 08:15',
+    codigo: '7841234567890',
+    descripcion: 'Funda silicona Samsung S24 Ultra color negro',
+    motivo: 'El cliente preguntó mucho y no tenemos. Creo que se vendería bien.',
+    categoria: 'Fundas y protectores',
+    proveedorSugerido: 'prov-04',
+    cajeraId: 'user-carolina',
+    cajera: 'Carolina',
+    local: 'Shopping del Sol',
+    estado: 'pendiente',
+    notaSupervisor: null,
+    fechaResolucion: null
+  },
+  {
+    id: 'alt-002',
+    fecha: '2026-04-21 15:40',
+    codigo: '7849876543210',
+    descripcion: 'Cable USB-C a Lightning trenzado 2 metros',
+    motivo: null,
+    categoria: 'Cables y cargadores',
+    proveedorSugerido: 'prov-01',
+    cajeraId: 'caj-03',
+    cajera: 'Paola',
+    local: 'Lambaré',
+    estado: 'aprobado',
+    notaSupervisor: 'Lo agrego al catálogo con el proveedor actual. Buen punto.',
+    fechaResolucion: '2026-04-22 09:00'
+  },
+  {
+    id: 'alt-003',
+    fecha: '2026-04-20 11:22',
+    codigo: '7840099887766',
+    descripcion: 'Smartwatch Xiaomi Band 8 correa intercambiable',
+    motivo: 'Varios clientes preguntan en la semana por este modelo.',
+    categoria: 'Wearables',
+    proveedorSugerido: 'prov-03',
+    cajeraId: 'caj-07',
+    cajera: 'Mirta',
+    local: 'Villa Morra',
+    estado: 'rechazado',
+    notaSupervisor: 'El margen no cierra con ese proveedor. Buscar alternativa antes de aprobar.',
+    fechaResolucion: '2026-04-21 14:30'
+  },
+  {
+    id: 'alt-004',
+    fecha: '2026-04-22 09:50',
+    codigo: '7845544332211',
+    descripcion: 'Soporte magnético para auto rejilla ventilación',
+    motivo: null,
+    categoria: 'Accesorios varios',
+    proveedorSugerido: null,
+    cajeraId: 'caj-02',
+    cajera: 'Nélida',
+    local: 'Ciudad del Este',
+    estado: 'pendiente',
+    notaSupervisor: null,
+    fechaResolucion: null
+  },
+  {
+    id: 'alt-005',
+    fecha: '2026-04-22 10:35',
+    codigo: '7843311220099',
+    descripcion: 'Auricular con cable tipo C para Samsung A55',
+    motivo: 'Vino un cliente a reclamar que no tenemos. El vendedor anterior sí lo tenía.',
+    categoria: 'Auriculares',
+    proveedorSugerido: 'prov-02',
+    cajeraId: 'caj-01',
+    cajera: 'Romina',
+    local: 'Shopping Multiplaza',
+    estado: 'pendiente',
+    notaSupervisor: null,
+    fechaResolucion: null
+  }
+];
+
+// =========================================================================
 // Config — Parámetros globales del sistema (admin/config/parametros)
 // =========================================================================
 export const parametros = {

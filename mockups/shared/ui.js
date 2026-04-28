@@ -218,3 +218,45 @@ export function initAvatarMenu(opts = {}) {
 
   return { open: openMenu, close: closeMenu };
 }
+
+/* =============================================================================
+   updateAltasBadge — actualiza el contador del nav-item "Altas pendientes"
+   ----------------------------------------------------------------------------
+   Combina las solicitudes mock con las que la cajera dejó en localStorage y
+   las resoluciones del supervisor. Cuenta las que terminan en estado
+   "pendiente" y rellena el badge `#nav-count-altas`. Si 0, lo oculta.
+
+     opts.mockSolicitudes  array opcional (si no, se asume []).
+     opts.badgeId          id del elemento contador (default 'nav-count-altas').
+   ============================================================================= */
+export function updateAltasBadge(opts = {}) {
+  const {
+    mockSolicitudes = [],
+    badgeId = 'nav-count-altas',
+    localKey = 'multicompra:solicitudes_alta_producto',
+    resolKey = 'multicompra:solicitudes_resoluciones'
+  } = opts;
+
+  const badge = document.getElementById(badgeId);
+  if (!badge) return;
+
+  let locales = [];
+  let resol = {};
+  try { locales = JSON.parse(localStorage.getItem(localKey) || '[]'); } catch (_) {}
+  try { resol = JSON.parse(localStorage.getItem(resolKey) || '{}'); } catch (_) {}
+
+  const todas = [...mockSolicitudes, ...locales];
+  let pendientes = 0;
+  for (const s of todas) {
+    const estado = (resol[s.id] && resol[s.id].estado) || s.estado;
+    if (estado === 'pendiente') pendientes++;
+  }
+
+  if (pendientes > 0) {
+    badge.textContent = String(pendientes);
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
+  }
+  return pendientes;
+}
