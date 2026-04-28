@@ -534,6 +534,7 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     const label = {
       'borrador':  'Borrador',
       'enviada':   'Enviada',
+      'aprobada':  'Aprobada',
       'en_oc':     'En OC',
       'cerrada':   'Cerrada',
       'devuelta':  'Devuelta',
@@ -549,21 +550,32 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     return `${d}/${m}/${y.slice(2)}`;
   }
 
-  // Mergear historial real (OPs enviadas por esta cajera desde la app) con el mock
+  // Mergear historial real (OPs enviadas por esta cajera desde la app) con el mock.
+  // Si la supervisora ya aprobó/devolvió la OP, mostrar ese estado actualizado.
   let historialReal = [];
+  let resolucionesOps = {};
+  try {
+    resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+  } catch (_) {}
+
   try {
     const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
     historialReal = todas
       .filter(op => op.cajeraId === cajeraActual.id)
-      .map(op => ({
-        id:         op.id,
-        fechaEnvio: op.fecha,                  // ya viene en formato '2026-04-28 19:05'
-        estado:     op.estado || 'enviada',
-        lineas:     op.lineas.map(l => ({
-          productoId: l.productoId,
-          cantidad:   l.cantidad
-        }))
-      }));
+      .map(op => {
+        // Si la supervisora ya resolvió, mostrar ese estado
+        const resol = resolucionesOps[op.id];
+        const estadoActualizado = resol ? resol.estado : (op.estado || 'enviada');
+        return {
+          id:         op.id,
+          fechaEnvio: op.fecha,
+          estado:     estadoActualizado,
+          lineas:     op.lineas.map(l => ({
+            productoId: l.productoId,
+            cantidad:   l.cantidad
+          }))
+        };
+      });
   } catch (_) {}
 
   // Reales primero (más recientes arriba), después el mock para que la demo se vea poblada

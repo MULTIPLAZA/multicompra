@@ -554,13 +554,26 @@
 
   // ─── Mergear OPs reales (las que la cajera envió) con las del mock ─────
   const OPS_KEY = 'multicompra:ops_enviadas';
+  const OPS_RESOL_KEY = 'multicompra:ops_resoluciones';
   let opsReales = [];
+  let resoluciones = {};
   try {
     opsReales = JSON.parse(localStorage.getItem(OPS_KEY) || '[]');
   } catch (_) {}
+  try {
+    resoluciones = JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}');
+  } catch (_) {}
+
+  // Filtrar OPs ya resueltas (aprobadas/devueltas) del listado de pendientes:
+  // si tiene una resolución, no aparece más en el panel del supervisor.
+  function tieneResolucionFinal(opId) {
+    const r = resoluciones[opId];
+    return r && (r.estado === 'aprobada' || r.estado === 'devuelta');
+  }
 
   // Las reales primero (más recientes), después el mock (para que la demo se vea poblada)
-  const opsPendientes = [...opsReales, ...opsPendientesMock];
+  const opsPendientes = [...opsReales, ...opsPendientesMock]
+    .filter(op => !tieneResolucionFinal(op.id));
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock

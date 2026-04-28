@@ -582,20 +582,55 @@
     `;
   }
 
+  // ─── Sistema de resoluciones del supervisor ────────────────────────────
+  // Cuando el supervisor aprueba/devuelve una OP, guardamos la decisión
+  // en localStorage. La pantalla del dashboard del supervisor lee esto
+  // para filtrar las que ya están resueltas; la del historial de la cajera
+  // refleja el estado actualizado de cada OP.
+  const OPS_RESOL_KEY = 'multicompra:ops_resoluciones';
+
+  function leerResoluciones() {
+    try { return JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}'); }
+    catch (_) { return {}; }
+  }
+
+  function guardarResolucion(opId, resolucion) {
+    const all = leerResoluciones();
+    all[opId] = resolucion;
+    try { localStorage.setItem(OPS_RESOL_KEY, JSON.stringify(all)); }
+    catch (_) {}
+  }
+
+  // Si esta OP ya tiene una resolución previa, mostrarla como estado actual
+  const resolPrevia = leerResoluciones()[op.id];
+  const estadoEfectivo = resolPrevia ? resolPrevia.estado : estado;
+
   // Acciones según estado
   const actionsHost = document.getElementById('subh-actions');
-  if (estado === 'enviada') {
+  if (estadoEfectivo === 'enviada') {
     actionsHost.innerHTML = `
-      <a class="btn btn-primary" href="oc-nueva.html?ops=${encodeURIComponent(op.id)}">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        Incluir en OC
-      </a>
+      <button type="button" class="btn btn-primary" id="btn-aprobar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Aprobar
+      </button>
       <button type="button" class="btn btn-secondary" id="btn-devolver">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
         Devolver a cajera
       </button>
     `;
-  } else if (estado === 'en_oc') {
+  } else if (estadoEfectivo === 'aprobada') {
+    actionsHost.innerHTML = `
+      <span class="chip" style="background:var(--success-soft, #dcfce7);color:var(--success, #15803d);border:1px solid var(--success, #15803d);padding:4px 12px;border-radius:999px;font-size:var(--fs-sm);font-weight:600;">
+        ✓ Aprobada por ${resolPrevia.supervisor || 'el supervisor'} · ${resolPrevia.fechaResolucion || ''}
+      </span>
+    `;
+  } else if (estadoEfectivo === 'devuelta') {
+    actionsHost.innerHTML = `
+      <span class="chip" style="background:var(--warning-soft, #fef3c7);color:var(--warning-text, #b45309);border:1px solid var(--warning, #f59e0b);padding:4px 12px;border-radius:999px;font-size:var(--fs-sm);font-weight:600;">
+        ↶ Devuelta a la cajera · ${resolPrevia.fechaResolucion || ''}
+      </span>
+    `;
+  } else if (estadoEfectivo === 'en_oc') {
     actionsHost.innerHTML = `
       <a class="chip chip-linked" href="oc-editar.html" title="Ver OC donde está incluida esta OP">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
@@ -706,6 +741,34 @@
   }
   function cerrarModal() { modalReturn.classList.remove('show'); }
 
+  // Helper: nombre del supervisor logueado (para registrar quién aprobó/devolvió)
+  function supervisorNombre() {
+    try {
+      const u = JSON.parse(localStorage.getItem('multicompra:user') || '{}');
+      return u.nombre || 'Supervisor';
+    } catch (_) { return 'Supervisor'; }
+  }
+
+  function fechaAhora() {
+    const d = new Date(), pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // Botón APROBAR — persiste la resolución y vuelve al dashboard
+  const btnApr = document.getElementById('btn-aprobar');
+  if (btnApr) {
+    btnApr.addEventListener('click', () => {
+      guardarResolucion(op.id, {
+        estado: 'aprobada',
+        supervisor: supervisorNombre(),
+        fechaResolucion: fechaAhora(),
+        nota: null
+      });
+      showToast(`${IDU} aprobada. Volviendo al panel…`);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1100);
+    });
+  }
+
   const btnDev = document.getElementById('btn-devolver');
   if (btnDev) btnDev.addEventListener('click', abrirModal);
   document.getElementById('btn-close-return').addEventListener('click', cerrarModal);
@@ -714,6 +777,13 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalReturn.classList.contains('show')) cerrarModal(); });
 
   btnReturnConfirm.addEventListener('click', () => {
+    // Persistir la devolución con la nota
+    guardarResolucion(op.id, {
+      estado: 'devuelta',
+      supervisor: supervisorNombre(),
+      fechaResolucion: fechaAhora(),
+      nota: returnNota.value.trim()
+    });
     cerrarModal();
     showToast(`${IDU} devuelta a la cajera con tu nota.`);
     setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);

@@ -459,6 +459,7 @@ img, svg { display: block; max-width: 100%; }
 /* Estados de OP */
 .badge-borrador    { background: var(--bg-elev-2);    color: var(--text-muted); }
 .badge-enviada     { background: var(--info-soft);    color: var(--info-text); }
+.badge-aprobada    { background: var(--success-soft); color: var(--success-text); }
 .badge-en-oc       { background: var(--primary-soft); color: var(--primary); }
 .badge-devuelta    { background: var(--warning-soft); color: var(--warning-text); }
 .badge-cerrada     { background: var(--success-soft); color: var(--success-text); }
