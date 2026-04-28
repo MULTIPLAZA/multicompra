@@ -461,6 +461,13 @@
         </span>
         <span class="resumen-kpi-value">2</span>
       </div>
+      <div class="resumen-kpi" id="kpi-altas">
+        <span class="resumen-kpi-label">
+          Altas de productos a revisar
+          <a href="solicitudes-alta.html" id="kpi-altas-link">ver</a>
+        </span>
+        <span class="resumen-kpi-value" id="kpi-altas-value">0</span>
+      </div>
     </section>
 
     <section class="resumen-section">
@@ -889,7 +896,17 @@
   renderList();
   updateBulkBar();
 
-  updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
+  const altasPendientes = updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto }) || 0;
+  // KPI en el panel derecho del dashboard
+  const kpiAltasValue = document.getElementById('kpi-altas-value');
+  const kpiAltasLink = document.getElementById('kpi-altas-link');
+  if (kpiAltasValue) {
+    kpiAltasValue.textContent = String(altasPendientes);
+    if (altasPendientes === 0) {
+      kpiAltasValue.style.color = 'var(--text-muted)';
+      if (kpiAltasLink) kpiAltasLink.style.display = 'none';
+    }
+  }
 </script>
 
 </body>
