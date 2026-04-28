@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MultiCompra — Manual del sistema</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 26pt;
+    color: #0f766e;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+  }
+  h1 + .subtitle { color: #64748b; font-size: 12pt; margin-bottom: 28px; }
+  h2 {
+    font-size: 16pt;
+    color: #0f766e;
+    margin-top: 32px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #14b8a6;
+    padding-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12.5pt;
+    color: #0f172a;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11pt;
+    color: #0f766e;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 22px; padding: 0; }
+  li { margin: 3px 0; }
+  strong { color: #0f172a; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #f1f5f9; padding: 1px 5px; border-radius: 3px;
+    font-size: 9.5pt; color: #0f766e;
+  }
+  .box {
+    border-left: 4px solid #14b8a6;
+    background: #f0fdfa;
+    padding: 10px 14px;
+    margin: 10px 0;
+    border-radius: 0 6px 6px 0;
+    page-break-inside: avoid;
+  }
+  .box.warn { border-left-color: #f59e0b; background: #fffbeb; }
+  .box.info { border-left-color: #3b82f6; background: #eff6ff; }
+  .box .box-title { font-weight: 700; margin-bottom: 4px; font-size: 10pt; }
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 10px 0; font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th { background: #0f766e; color: white; text-align: left; padding: 7px 9px; font-weight: 600; }
+  td { border: 1px solid #e2e8f0; padding: 7px 9px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ─── Cover ─────────────────────────────────────────────────────── */
+  .cover {
+    height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-start;
+    page-break-after: always;
+  }
+  .cover .brand {
+    font-size: 11pt; color: #64748b;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .cover h1 { font-size: 48pt; margin: 16px 0 6px 0; line-height: 1.05; }
+  .cover .big-subtitle { font-size: 17pt; color: #334155; margin-bottom: 36px; }
+  .cover .meta { color: #64748b; font-size: 11pt; line-height: 1.9; }
+  .cover .meta strong { color: #0f172a; }
+
+  /* ─── Toc ───────────────────────────────────────────────────────── */
+  .toc { page-break-after: always; }
+  .toc ol { list-style: none; margin-left: 0; padding-left: 0; }
+  .toc li { padding: 5px 0; border-bottom: 1px dotted #cbd5e1; }
+  .toc .n { display: inline-block; width: 30px; color: #0f766e; font-weight: 700; }
+
+  /* ─── Wireframes / "screenshots" ────────────────────────────────── */
+  .screen-wrap { margin: 16px 0; page-break-inside: avoid; }
+  .screen-label {
+    display: inline-block;
+    background: #0f766e; color: white;
+    font-family: "Consolas", monospace;
+    font-size: 9pt;
+    padding: 3px 9px;
+    border-radius: 4px 4px 0 0;
+    font-weight: 600;
+  }
+  .screen {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 6px 6px 6px;
+    box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.15);
+    overflow: hidden;
+  }
+  .screen-bar {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-bottom: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .screen-bar .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+  .screen-bar .dot:nth-child(1) { background: #ef4444; }
+  .screen-bar .dot:nth-child(2) { background: #f59e0b; }
+  .screen-bar .dot:nth-child(3) { background: #22c55e; }
+  .screen-bar .url {
+    flex: 1; background: white;
+    border: 1px solid #cbd5e1; border-radius: 12px;
+    padding: 2px 10px;
+    font-family: "Consolas", monospace;
+    font-size: 8pt;
+    color: #475569;
+    margin: 0 6px;
+  }
+  .screen-body { padding: 14px 16px; min-height: 80px; }
+  .screen-caption {
+    font-size: 9pt; color: #475569;
+    margin-top: 6px; padding: 6px 8px;
+    background: #f8fafc; border-radius: 4px;
+    border-left: 3px solid #14b8a6;
+  }
+
+  /* Wireframe primitives */
+  .w-card {
+    background: #ffffff; border: 1px solid #e2e8f0;
+    border-radius: 6px; padding: 10px 12px;
+    margin: 6px 0;
+  }
+  .w-card-head {
+    font-weight: 700; color: #0f172a; font-size: 10pt;
+    margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .w-input {
+    background: #f8fafc; border: 1px solid #cbd5e1;
+    border-radius: 4px; padding: 6px 9px;
+    font-size: 9pt; color: #334155;
+    font-family: "Consolas", monospace;
+    margin: 3px 0;
+  }
+  .w-btn {
+    display: inline-block;
+    background: #0f766e; color: white;
+    padding: 5px 12px; border-radius: 4px;
+    font-size: 9pt; font-weight: 600;
+  }
+  .w-btn.ghost {
+    background: white; color: #475569;
+    border: 1px solid #cbd5e1;
+  }
+  .w-btn.warn { background: #f59e0b; }
+  .w-btn.danger { background: #dc2626; }
+  .w-row {
+    display: flex; gap: 8px; align-items: center;
+    padding: 6px 0; border-bottom: 1px dotted #e2e8f0;
+    font-size: 9.5pt;
+  }
+  .w-row:last-child { border-bottom: none; }
+  .w-label { color: #64748b; font-size: 8.5pt; }
+  .w-chip {
+    display: inline-block;
+    padding: 1px 7px; border-radius: 999px;
+    font-size: 8pt; font-weight: 600;
+    background: #f0fdfa; color: #0f766e;
+    border: 1px solid #14b8a6;
+  }
+  .w-chip.warn { background: #fffbeb; color: #b45309; border-color: #f59e0b; }
+  .w-chip.danger { background: #fef2f2; color: #b91c1c; border-color: #ef4444; }
+  .w-chip.success { background: #f0fdf4; color: #15803d; border-color: #22c55e; }
+  .w-meta { color: #64748b; font-size: 8.5pt; }
+  .w-strong { font-weight: 700; color: #0f172a; }
+  .w-mono { font-family: "Consolas", monospace; font-size: 8.5pt; }
+
+  /* ─── Layout: header + sidebar simulado de la app ──────────────── */
+  .app-mini {
+    display: flex; min-height: 320px;
+    background: #f8fafc;
+  }
+  .app-mini-side {
+    width: 110px;
+    background: #1e293b; color: #cbd5e1;
+    padding: 10px 8px;
+    font-size: 8.5pt;
+  }
+  .app-mini-side .item {
+    padding: 5px 7px; border-radius: 4px;
+    margin-bottom: 2px;
+    color: #cbd5e1;
+  }
+  .app-mini-side .item.active { background: #0f766e; color: white; font-weight: 600; }
+  .app-mini-main { flex: 1; padding: 12px 16px; }
+  .app-mini-head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .app-mini-head .hello { font-size: 11pt; font-weight: 700; color: #0f172a; }
+  .app-mini-head .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #0f766e; color: white;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9pt; font-weight: 700;
+  }
+
+  .footer-note {
+    margin-top: 30px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b; font-size: 9pt;
+  }
+
+  /* Layout helpers */
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .role-card {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 6px; padding: 10px 12px;
+  }
+  .role-card h4 { margin-top: 0; }
+  .role-card.cajera { border-left: 4px solid #0f766e; }
+  .role-card.supervisor { border-left: 4px solid #9333ea; }
+  .role-card.admin { border-left: 4px solid #dc2626; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- PORTADA                                                       -->
+<!-- ============================================================ -->
+<section class="cover">
+  <div class="brand">MultiCompra · NODO</div>
+  <h1>Manual<br>del sistema</h1>
+  <div class="big-subtitle">Guía visual para Diego — flujos, pantallas y cómo se usa</div>
+  <div class="meta">
+    <strong>Cliente:</strong> Diego — cadena de accesorios de celular<br>
+    <strong>Versión:</strong> 1.0 (mockup conectado a datos reales)<br>
+    <strong>Fecha:</strong> 28 de abril de 2026<br>
+    <strong>URL:</strong> <code style="font-family:Consolas,monospace;background:#f0fdfa;color:#0f766e;padding:2px 8px;">https://multicompra.pages.dev/login</code>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ÍNDICE                                                        -->
+<!-- ============================================================ -->
+<section class="toc">
+  <h2>Índice</h2>
+  <ol>
+    <li><span class="n">1.</span> ¿Qué es MultiCompra y por qué lo estamos haciendo?</li>
+    <li><span class="n">2.</span> Los 3 perfiles del sistema</li>
+    <li><span class="n">3.</span> Flujo completo del pedido (visión panorámica)</li>
+    <li><span class="n">4.</span> Pantallas — la cajera</li>
+    <li><span class="n">5.</span> Pantallas — la supervisora</li>
+    <li><span class="n">6.</span> Pantallas — el admin</li>
+    <li><span class="n">7.</span> Conexión con tu sistema actual</li>
+    <li><span class="n">8.</span> Estado actual y qué falta</li>
+    <li><span class="n">9.</span> Cómo entrar a la app</li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<!-- 1. QUÉ ES                                                     -->
+<!-- ============================================================ -->
+<section>
+
+<h2>1) ¿Qué es MultiCompra y por qué lo estamos haciendo?</h2>
+
+<p><strong>MultiCompra</strong> es una aplicación web (PWA) que ordena y disciplina el flujo de pedidos y compras de toda tu cadena. Antes:</p>
+
+<ul>
+  <li>Las cajeras pedían cosas por WhatsApp, mensaje suelto, papel.</li>
+  <li>La supervisora juntaba pedidos a mano de varias fuentes.</li>
+  <li>No había forma fácil de saber quién pidió qué, ni de cruzar con el stock real.</li>
+  <li>Cada compra era una tarea suelta, sin trazabilidad.</li>
+</ul>
+
+<p>Ahora:</p>
+
+<div class="box">
+  <div class="box-title">Cómo cambia el día a día</div>
+  <ul>
+    <li><strong>La cajera</strong> abre la app en su local, escanea o busca productos, manda el pedido en 2 clicks.</li>
+    <li><strong>La supervisora</strong> abre el panel en el depósito central y ve TODOS los pedidos juntos, ordenados por urgencia, con el stock cruzado.</li>
+    <li><strong>Vos</strong> (admin) tenés reportes de qué está pidiendo cada local, qué se está comprando, qué proveedor.</li>
+  </ul>
+  Toda la info de productos, stock, costos, locales y proveedores viene de <strong>tu sistema actual</strong>. MultiCompra solamente agrega una capa de orden encima.
+</div>
+
+<h3>Lo importante</h3>
+<ul>
+  <li>No reemplaza tu sistema, lo <strong>complementa</strong>.</li>
+  <li>Acceso desde cualquier dispositivo (celular, notebook, tablet) con un navegador.</li>
+  <li>No se necesita instalar nada.</li>
+  <li>Multi-local desde el día uno (los 18 depósitos que ya tenés).</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. PERFILES                                                   -->
+<!-- ============================================================ -->
+<section>
+
+<h2>2) Los 3 perfiles del sistema</h2>
+
+<p>Cuando una persona entra a la app, según su <strong>rol</strong> ve un panel distinto:</p>
+
+<div class="grid-2">
+  <div class="role-card cajera">
+    <h4>Cajera</h4>
+    <p style="margin:4px 0 8px 0;font-size:9.5pt;">Trabaja en un local. Su trabajo en MultiCompra es uno solo: <strong>armar y enviar el pedido del día</strong>.</p>
+    <ul style="font-size:9pt;">
+      <li>Pantalla simple, tipografía grande</li>
+      <li>Funciona con escaneo láser o teclado</li>
+      <li>Ve solo lo de su local</li>
+    </ul>
+  </div>
+
+  <div class="role-card supervisor">
+    <h4>Supervisora</h4>
+    <p style="margin:4px 0 8px 0;font-size:9.5pt;">Trabaja en el depósito central. Recibe los pedidos de los 18 locales y arma las <strong>órdenes de compra</strong> a proveedores.</p>
+    <ul style="font-size:9pt;">
+      <li>Pantalla densa con muchos datos a la vez</li>
+      <li>Cruza pedido vs stock real</li>
+      <li>Aprueba, modifica o rechaza pedidos</li>
+    </ul>
+  </div>
+
+  <div class="role-card admin" style="grid-column: 1 / -1;">
+    <h4>Admin (vos)</h4>
+    <p style="margin:4px 0 8px 0;font-size:9.5pt;">Vista global. No opera el día a día, pero ve <strong>reportes y configuración</strong>.</p>
+    <ul style="font-size:9pt;">
+      <li>Reportes: cuánto pidió cada local, cuánto se compró, qué proveedor, etc.</li>
+      <li>Configuración: parámetros del sistema, alta/baja de personal autorizado</li>
+      <li>Pensado para celular o tablet — no necesitás estar en la oficina</li>
+    </ul>
+  </div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 3. FLUJO PANORÁMICO                                           -->
+<!-- ============================================================ -->
+<section>
+
+<h2>3) Flujo completo del pedido</h2>
+
+<p>El ciclo "de la cajera al proveedor" pasa por 3 estados:</p>
+
+<table>
+  <tr>
+    <th style="width: 22%;">Etapa</th>
+    <th style="width: 22%;">Quién la maneja</th>
+    <th>Qué pasa</th>
+  </tr>
+  <tr>
+    <td><strong>OP — Orden de Pedido</strong></td>
+    <td>Cajera</td>
+    <td>La cajera de cada local arma su lista de productos a reponer y la envía.</td>
+  </tr>
+  <tr>
+    <td><strong>OC — Orden de Compra</strong></td>
+    <td>Supervisora</td>
+    <td>La supervisora junta varias OP de distintos locales y las consolida en una OC al proveedor (1 OC por proveedor).</td>
+  </tr>
+  <tr>
+    <td><strong>Compra</strong></td>
+    <td>Supervisora / depósito</td>
+    <td>Cuando llega la mercadería del proveedor, se registra como Compra. La OC queda cerrada y los productos entran al stock del depósito central.</td>
+  </tr>
+</table>
+
+<div class="box info">
+  <div class="box-title">Decisión clave que tomamos</div>
+  El flujo físico real de la mercadería es <strong>Proveedor → Depósito Central → Local</strong>. La mercadería siempre entra primero al central. El traslado central → local <em>NO</em> se maneja en MultiCompra: eso lo registra tu sistema actual. MultiCompra solamente lee el stock por local desde tu sistema, no lo modifica.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 4. PANTALLAS — CAJERA                                         -->
+<!-- ============================================================ -->
+<section style="page-break-before: always;">
+
+<h2>4) Pantallas — la cajera</h2>
+
+<h3>4.1 Login</h3>
+
+<p>La cajera entra a la URL y le aparece esta pantalla:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">login.html</div>
+  <div class="screen">
+    <div class="screen-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">https://multicompra.pages.dev/login</span></div>
+    <div class="screen-body" style="text-align:center;background:#fafafa;">
+      <div style="font-size:24pt;font-weight:800;color:#0f766e;margin:14px 0 4px;">MultiCompra</div>
+      <div style="color:#64748b;font-size:9.5pt;margin-bottom:18px;">Sistema de Órdenes de Pedido y Compra</div>
+
+      <div style="max-width:300px;margin:0 auto;background:white;border:1px solid #e2e8f0;border-radius:6px;padding:14px;text-align:left;">
+        <div class="w-label">Usuario</div>
+        <div class="w-input">RICARDO</div>
+        <div class="w-label" style="margin-top:8px;">Contraseña</div>
+        <div class="w-input">●●●●●</div>
+        <div class="w-btn" style="display:block;text-align:center;margin-top:12px;">Entrar</div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Tipea su usuario (el mismo que ya usa en tu sistema actual) y su clave.</div>
+</div>
+
+<h3>4.2 Elegir local</h3>
+
+<p>Apenas ingresa, le aparece un cartel pidiendo elegir en qué local está trabajando hoy. Esto es porque la misma persona puede atender en distintos locales según el día:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">modal "elegí tu local"</div>
+  <div class="screen">
+    <div class="screen-body" style="background:rgba(15,23,42,0.55);padding:30px;">
+      <div style="max-width:340px;margin:0 auto;background:white;border-radius:8px;padding:18px;">
+        <div style="font-weight:700;font-size:11pt;margin-bottom:4px;">¡Bienvenido Ricardo!</div>
+        <div style="color:#64748b;font-size:9pt;margin-bottom:10px;">¿En qué local estás trabajando hoy?</div>
+        <div class="w-label">Local</div>
+        <div class="w-input">MULTIPLAZA — DEP MULTIPLAZA ▼</div>
+        <div style="text-align:right;margin-top:10px;">
+          <span class="w-btn ghost" style="margin-right:6px;">Cancelar</span>
+          <span class="w-btn">Entrar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Lista en vivo con los 22 depósitos activos de tu sistema (KIWI SHOP, GONDOLA, MULTIPLAZA, etc.).</div>
+</div>
+
+<h3>4.3 Pantalla de carga</h3>
+
+<p>El sistema baja en ese momento todo lo que la cajera necesita: locales, proveedores, catálogo de productos, stock por depósito. Tarda alrededor de 7 segundos:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">splash de carga</div>
+  <div class="screen">
+    <div class="screen-body" style="text-align:center;background:linear-gradient(135deg,#fafafa,#f0fdfa);">
+      <div style="width:48px;height:48px;background:#0f766e;border-radius:14px;margin:14px auto 8px;display:flex;align-items:center;justify-content:center;color:white;">🛒</div>
+      <div style="font-size:18pt;font-weight:800;color:#0f766e;">MultiCompra</div>
+      <div style="font-size:11pt;color:#0f172a;margin:14px 0 6px;">Sincronizando catálogo…</div>
+      <div style="max-width:300px;margin:0 auto;height:4px;background:#e2e8f0;border-radius:999px;overflow:hidden;">
+        <div style="width:75%;height:100%;background:linear-gradient(90deg,#0f766e,#5eead4);"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;">
+        <span class="w-chip success">✓ Locales (22)</span>
+        <span class="w-chip success">✓ Proveedores (83)</span>
+        <span class="w-chip">● Productos…</span>
+        <span class="w-chip" style="opacity:0.4;">● Stock</span>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Solo aparece la primera vez que abre la app en el día. Después queda en cache hasta que cierre el navegador.</div>
+</div>
+
+<h3>4.4 Dashboard de la cajera</h3>
+
+<p>Es la pantalla principal cuando entra. La saluda con su nombre y el local elegido:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">cajera/dashboard.html</div>
+  <div class="screen">
+    <div class="screen-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">/cajera/dashboard</span></div>
+    <div class="app-mini" style="background:#fafafa;">
+      <div class="app-mini-main" style="padding:12px;">
+        <div class="app-mini-head">
+          <div>
+            <div class="hello">Hola Ricardo</div>
+            <div class="w-meta">MULTIPLAZA · DEP MULTIPLAZA</div>
+          </div>
+          <div class="avatar">RI</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="w-card" style="background:#f0fdfa;border-color:#14b8a6;">
+            <div class="w-card-head">Pedido de hoy</div>
+            <div class="w-meta">Tenés 0 productos en borrador.</div>
+            <div class="w-btn" style="margin-top:8px;">+ Cargar pedido nuevo</div>
+          </div>
+          <div class="w-card">
+            <div class="w-card-head">Mi historial</div>
+            <div class="w-row">
+              <span class="w-mono">OP-LOC-XXX</span>
+              <span class="w-chip success">Enviada</span>
+              <span style="margin-left:auto;" class="w-meta">3 prod · 5 unid</span>
+            </div>
+            <div class="w-row">
+              <span class="w-mono">OP-1051</span>
+              <span class="w-chip success">Cerrada</span>
+              <span style="margin-left:auto;" class="w-meta">7 prod · 12 unid</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Dos cards: el pedido del día (si lo está armando) y el historial (sus últimos pedidos enviados).</div>
+</div>
+
+<h3>4.5 Op nueva — el corazón de la cajera</h3>
+
+<p>Acá la cajera arma su pedido. Tiene un input grande arriba para escanear códigos de barra con un lector láser, y abajo se va llenando la lista:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">cajera/op-nueva.html</div>
+  <div class="screen">
+    <div class="screen-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">/cajera/op-nueva</span></div>
+    <div class="app-mini" style="background:#fafafa;">
+      <div class="app-mini-main" style="padding:12px;">
+        <div class="app-mini-head">
+          <div class="hello">Pedido nuevo</div>
+          <div class="avatar">RI</div>
+        </div>
+
+        <div class="w-card" style="background:#f0fdfa;border-color:#14b8a6;">
+          <div class="w-label">Escaneá o tipeá el código</div>
+          <div class="w-input" style="font-size:14pt;padding:10px 12px;">|</div>
+          <div style="margin-top:6px;font-size:8.5pt;color:#64748b;">o usá <em>"No tengo el código"</em> para buscar por descripción ↓</div>
+        </div>
+
+        <div class="w-card" style="margin-top:10px;">
+          <div class="w-card-head">Productos del pedido <span class="w-meta">3 prod · 5 unid</span></div>
+          <div class="w-row">
+            <span class="w-mono">123</span>
+            <span class="w-strong">Cargador Samsung 1m 2.0</span>
+            <span style="margin-left:auto;"><span class="w-btn ghost" style="padding:1px 8px;">−</span> 2 <span class="w-btn ghost" style="padding:1px 8px;">+</span></span>
+          </div>
+          <div class="w-row">
+            <span class="w-mono">00001005</span>
+            <span class="w-strong">Glass iPhone 6 6s</span>
+            <span style="margin-left:auto;"><span class="w-btn ghost" style="padding:1px 8px;">−</span> 1 <span class="w-btn ghost" style="padding:1px 8px;">+</span></span>
+          </div>
+          <div class="w-row">
+            <span class="w-mono">00001228</span>
+            <span class="w-strong">Protector LG G2 dorado slim armor</span>
+            <span style="margin-left:auto;"><span class="w-btn ghost" style="padding:1px 8px;">−</span> 2 <span class="w-btn ghost" style="padding:1px 8px;">+</span></span>
+          </div>
+        </div>
+
+        <div style="text-align:right;margin-top:8px;">
+          <span class="w-btn ghost">Guardar borrador</span>
+          <span class="w-btn">Enviar pedido</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">El input está siempre con foco — la cajera puede escanear sin tocar el mouse. Si el producto no existe, aparece un botón "Solicitar alta" para que la supervisora lo dé de alta.</div>
+</div>
+
+<h3>4.6 Buscar por descripción (cuando no hay código)</h3>
+
+<p>Si la etiqueta del producto no escanea o está borrada, la cajera puede buscar por descripción:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">cajera/op-nueva — buscador</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div class="w-input" style="font-size:11pt;">cargador|</div>
+      <div style="background:white;border:1px solid #cbd5e1;border-radius:4px;margin-top:2px;">
+        <div class="w-row" style="background:#f0fdfa;padding:8px 10px;border-left:3px solid #14b8a6;">
+          <span class="w-strong">Cargador Samsung 1m 2.0</span>
+          <span class="w-mono" style="margin-left:auto;color:#64748b;">123</span>
+          <span class="w-chip" style="margin-left:6px;">+ Agregar</span>
+        </div>
+        <div class="w-row" style="padding:8px 10px;">
+          <span>Cargador USB-C 20W</span>
+          <span class="w-mono" style="margin-left:auto;color:#64748b;">00001100</span>
+        </div>
+        <div class="w-row" style="padding:8px 10px;">
+          <span>Cargador iPhone Lightning</span>
+          <span class="w-mono" style="margin-left:auto;color:#64748b;">00001110</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">
+    <strong>Navegación con teclado</strong>: ↓/↑ entre resultados, <strong>Enter</strong> o <strong>Espacio</strong> para agregar el resaltado, Esc para cerrar. El primero queda resaltado por default.
+  </div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 5. PANTALLAS — SUPERVISORA                                    -->
+<!-- ============================================================ -->
+<section style="page-break-before: always;">
+
+<h2>5) Pantallas — la supervisora</h2>
+
+<h3>5.1 Dashboard del supervisor</h3>
+
+<p>Cuando la supervisora entra ve <strong>todos los pedidos</strong> de los 18 locales en una sola pantalla, ordenados por fecha (más nuevos arriba). Los más viejos llevan un chip rojo "Vieja" para llamar la atención:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/dashboard.html</div>
+  <div class="screen">
+    <div class="screen-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">/supervisor/dashboard</span></div>
+    <div class="app-mini">
+      <div class="app-mini-side">
+        <div class="item active">📋 Pedidos</div>
+        <div class="item">🛒 Compras</div>
+        <div class="item">📦 Catálogo</div>
+        <div class="item">⚠ Altas pendientes <span style="background:#dc2626;color:white;border-radius:8px;padding:0 5px;font-size:7pt;">3</span></div>
+      </div>
+      <div class="app-mini-main">
+        <div class="app-mini-head">
+          <div class="hello">Hola Shirley</div>
+          <div class="avatar" style="background:#9333ea;">SH</div>
+        </div>
+
+        <div style="margin-bottom:8px;">
+          <span class="w-chip">7 OPs pendientes</span>
+          <span class="w-meta" style="margin-left:8px;">Hoy: martes 28 de abril</span>
+        </div>
+
+        <div class="w-card">
+          <div class="w-row">
+            <span class="w-mono">OP-LOC-XXX</span>
+            <span style="background:#0f766e;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">MUL</span>
+            <span>MULTIPLAZA</span>
+            <span class="w-meta">· Ricardo · recién</span>
+            <span style="margin-left:auto;" class="w-meta">3 prod · 5 unid</span>
+          </div>
+          <div class="w-row">
+            <span class="w-mono">OP-1047</span>
+            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">FDM</span>
+            <span>Fernando de la Mora</span>
+            <span class="w-meta">· Andrea · hoy</span>
+            <span style="margin-left:auto;" class="w-meta">8 prod · 14 unid</span>
+          </div>
+          <div class="w-row">
+            <span class="w-mono">OP-1043</span>
+            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">SHM</span>
+            <span>Shopping Mcal.</span>
+            <span class="w-chip warn">Vieja</span>
+            <span class="w-chip danger">Excepción</span>
+            <span style="margin-left:auto;" class="w-meta">12 prod · 25 unid</span>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;text-align:right;">
+          <span class="w-btn">Consolidar en OC</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Las OPs nuevas (las que recién mandó una cajera) aparecen arriba con el icono del local. Filtros para buscar por local, cajera, producto.</div>
+</div>
+
+<h3>5.2 Detalle de un pedido</h3>
+
+<p>Click en una fila → abre el detalle. La supervisora ve cada línea con el costo, el stock central y el stock que tiene actualmente ese local:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/op-detalle.html</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <div>
+          <div class="w-strong" style="font-size:12pt;">OP-LOC-XXX · MULTIPLAZA · Ricardo</div>
+          <div class="w-meta">Enviada hoy · 3 productos · 5 unidades</div>
+        </div>
+        <div>
+          <span class="w-btn ghost">Devolver</span>
+          <span class="w-btn">Aprobar</span>
+        </div>
+      </div>
+
+      <table style="margin:0;">
+        <tr>
+          <th>Código</th><th>Producto</th><th>Pedido</th><th>Stock central</th><th>Costo unit.</th>
+        </tr>
+        <tr><td class="w-mono">123</td><td>Cargador Samsung 1m</td><td><strong>2</strong></td><td>45</td><td>Gs. 7.000</td></tr>
+        <tr><td class="w-mono">00001005</td><td>Glass iPhone 6 6s</td><td><strong>1</strong></td><td>120</td><td>Gs. 1.848</td></tr>
+        <tr><td class="w-mono">00001228</td><td>Protector LG G2 dorado</td><td><strong>2</strong></td><td>8</td><td>Gs. 12.000</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="screen-caption">Toda la info técnica viene en vivo de tu sistema actual: costo, precio, stock por depósito.</div>
+</div>
+
+<h3>5.3 Catálogo</h3>
+
+<p>La supervisora puede consultar cualquier producto y ver el stock distribuido por TODOS los depósitos a la vez:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/catalogo.html</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div class="w-input" style="font-size:11pt;">cargador|</div>
+      <div style="background:#f8fafc;padding:8px;border-radius:4px;margin-top:6px;font-size:9pt;">
+        <strong>Cargador Samsung 1m 2.0</strong> <span class="w-mono w-meta">· Cód: 123</span><br>
+        <span class="w-meta">Costo: Gs. 7.000 · Precio sugerido: Gs. 60.000</span>
+      </div>
+
+      <table style="margin-top:8px;">
+        <tr><th>Local</th><th style="text-align:right;">Stock</th></tr>
+        <tr><td>Depósito Central</td><td style="text-align:right;"><strong>45</strong></td></tr>
+        <tr><td>MULTIPLAZA</td><td style="text-align:right;">8</td></tr>
+        <tr><td>KIWI SHOP</td><td style="text-align:right;">5</td></tr>
+        <tr><td>GONDOLA</td><td style="text-align:right;">3</td></tr>
+        <tr><td>SAN LORENZO</td><td style="text-align:right;"><span style="color:#dc2626;">0</span></td></tr>
+        <tr><td>VILLA MORRA</td><td style="text-align:right;">2</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="screen-caption">Sirve para decidir si transferir desde otro local en lugar de comprar nuevo.</div>
+</div>
+
+<h3>5.4 Solicitudes de alta de producto</h3>
+
+<p>Cuando una cajera escanea un producto que no existe en el catálogo, manda una "solicitud de alta" para que la supervisora la apruebe o rechace:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/solicitudes-alta.html</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div style="margin-bottom:6px;">
+        <span class="w-chip warn">3 pendientes</span>
+        <span class="w-chip success" style="margin-left:4px;">12 aprobadas</span>
+        <span class="w-chip danger" style="margin-left:4px;">2 rechazadas</span>
+      </div>
+
+      <table style="margin:0;">
+        <tr><th>Código</th><th>Descripción</th><th>Cajera · Local</th><th>Acción</th></tr>
+        <tr>
+          <td class="w-mono">7894561230055</td>
+          <td>Cable tipo C 2m trenzado</td>
+          <td>Andrea · FDM</td>
+          <td><span class="w-btn ghost" style="font-size:8pt;">Rechazar</span> <span class="w-btn" style="font-size:8pt;">Aprobar</span></td>
+        </tr>
+        <tr>
+          <td class="w-mono">7894561230062</td>
+          <td>Cargador inalámbrico 15W</td>
+          <td>Carolina · SHM</td>
+          <td><span class="w-btn ghost" style="font-size:8pt;">Rechazar</span> <span class="w-btn" style="font-size:8pt;">Aprobar</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="screen-caption">Cada alta llega con la descripción que escribió la cajera, su motivo y el proveedor que sugiere.</div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 6. PANTALLAS — ADMIN                                          -->
+<!-- ============================================================ -->
+<section style="page-break-before: always;">
+
+<h2>6) Pantallas — el admin</h2>
+
+<p>Pensado para vos. No es operativo del día, es de seguimiento y configuración:</p>
+
+<h3>6.1 Dashboard admin</h3>
+
+<div class="screen-wrap">
+  <div class="screen-label">admin/dashboard.html</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="w-card" style="background:#f0fdfa;border-color:#14b8a6;text-align:center;">
+          <div class="w-label">OPs últimos 7 días</div>
+          <div style="font-size:18pt;font-weight:800;color:#0f766e;">142</div>
+        </div>
+        <div class="w-card" style="background:#fffbeb;border-color:#f59e0b;text-align:center;">
+          <div class="w-label">OCs últimos 7 días</div>
+          <div style="font-size:18pt;font-weight:800;color:#b45309;">23</div>
+        </div>
+        <div class="w-card" style="background:#fef2f2;border-color:#dc2626;text-align:center;">
+          <div class="w-label">Compras mes</div>
+          <div style="font-size:18pt;font-weight:800;color:#b91c1c;">Gs. 28M</div>
+        </div>
+      </div>
+
+      <div class="w-card" style="margin-top:8px;">
+        <div class="w-card-head">Reportes</div>
+        <ul style="margin:4px 0;font-size:9pt;">
+          <li>OP vs Compra vs Venta — evaluar acierto del pedido</li>
+          <li>OPs fuera de protocolo — quién pidió fuera del día asignado</li>
+          <li>Reposición por local — qué tan seguido pide cada uno</li>
+          <li>Stock muerto — qué no rota</li>
+          <li>Devoluciones — qué se devuelve más</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Los 5 reportes principales con filtros de fecha en la parte de arriba.</div>
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. CONEXIÓN                                                   -->
+<!-- ============================================================ -->
+<section>
+
+<h2>7) Conexión con tu sistema actual</h2>
+
+<p>MultiCompra <strong>NO</strong> tiene su propia base de datos de productos, ni de stock, ni de proveedores. Toda esa información viene de tu sistema (la base ADCON2).</p>
+
+<p>Para hacer la conexión, Carlos agregó al SP <code>SpAdconApp</code> seis "operaciones" nuevas que MultiCompra usa:</p>
+
+<table>
+  <tr><th>Operación</th><th>Para qué</th></tr>
+  <tr><td><code>MULTICOMPRA_AUTH</code></td><td>Validar usuario y clave al hacer login</td></tr>
+  <tr><td><code>MULTICOMPRA_LOCALES</code></td><td>Lista de los 22 depósitos activos</td></tr>
+  <tr><td><code>MULTICOMPRA_PROVEEDORES</code></td><td>Lista de los 83 proveedores</td></tr>
+  <tr><td><code>MULTICOMPRA_PRODUCTOS</code></td><td>Catálogo: 13.372 productos con costo, precio, código y proveedor habitual</td></tr>
+  <tr><td><code>MULTICOMPRA_RECALCULO_STOCK</code></td><td>Recalcular el snapshot de existencias</td></tr>
+  <tr><td><code>MULTICOMPRA_STOCK</code></td><td>Matriz completa de stock: 27.987 filas (depósito × producto)</td></tr>
+</table>
+
+<div class="box info">
+  <div class="box-title">Lo importante</div>
+  Si vos cambiás un precio, agregás un producto, o registrás una compra <strong>en tu sistema</strong>, MultiCompra lo refleja al siguiente login. No hay datos duplicados.
+</div>
+
+<h3>Lo que SÍ guarda MultiCompra (en su propia base)</h3>
+<ul>
+  <li>Las OPs que las cajeras envían</li>
+  <li>Las OCs que la supervisora arma</li>
+  <li>Las Compras que se registran cuando llega la mercadería</li>
+  <li>Los borradores en proceso</li>
+  <li>El historial completo de quién hizo qué</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 8. ESTADO ACTUAL                                              -->
+<!-- ============================================================ -->
+<section>
+
+<h2>8) Estado actual y qué falta</h2>
+
+<h3>✅ Listo y andando</h3>
+<ul>
+  <li>Login real con tus usuarios</li>
+  <li>Pantalla de carga con datos en vivo de tu sistema</li>
+  <li>Dashboard cajera personalizado por usuario y local</li>
+  <li>Pedido nuevo con escaneo y búsqueda por descripción (con teclado)</li>
+  <li>Envío del pedido y persistencia</li>
+  <li>Dashboard supervisor mostrando los pedidos en tiempo real</li>
+  <li>Detalle del pedido con productos reales y costos reales</li>
+  <li>Catálogo del supervisor con stock por depósito</li>
+  <li>Modal "solicitar alta de producto" cuando un código no existe</li>
+</ul>
+
+<h3>⏳ En progreso / queda</h3>
+<ul>
+  <li><strong>Consolidar OPs en OC</strong> — la pantalla del supervisor para juntar varios pedidos en una orden de compra al proveedor (hoy con datos de demo).</li>
+  <li><strong>Registro de Compra</strong> — cuando llega la mercadería, marcar la OC como cerrada (todavía no implementado).</li>
+  <li><strong>Reportes admin reales</strong> — los 5 reportes hoy muestran datos de demo, hay que cablearlos a la base real.</li>
+  <li><strong>Persistencia en base externa</strong> — hoy las OPs viven en el navegador. Migración a Supabase para que se vean entre dispositivos.</li>
+  <li><strong>Notificaciones</strong> — avisar a la supervisora cuando llega un pedido nuevo (push o WhatsApp).</li>
+</ul>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 9. CÓMO ENTRAR                                                -->
+<!-- ============================================================ -->
+<section>
+
+<h2>9) Cómo entrar a la app</h2>
+
+<div class="box">
+  <div class="box-title">Acceso</div>
+  <p style="margin:4px 0;"><strong>URL:</strong> <code>https://multicompra.pages.dev/login</code></p>
+  <p style="margin:4px 0;"><strong>Usuario de prueba:</strong> RICARDO</p>
+  <p style="margin:4px 0;"><strong>Clave:</strong> 12345</p>
+  <p style="margin:4px 0;font-size:9pt;color:#64748b;">(Cualquier usuario activo de tu sistema actual sirve, este es uno que Carlos habilitó para pruebas.)</p>
+</div>
+
+<h3>Si querés probar con datos demo</h3>
+<p>En la pantalla de login, abajo del form, hay un botón <strong>"¿Querés probar la app?"</strong>. Te muestra 3 cards con usuarios de demostración (Carolina cajera, Shirley supervisor, Diego admin) que entran sin pegarle a tu sistema. Son datos ficticios para presentaciones.</p>
+
+<p class="footer-note">
+  Manual generado el 28 de abril de 2026 · MultiCompra v1.0 ·
+  NODO · <code>github.com/MULTIPLAZA/multicompra</code> ·
+  Cualquier duda, escribime.
+</p>
+
+</section>
+
+</body>
+</html>
