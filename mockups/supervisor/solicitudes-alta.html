@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Altas de productos pendientes</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    .list-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: var(--sp-3) var(--sp-4) 0;
+    }
+    .table-host {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* Tabs estilo chips para filtrar por estado */
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+    .tab-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      padding: 6px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--bg-elev);
+      color: var(--text);
+      font-size: var(--fs-sm);
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .tab-chip:hover { background: var(--bg-elev-2); }
+    .tab-chip.active {
+      background: var(--primary);
+      color: var(--primary-on);
+      border-color: var(--primary);
+    }
+    .tab-chip .tab-count {
+      display: inline-block;
+      min-width: 20px;
+      padding: 0 6px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: var(--radius-pill);
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+    }
+    .tab-chip.active .tab-count {
+      background: rgba(255, 255, 255, 0.22);
+      color: var(--primary-on);
+    }
+
+    /* Fila expandida con detalle */
+    .table tbody tr.row-clickable { cursor: pointer; }
+    .table tbody tr.row-detail td {
+      background: var(--bg-elev-2);
+      padding: var(--sp-3) var(--sp-4);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-3) var(--sp-5);
+      font-size: var(--fs-sm);
+    }
+    .detail-label {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+    .detail-value { color: var(--text-strong); line-height: 1.5; white-space: pre-wrap; }
+    .detail-value.muted { color: var(--text-muted); font-style: italic; }
+
+    /* Botones de acción inline */
+    .row-actions {
+      display: inline-flex;
+      gap: var(--sp-1);
+      align-items: center;
+    }
+    .btn-xs {
+      height: 24px;
+      padding: 0 var(--sp-2);
+      font-size: var(--fs-xs);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elev);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .btn-xs:hover { background: var(--bg-elev-2); }
+    .btn-xs.btn-approve {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+    .btn-xs.btn-approve:hover { filter: brightness(1.05); }
+    .btn-xs.btn-reject {
+      background: var(--bg-elev);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+    .btn-xs.btn-reject:hover { background: var(--danger-soft); }
+    [data-theme="dark"] .btn-xs.btn-approve { color: var(--bg); }
+
+    /* Badges de estado */
+    .badge-pendiente { background: var(--warning-soft); color: var(--warning-text); }
+    .badge-aprobado  { background: var(--success-soft); color: var(--success-text); }
+    .badge-rechazado { background: var(--danger-soft);  color: var(--danger);       }
+
+    .empty-state {
+      padding: var(--sp-10) var(--sp-6);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state h3 { color: var(--text-strong); margin-bottom: var(--sp-2); }
+
+    /* Spec mobile-friendly: en pantallas muy chicas la tabla scrollea horizontal */
+    @media (max-width: 720px) {
+      .table { min-width: 800px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="app-header" role="banner">
+    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
+      <span class="logo-text">MultiCompra</span>
+    </div>
+    <nav class="breadcrumbs" aria-label="Ubicación">
+      <a href="dashboard.html">Inicio</a>
+      <span class="sep">&rsaquo;</span>
+      <span class="current">Altas pendientes</span>
+    </nav>
+    <div class="grow"></div>
+    <div class="header-search">
+      <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
+    </div>
+    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
+      <span class="avatar" aria-hidden="true">SH</span>
+      <span>Hola Shirley</span>
+    </div>
+  </header>
+
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <nav class="nav">
+      <a class="nav-item" href="dashboard.html" data-label="Dashboard">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+      <a class="nav-item" href="oc-nueva.html" data-label="OPs pendientes">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="nav-item-label">OPs pendientes</span>
+      </a>
+      <a class="nav-item" href="oc-lista.html" data-label="OCs">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg></span>
+        <span class="nav-item-label">OCs</span>
+      </a>
+      <a class="nav-item" href="compra-lista.html" data-label="Compras">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span class="nav-item-label">Compras</span>
+      </a>
+      <a class="nav-item active" href="solicitudes-alta.html" data-label="Altas pendientes" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
+        <span class="nav-item-label">Altas pendientes</span>
+        <span class="nav-item-count" id="nav-count-altas" hidden>0</span>
+      </a>
+      <a class="nav-item" href="catalogo.html" data-label="Catálogo">
+        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        <span class="nav-item-label">Catálogo</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+
+    <div class="screen-subheader">
+      <h1 class="screen-title">Altas de productos pendientes</h1>
+      <span class="chip chip-timestamp" id="count-total">0 solicitudes</span>
+      <div class="grow"></div>
+    </div>
+
+    <div class="filter-bar" role="region" aria-label="Filtros">
+      <div class="tabs-bar" role="tablist" aria-label="Filtrar por estado">
+        <button class="tab-chip active" role="tab" data-tab="pendiente" aria-selected="true">
+          Pendientes <span class="tab-count" id="cnt-pendiente">0</span>
+        </button>
+        <button class="tab-chip" role="tab" data-tab="aprobado" aria-selected="false">
+          Aprobadas <span class="tab-count" id="cnt-aprobado">0</span>
+        </button>
+        <button class="tab-chip" role="tab" data-tab="rechazado" aria-selected="false">
+          Rechazadas <span class="tab-count" id="cnt-rechazado">0</span>
+        </button>
+        <button class="tab-chip" role="tab" data-tab="todas" aria-selected="false">
+          Todas <span class="tab-count" id="cnt-todas">0</span>
+        </button>
+      </div>
+      <span class="filter-count" id="filter-count" style="margin-left: auto; font-size: var(--fs-sm); color: var(--text-muted);">
+        <strong id="count-visible">0</strong> visibles
+      </span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="table-host">
+        <table class="table" id="alt-table" aria-label="Solicitudes de alta de producto">
+          <thead>
+            <tr>
+              <th style="width: 130px;">Fecha</th>
+              <th style="width: 150px;">Código</th>
+              <th>Descripción</th>
+              <th style="width: 150px;">Categoría</th>
+              <th style="width: 130px;">Cajera</th>
+              <th style="width: 140px;">Local</th>
+              <th style="width: 110px;">Estado</th>
+              <th style="width: 200px;" class="cell-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="alt-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- Modal Aprobar -->
+<div class="modal-backdrop" id="modal-aprobar" hidden aria-modal="true" role="dialog" aria-labelledby="aprobar-title">
+  <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="aprobar-title">Aprobar solicitud de alta</h2>
+      <button type="button" class="btn-icon" id="aprobar-close" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: var(--fs-base); line-height: 1.55; margin: 0;">
+        Vas a agregar al catálogo el producto:
+        <strong id="aprobar-desc">—</strong>
+        <span style="display:block; color: var(--text-muted); font-size: var(--fs-sm); margin-top: 4px;">
+          Código: <span id="aprobar-codigo">—</span>
+        </span>
+      </p>
+      <div class="form-field">
+        <label class="form-label" for="aprobar-nota">Nota para la cajera (opcional)</label>
+        <textarea id="aprobar-nota" class="input" rows="2" maxlength="200" placeholder="Ej: Lo agrego con el proveedor sugerido. Buen punto."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="aprobar-cancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="aprobar-confirm">Aprobar y agregar al catálogo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Rechazar -->
+<div class="modal-backdrop" id="modal-rechazar" hidden aria-modal="true" role="dialog" aria-labelledby="rechazar-title">
+  <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="rechazar-title">Rechazar solicitud de alta</h2>
+      <button type="button" class="btn-icon" id="rechazar-close" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: var(--fs-base); line-height: 1.55; margin: 0;">
+        Vas a rechazar la solicitud:
+        <strong id="rechazar-desc">—</strong>
+      </p>
+      <div class="form-field">
+        <label class="form-label" for="rechazar-motivo">
+          Motivo
+          <span class="form-hint" style="font-weight:400; margin-left:4px;">(mínimo 10 caracteres, lo va a ver la cajera)</span>
+        </label>
+        <textarea id="rechazar-motivo" class="input" rows="3" maxlength="240" placeholder="Ej: El margen no cierra con ese proveedor. Buscamos alternativa antes de aprobar."></textarea>
+        <span class="form-error" id="rechazar-motivo-error" hidden>El motivo necesita al menos 10 caracteres.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="rechazar-cancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="rechazar-confirm" style="background: var(--danger); border-color: var(--danger);">Rechazar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<script type="module">
+  import { solicitudesAltaProducto, proveedores } from '../shared/mock-data.js';
+  import { initSidebarClickOutside, initAvatarMenu } from '../shared/ui.js';
+
+  // ---------- Storage helpers ----------
+  const SOLICITUDES_KEY = 'multicompra:solicitudes_alta_producto';
+  const RESOLUCIONES_KEY = 'multicompra:solicitudes_resoluciones';
+
+  function leerSolicitudesLocales() {
+    try { return JSON.parse(localStorage.getItem(SOLICITUDES_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function leerResoluciones() {
+    try { return JSON.parse(localStorage.getItem(RESOLUCIONES_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function guardarResolucion(id, patch) {
+    const all = leerResoluciones();
+    all[id] = { ...(all[id] || {}), ...patch };
+    localStorage.setItem(RESOLUCIONES_KEY, JSON.stringify(all));
+  }
+
+  // ---------- Combinar mock + localStorage + resoluciones ----------
+  function getDataset() {
+    const mock = solicitudesAltaProducto.map(s => ({ ...s, _origen: 'mock' }));
+    const locales = leerSolicitudesLocales().map(s => ({ ...s, _origen: 'local' }));
+    const resol = leerResoluciones();
+    const todas = [...mock, ...locales].map(s => {
+      if (resol[s.id]) {
+        return { ...s, ...resol[s.id] };
+      }
+      return s;
+    });
+    todas.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+    return todas;
+  }
+
+  // ---------- State ----------
+  const state = {
+    tab: 'pendiente'
+  };
+
+  // ---------- Render ----------
+  const tbody = document.getElementById('alt-tbody');
+  const ESTADO_BADGE = {
+    pendiente:  { cls: 'badge-pendiente', txt: 'Pendiente' },
+    aprobado:   { cls: 'badge-aprobado',  txt: 'Aprobada' },
+    rechazado:  { cls: 'badge-rechazado', txt: 'Rechazada' }
+  };
+
+  function provNombre(id) {
+    if (!id) return '—';
+    const p = proveedores.find(x => x.id === id);
+    return p ? p.nombre : id;
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function rowHTML(s) {
+    const badge = ESTADO_BADGE[s.estado] || ESTADO_BADGE.pendiente;
+    const acciones = s.estado === 'pendiente'
+      ? `
+        <div class="row-actions">
+          <button type="button" class="btn-xs btn-approve" data-act="aprobar" data-id="${s.id}" title="Aprobar y agregar al catálogo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Aprobar
+          </button>
+          <button type="button" class="btn-xs btn-reject" data-act="rechazar" data-id="${s.id}" title="Rechazar con motivo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Rechazar
+          </button>
+        </div>`
+      : `<span class="text-muted text-xs">—</span>`;
+    return `
+      <tr class="row-clickable" data-id="${s.id}">
+        <td>${escapeHtml(s.fecha)}</td>
+        <td><code style="font-family: var(--font-mono); font-size: var(--fs-xs);">${escapeHtml(s.codigo)}</code></td>
+        <td>${escapeHtml(s.descripcion)}</td>
+        <td>${s.categoria ? escapeHtml(s.categoria) : '<span class="text-muted">—</span>'}</td>
+        <td>${escapeHtml(s.cajera)}</td>
+        <td>${escapeHtml(s.local)}</td>
+        <td><span class="badge ${badge.cls}">${badge.txt}</span></td>
+        <td class="cell-center">${acciones}</td>
+      </tr>
+    `;
+  }
+
+  function detailHTML(s) {
+    const motivo = s.motivo ? escapeHtml(s.motivo) : '<span class="muted">Sin motivo cargado</span>';
+    const nota   = s.notaSupervisor ? escapeHtml(s.notaSupervisor) : '<span class="muted">—</span>';
+    const resol  = s.fechaResolucion ? escapeHtml(s.fechaResolucion) : '<span class="muted">—</span>';
+    return `
+      <tr class="row-detail" data-detail-of="${s.id}">
+        <td colspan="8">
+          <div class="detail-grid">
+            <div>
+              <div class="detail-label">Motivo (cajera)</div>
+              <div class="detail-value ${s.motivo ? '' : 'muted'}">${motivo}</div>
+            </div>
+            <div>
+              <div class="detail-label">Proveedor sugerido</div>
+              <div class="detail-value">${escapeHtml(provNombre(s.proveedorSugerido))}</div>
+            </div>
+            <div>
+              <div class="detail-label">Nota del supervisor</div>
+              <div class="detail-value">${nota}</div>
+            </div>
+            <div>
+              <div class="detail-label">Fecha de resolución</div>
+              <div class="detail-value">${resol}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function render() {
+    const all = getDataset();
+
+    // contadores por estado
+    const counts = { pendiente: 0, aprobado: 0, rechazado: 0, todas: all.length };
+    all.forEach(s => { if (counts[s.estado] !== undefined) counts[s.estado]++; });
+    document.getElementById('cnt-pendiente').textContent = counts.pendiente;
+    document.getElementById('cnt-aprobado').textContent  = counts.aprobado;
+    document.getElementById('cnt-rechazado').textContent = counts.rechazado;
+    document.getElementById('cnt-todas').textContent     = counts.todas;
+
+    // badge sidebar (pendientes)
+    const navCount = document.getElementById('nav-count-altas');
+    if (counts.pendiente > 0) {
+      navCount.textContent = counts.pendiente;
+      navCount.hidden = false;
+    } else {
+      navCount.hidden = true;
+    }
+
+    // filtrar
+    const list = state.tab === 'todas' ? all : all.filter(s => s.estado === state.tab);
+
+    // header counts
+    document.getElementById('count-total').textContent =
+      `${counts.todas} solicitud${counts.todas === 1 ? '' : 'es'}`;
+    document.getElementById('count-visible').textContent = list.length;
+
+    // empty state
+    if (list.length === 0) {
+      const tabLabel = state.tab === 'pendiente' ? 'pendientes'
+                     : state.tab === 'aprobado'  ? 'aprobadas'
+                     : state.tab === 'rechazado' ? 'rechazadas'
+                     : '';
+      tbody.innerHTML = `
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <h3>Sin solicitudes ${tabLabel}</h3>
+            <p>Cuando una cajera escanee un código que no existe en el catálogo y solicite el alta, va a aparecer acá.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(rowHTML).join('');
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-chip').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab-chip').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      state.tab = tab.dataset.tab;
+      render();
+    });
+  });
+
+  // ---------- Click en fila: expandir / contraer detalle ----------
+  tbody.addEventListener('click', (e) => {
+    // Si vino de un botón de acción, no expandir
+    if (e.target.closest('[data-act]')) return;
+    const tr = e.target.closest('tr.row-clickable');
+    if (!tr) return;
+    const id = tr.dataset.id;
+    const detailExistente = tbody.querySelector(`tr.row-detail[data-detail-of="${id}"]`);
+    if (detailExistente) {
+      detailExistente.remove();
+      return;
+    }
+    const dataset = getDataset();
+    const s = dataset.find(x => x.id === id);
+    if (!s) return;
+    tr.insertAdjacentHTML('afterend', detailHTML(s));
+  });
+
+  // ---------- Acciones aprobar/rechazar ----------
+  let solicitudActiva = null;
+
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const dataset = getDataset();
+    const s = dataset.find(x => x.id === id);
+    if (!s) return;
+    solicitudActiva = s;
+    if (btn.dataset.act === 'aprobar') abrirModalAprobar(s);
+    else if (btn.dataset.act === 'rechazar') abrirModalRechazar(s);
+  });
+
+  // ---------- Modal Aprobar ----------
+  const modalAprobar = document.getElementById('modal-aprobar');
+  const aprobarDesc = document.getElementById('aprobar-desc');
+  const aprobarCodigo = document.getElementById('aprobar-codigo');
+  const aprobarNota = document.getElementById('aprobar-nota');
+
+  function abrirModalAprobar(s) {
+    aprobarDesc.textContent = s.descripcion;
+    aprobarCodigo.textContent = s.codigo;
+    aprobarNota.value = '';
+    modalAprobar.hidden = false;
+    setTimeout(() => aprobarNota.focus(), 50);
+  }
+  function cerrarModalAprobar() {
+    modalAprobar.hidden = true;
+    solicitudActiva = null;
+  }
+  document.getElementById('aprobar-close').addEventListener('click', cerrarModalAprobar);
+  document.getElementById('aprobar-cancel').addEventListener('click', cerrarModalAprobar);
+  modalAprobar.addEventListener('click', (e) => { if (e.target === modalAprobar) cerrarModalAprobar(); });
+
+  document.getElementById('aprobar-confirm').addEventListener('click', () => {
+    if (!solicitudActiva) return cerrarModalAprobar();
+    const ahora = new Date();
+    const fechaStr = ahora.toISOString().slice(0, 10) + ' ' + ahora.toTimeString().slice(0, 5);
+    guardarResolucion(solicitudActiva.id, {
+      estado: 'aprobado',
+      notaSupervisor: aprobarNota.value.trim() || 'Aprobada sin nota.',
+      fechaResolucion: fechaStr
+    });
+    // Persistir el "producto agregado" en otro storage (mock — no toca catálogo real)
+    try {
+      const PRODUCTOS_EXTRA = 'multicompra:productos_extra';
+      const arr = JSON.parse(localStorage.getItem(PRODUCTOS_EXTRA) || '[]');
+      arr.push({
+        id: 'p-extra-' + solicitudActiva.id,
+        nombre: solicitudActiva.descripcion,
+        barras: solicitudActiva.codigo,
+        categoria: solicitudActiva.categoria,
+        proveedorSugerido: solicitudActiva.proveedorSugerido,
+        creadoEn: fechaStr
+      });
+      localStorage.setItem(PRODUCTOS_EXTRA, JSON.stringify(arr));
+    } catch (e) { /* silent */ }
+    cerrarModalAprobar();
+    showToast('Producto agregado al catálogo.', 'success');
+    render();
+  });
+
+  // ---------- Modal Rechazar ----------
+  const modalRechazar = document.getElementById('modal-rechazar');
+  const rechazarDesc = document.getElementById('rechazar-desc');
+  const rechazarMotivo = document.getElementById('rechazar-motivo');
+  const rechazarMotivoErr = document.getElementById('rechazar-motivo-error');
+
+  function abrirModalRechazar(s) {
+    rechazarDesc.textContent = s.descripcion;
+    rechazarMotivo.value = '';
+    rechazarMotivoErr.hidden = true;
+    rechazarMotivo.removeAttribute('aria-invalid');
+    modalRechazar.hidden = false;
+    setTimeout(() => rechazarMotivo.focus(), 50);
+  }
+  function cerrarModalRechazar() {
+    modalRechazar.hidden = true;
+    solicitudActiva = null;
+  }
+  document.getElementById('rechazar-close').addEventListener('click', cerrarModalRechazar);
+  document.getElementById('rechazar-cancel').addEventListener('click', cerrarModalRechazar);
+  modalRechazar.addEventListener('click', (e) => { if (e.target === modalRechazar) cerrarModalRechazar(); });
+  rechazarMotivo.addEventListener('input', () => {
+    if (rechazarMotivo.value.trim().length >= 10) {
+      rechazarMotivoErr.hidden = true;
+      rechazarMotivo.removeAttribute('aria-invalid');
+    }
+  });
+  document.getElementById('rechazar-confirm').addEventListener('click', () => {
+    if (!solicitudActiva) return cerrarModalRechazar();
+    const motivo = rechazarMotivo.value.trim();
+    if (motivo.length < 10) {
+      rechazarMotivoErr.hidden = false;
+      rechazarMotivo.setAttribute('aria-invalid', 'true');
+      rechazarMotivo.focus();
+      return;
+    }
+    const ahora = new Date();
+    const fechaStr = ahora.toISOString().slice(0, 10) + ' ' + ahora.toTimeString().slice(0, 5);
+    guardarResolucion(solicitudActiva.id, {
+      estado: 'rechazado',
+      notaSupervisor: motivo,
+      fechaResolucion: fechaStr
+    });
+    cerrarModalRechazar();
+    showToast('Solicitud rechazada.', 'success');
+    render();
+  });
+
+  // Esc cierra cualquier modal abierto
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!modalAprobar.hidden) cerrarModalAprobar();
+    if (!modalRechazar.hidden) cerrarModalRechazar();
+  });
+
+  // ---------- Toast ----------
+  const toastContainer = document.getElementById('toast-container');
+  function showToast(msg, tipo = 'success') {
+    const t = document.createElement('div');
+    t.className = 'toast toast-' + (tipo === 'error' ? 'error' : tipo === 'warning' ? 'warning' : 'success');
+    t.textContent = msg;
+    toastContainer.appendChild(t);
+    setTimeout(() => {
+      t.style.transition = 'opacity 200ms ease';
+      t.style.opacity = '0';
+      setTimeout(() => t.remove(), 220);
+    }, 2400);
+  }
+
+  // ---------- Avatar + sidebar ----------
+  initAvatarMenu({
+    userName: 'Shirley',
+    userRole: 'supervisor',
+    userLocal: 'Central',
+    perfilHref: null,
+    logoutHref: '../logout.html'
+  });
+  initSidebarClickOutside({ appSelector: '#app' });
+
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+    const app = document.getElementById('app');
+    const isOpen = app.classList.toggle('sidebar-forced-open');
+    localStorage.setItem('multicompra.sidebar.forceOpen', isOpen ? 'true' : 'false');
+  });
+
+  // ---------- Init ----------
+  render();
+</script>
+
+</body>
+</html>
