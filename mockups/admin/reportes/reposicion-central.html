@@ -279,7 +279,6 @@
           <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
           <button type="button" class="chip-period active" data-periodo="3m">Últimos 3 meses</button>
           <button type="button" class="chip-period" data-periodo="anio">Este año</button>
-          <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
         </div>
       </section>
 
@@ -350,6 +349,7 @@
   <script type="module">
     import { productos, reporteReposicionCentral, fmtGs } from '../../shared/mock-data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
+    import { initDateRangePicker } from '../../shared/date-range-picker.js';
 
     const r = reporteReposicionCentral;
     const prodById = new Map(productos.map(p => [p.id, p]));
@@ -417,6 +417,14 @@
         document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
         c.classList.add('active');
       });
+    });
+
+    initDateRangePicker({
+      containerSelector: '.periodo-chips',
+      initialFromQS: true,
+      onApply: ({ desde, hasta }) => {
+        // pendiente: filtrar reposiciones por rango de fechas
+      },
     });
 
     initAvatarMenu({

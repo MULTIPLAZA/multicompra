@@ -274,7 +274,6 @@
             <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
             <button type="button" class="chip-period" data-periodo="3m">Últimos 3 meses</button>
             <button type="button" class="chip-period active" data-periodo="anio">Este año</button>
-            <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
           </div>
         </div>
         <div class="filter-row">
@@ -323,6 +322,7 @@
   <script type="module">
     import { productos, reporteStockMuerto, fmtGs } from '../../shared/mock-data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
+    import { initDateRangePicker } from '../../shared/date-range-picker.js';
 
     const r = reporteStockMuerto;
     const prodById = new Map(productos.map(p => [p.id, p]));
@@ -396,7 +396,16 @@
       c.addEventListener('click', () => {
         document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
         c.classList.add('active');
+        render();
       });
+    });
+
+    initDateRangePicker({
+      containerSelector: '.periodo-chips',
+      initialFromQS: true,
+      onApply: ({ desde, hasta }) => {
+        // pendiente: filtrar por fecha de último movimiento
+      },
     });
 
     initAvatarMenu({

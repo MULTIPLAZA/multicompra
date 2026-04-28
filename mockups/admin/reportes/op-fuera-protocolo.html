@@ -305,7 +305,6 @@
           <button type="button" class="chip-period active" data-periodo="mes">Mes actual</button>
           <button type="button" class="chip-period" data-periodo="3m">Últimos 3 meses</button>
           <button type="button" class="chip-period" data-periodo="anio">Este año</button>
-          <button type="button" class="chip-period" data-periodo="custom">Custom&hellip;</button>
         </div>
       </section>
 
@@ -337,6 +336,7 @@
   <script type="module">
     import { reporteOpFueraProtocolo } from '../../shared/mock-data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
+    import { initDateRangePicker } from '../../shared/date-range-picker.js';
 
     const r = reporteOpFueraProtocolo;
     document.getElementById('kpi-total').textContent = r.totalActual;
@@ -411,6 +411,14 @@
         document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
         c.classList.add('active');
       });
+    });
+
+    initDateRangePicker({
+      containerSelector: '.periodo-chips',
+      initialFromQS: true,
+      onApply: ({ desde, hasta }) => {
+        // pendiente: filtrar excepciones por rango de fechas
+      },
     });
 
     initAvatarMenu({
