@@ -164,11 +164,30 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
-    import { locales } from '../../shared/mock-data.js';
+    import { locales as localesMock } from '../../shared/mock-data.js';
+    import { isCargado, getLocales as _getLocalesReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
 
+    // Si hay cache cargado, mostramos los locales reales (los 28 depósitos
+    // que vienen del ERP). Cada uno se enriquece con los campos visuales que
+    // espera la pantalla (codigo, dirección, etc).
+    const localesParaMostrar = isCargado()
+      ? _getLocalesReales({ incluirInactivos: true }).map(l => ({
+          id: l.id,
+          codigo: (l.nombre || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase(),
+          nombre: l.Sucursal && l.Sucursal !== l.nombre
+            ? `${l.Sucursal} · ${l.nombre}`
+            : l.nombre,
+          direccion: '—',
+          ciudad: l.Sucursal || '—',
+          telefono: '',
+          cajerasCount: 0,
+          activo: !!l.activo
+        }))
+      : localesMock;
+
     // Estado de la tabla (copia superficial para permitir desactivar)
-    const data = locales.map(l => ({ ...l }));
+    const data = localesParaMostrar.map(l => ({ ...l }));
     const tbody = document.getElementById('tbody');
     const countEl = document.getElementById('filter-count');
     const inpSearch = document.getElementById('inp-search');

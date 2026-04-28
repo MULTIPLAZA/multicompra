@@ -224,8 +224,14 @@
 </div>
 
 <script type="module">
-  import { comprasHistorico, proveedores, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { comprasHistorico, proveedores as proveedoresMock, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // Proveedores reales mergeados con el mock para que los nombres se vean reales
+  const proveedores = isCargado()
+    ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc || '' })), ...proveedoresMock]
+    : proveedoresMock;
 
   const ESTADO_BADGE = {
     precargada:           { cls: 'badge-precargada',        txt: 'Precargada' },

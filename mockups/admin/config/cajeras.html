@@ -158,10 +158,43 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
-    import { cajerasConfig, locales } from '../../shared/mock-data.js';
+    import { cajerasConfig, locales as localesMock } from '../../shared/mock-data.js';
+    import { isCargado, getLocales as _getLocalesReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
 
-    const data = cajerasConfig.map(c => ({ ...c }));
+    // Locales: si hay cache, usar los reales con shape mock-compatible
+    const locales = isCargado()
+      ? _getLocalesReales({ incluirInactivos: true }).map(l => ({
+          id: l.id,
+          nombre: l.Sucursal && l.Sucursal !== l.nombre ? `${l.Sucursal} · ${l.nombre}` : l.nombre,
+          codigo: (l.nombre || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase(),
+          activo: !!l.activo
+        }))
+      : localesMock;
+
+    // Cajeras: por ahora seguimos con el mock + las que se infieren de las
+    // OPs reales (cualquier cajeraId que haya enviado una OP aparece como
+    // usuaria registrada).
+    const cajerasInferidas = (() => {
+      try {
+        const ops = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+        const map = new Map();
+        for (const op of ops) {
+          if (!map.has(op.cajeraId)) {
+            map.set(op.cajeraId, {
+              id: 'cj-real-' + op.cajeraId,
+              nombre: op.cajera,
+              email: '',
+              localId: op.localId,
+              activa: true,
+              ultimoAcceso: op.fecha
+            });
+          }
+        }
+        return [...map.values()];
+      } catch (_) { return []; }
+    })();
+    const data = [...cajerasInferidas, ...cajerasConfig].map(c => ({ ...c }));
     const localById = Object.fromEntries(locales.map(l => [l.id, l]));
     const tbody = document.getElementById('tbody');
     const countEl = document.getElementById('filter-count');

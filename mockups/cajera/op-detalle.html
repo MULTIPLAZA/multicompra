@@ -399,8 +399,22 @@
 </div>
 
 <script type="module">
-  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+  import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
+
+  // Usuario real desde localStorage. Fallback al mock.
+  let cajeraActual = cajeraMock;
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      cajeraActual = {
+        id: u.id, nombre: u.nombre, rol: u.rol,
+        iniciales: u.iniciales || (u.nombre || '?').slice(0, 2).toUpperCase(),
+        localId: u.localId, localNombre: u.localNombre || cajeraMock.localNombre
+      };
+    }
+  } catch (_) {}
 
   document.getElementById('hello-name').textContent = cajeraActual.nombre;
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
@@ -410,8 +424,49 @@
   const params = new URLSearchParams(location.search);
   const opId = params.get('id') || 'op-1055';
 
-  // Buscar en historial, y si no está, construir uno sintético (enviada)
-  let op = historialCajera.find(o => o.id === opId);
+  // Combinar OPs reales (las que esta cajera mandó desde la app) con historial mock
+  let opsRealesCajera = [];
+  let resolucionesOps = {};
+  try {
+    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    opsRealesCajera = todas.filter(op => op.cajeraId === cajeraActual.id);
+  } catch (_) {}
+  try {
+    resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+  } catch (_) {}
+
+  // productoById combina mock + productos inline de las OPs reales
+  const _productoById = new Map(productos.map(p => [p.id, p]));
+  for (const opR of opsRealesCajera) {
+    for (const l of opR.lineas) {
+      if (!_productoById.has(l.productoId) && l.productoNombre) {
+        _productoById.set(l.productoId, {
+          id: l.productoId,
+          nombre: l.productoNombre,
+          barras: l.productoCodigo || ''
+        });
+      }
+    }
+  }
+  // Hacer que el resto del script encuentre productoById como antes
+  window.__productoById = _productoById;
+
+  // Buscar en OPs reales primero, después en historial mock
+  let op = null;
+  const opReal = opsRealesCajera.find(o => o.id === opId);
+  if (opReal) {
+    const resol = resolucionesOps[opId];
+    op = {
+      id: opReal.id,
+      fechaEnvio: opReal.fecha,
+      estado: resol ? resol.estado : (opReal.estado || 'enviada'),
+      esExcepcion: opReal.esExcepcion,
+      motivoExcepcion: opReal.motivoExcepcion,
+      notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
+      lineas: opReal.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+    };
+  }
+  if (!op) op = historialCajera.find(o => o.id === opId);
   if (!op) {
     // Sintético para op-1055 (la nueva del día) si no está en historial
     op = {
@@ -463,11 +518,10 @@
     document.getElementById('exc-motivo').textContent = op.motivoExcepcion;
   }
 
-  // Productos
-  const prodById = new Map(productos.map(p => [p.id, p]));
+  // Productos — usamos el _productoById que combina mock + reales (definido arriba)
   const body = document.getElementById('prod-body');
   body.innerHTML = op.lineas.map(ln => {
-    const p = prodById.get(ln.productoId);
+    const p = _productoById.get(ln.productoId);
     if (!p) return '';
     return `
       <tr>

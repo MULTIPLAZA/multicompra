@@ -142,9 +142,26 @@
 
   <script type="module">
     import { proveedoresConfig } from '../../shared/mock-data.js';
+    import { isCargado, getProveedores as _getProvReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
 
-    const data = proveedoresConfig.map(p => ({ ...p }));
+    // Si hay cache cargado, mostrar los proveedores reales (~83) con los
+    // campos visuales que espera la pantalla (especialidad, ocsUltimoMes
+    // se rellenan con valores neutros).
+    const proveedoresParaMostrar = isCargado()
+      ? _getProvReales({ incluirInactivos: true }).map(p => ({
+          id: p.id,
+          nombre: p.nombre,
+          ruc: p.ruc || '',
+          contacto: p.contacto || '',
+          telefono: p.contacto || '',
+          especialidad: '',
+          ocsUltimoMes: 0,
+          activo: !!p.activo
+        }))
+      : proveedoresConfig;
+
+    const data = proveedoresParaMostrar.map(p => ({ ...p }));
     const tbody = document.getElementById('tbody');
     const countEl = document.getElementById('filter-count');
     const inpSearch = document.getElementById('inp-search');

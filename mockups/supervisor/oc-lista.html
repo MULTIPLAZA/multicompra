@@ -233,8 +233,15 @@
 </div>
 
 <script type="module">
-  import { ocsHistorico, proveedores, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { ocsHistorico, proveedores as proveedoresMock, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // Mergear proveedores reales con los del mock (los nombres en las OCs se
+  // muestran reales si coincide el id; el resto del mock sigue para demo).
+  const proveedores = isCargado()
+    ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc, contacto: p.contacto })), ...proveedoresMock]
+    : proveedoresMock;
 
   const ESTADO_BADGE = {
     abierta:                { cls: 'badge-abierta',              txt: 'Abierta' },

@@ -879,8 +879,124 @@
      Scripts
      ================================================================= -->
 <script type="module">
-  import { opsPendientes, proveedores, locales, productos, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import {
+    opsPendientes as opsPendientesMock,
+    proveedores as proveedoresMock,
+    locales as localesMock,
+    productos as productosMock,
+    solicitudesAltaProducto
+  } from '../shared/mock-data.js';
+  import {
+    isCargado,
+    getProductos as _getProductosReales,
+    getLocales as _getLocalesReales,
+    getProveedores as _getProveedoresReales,
+    getStockTotal,
+    getStockProducto
+  } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Mergear datos reales (si la cache está cargada) con los mocks ───────
+  // Mantenemos el shape del mock para no reescribir el código existente:
+  // producto: { id, barras, nombre, costo, precio, stockCentral, stockPorLocal }
+  // local:    { id, codigo, nombre, activo }
+  // proveedor:{ id, nombre, ruc, contacto, ... }
+  let opsPendientes = [...opsPendientesMock];
+  let proveedores   = [...proveedoresMock];
+  let locales       = [...localesMock];
+  let productos     = [...productosMock];
+
+  if (isCargado()) {
+    const realLocales     = _getLocalesReales();
+    const realProveedores = _getProveedoresReales();
+    const realProductos   = _getProductosReales();
+
+    // Locales: shape mock-compatible
+    const localesReales = realLocales.map(l => ({
+      id: l.id,
+      nombre: l.Sucursal && l.Sucursal !== l.nombre ? `${l.Sucursal} · ${l.nombre}` : l.nombre,
+      codigo: (l.nombre || l.Sucursal || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase(),
+      activo: l.activo,
+      cajerasCount: 1
+    }));
+    locales = [...localesReales, ...localesMock];
+
+    // Proveedores: ya vienen con shape similar (id, nombre, ruc, contacto)
+    const proveedoresReales = realProveedores.map(p => ({
+      id: p.id,
+      nombre: p.nombre,
+      ruc: p.ruc || '',
+      contacto: p.contacto || '',
+      telefono: p.contacto || '',
+      especialidad: ''
+    }));
+    proveedores = [...proveedoresReales, ...proveedoresMock];
+
+    // Productos: shape mock-compatible
+    const productosReales = realProductos.map(p => ({
+      id: p.id,
+      barras: String(p.codigo || ''),
+      nombre: p.descripcion || '',
+      categoria: p.categoria || '',
+      costo: Number(p.costo) || 0,
+      precio: Number(p.precio) || 0,
+      stockCentral: getStockTotal(p.id),
+      stockPorLocal: localesReales.reduce((acc, l) => {
+        acc[l.id] = getStockProducto(l.id, p.id);
+        return acc;
+      }, {}),
+      idProveedor: p.idProveedor
+    }));
+    productos = [...productosReales, ...productosMock];
+  }
+
+  // ─── OPs pendientes: mergear las reales aprobadas y enviadas con el mock ──
+  try {
+    const opsRealesArr = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    const resoluciones = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+    // Solo OPs aprobadas o enviadas (sin resolver) entran a la consolidación.
+    // Devueltas no aparecen acá.
+    const opsRealesParaOC = opsRealesArr
+      .filter(op => {
+        const r = resoluciones[op.id];
+        if (!r) return true; // sin resolver = enviada
+        return r.estado === 'aprobada';
+      })
+      .map(op => {
+        // Adaptar shape al esperado por oc-nueva: lineas con productoId
+        return {
+          ...op,
+          esVieja: false,
+          esExcepcion: !!op.esExcepcion,
+          motivoExcepcion: op.motivoExcepcion || null,
+          lineas: op.lineas.map(l => ({
+            productoId: l.productoId,
+            cantidad: l.cantidad
+          }))
+        };
+      });
+    opsPendientes = [...opsRealesParaOC, ...opsPendientesMock];
+
+    // También enriquecer productos con los inline de las OPs reales
+    const idsExistentes = new Set(productos.map(p => p.id));
+    for (const op of opsRealesArr) {
+      for (const l of op.lineas) {
+        if (!idsExistentes.has(l.productoId) && l.productoNombre) {
+          productos.push({
+            id: l.productoId,
+            barras: l.productoCodigo || '',
+            nombre: l.productoNombre,
+            costo: l.productoCosto || 0,
+            precio: l.productoPrecio || 0,
+            stockCentral: 0,
+            stockPorLocal: {},
+            idProveedor: l.idProveedor
+          });
+          idsExistentes.add(l.productoId);
+        }
+      }
+    }
+  } catch (_) {}
 
   // =====================================================================
   // Estado de UI

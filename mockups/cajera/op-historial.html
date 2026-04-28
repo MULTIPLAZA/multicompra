@@ -397,13 +397,54 @@
 </div>
 
 <script type="module">
-  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+  import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
+
+  // Usuario real desde localStorage (login real). Fallback al mock.
+  let cajeraActual = cajeraMock;
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      cajeraActual = {
+        id: u.id, nombre: u.nombre, rol: u.rol,
+        iniciales: u.iniciales || (u.nombre || '?').slice(0, 2).toUpperCase(),
+        localId: u.localId, localNombre: u.localNombre || cajeraMock.localNombre
+      };
+    }
+  } catch (_) {}
 
   // Saludo
   document.getElementById('hello-name').textContent = cajeraActual.nombre;
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
   document.getElementById('avatar-iniciales').textContent = cajeraActual.iniciales;
+
+  // ─── Mergear OPs reales con el historial del mock ──────────────────────
+  let opsRealesCajera = [];
+  let resolucionesOps = {};
+  try {
+    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    opsRealesCajera = todas.filter(op => op.cajeraId === cajeraActual.id);
+  } catch (_) {}
+  try {
+    resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+  } catch (_) {}
+
+  // Las OPs reales adaptadas al shape del mock (id, fechaEnvio, estado, lineas)
+  const historialReal = opsRealesCajera.map(op => {
+    const resol = resolucionesOps[op.id];
+    return {
+      id: op.id,
+      fechaEnvio: op.fecha,
+      estado: resol ? resol.estado : (op.estado || 'enviada'),
+      lineas: op.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad })),
+      _real: true,
+      _opOriginal: op
+    };
+  });
+
+  // Combinar — reales primero (más recientes)
+  const historialCompleto = [...historialReal, ...historialCajera];
 
   // Estado de filtros
   const state = {
@@ -412,7 +453,19 @@
     estado: ''
   };
 
+  // productoById combina mock + productos inline de las OPs reales
   const productoById = new Map(productos.map(p => [p.id, p]));
+  for (const op of opsRealesCajera) {
+    for (const l of op.lineas) {
+      if (!productoById.has(l.productoId) && l.productoNombre) {
+        productoById.set(l.productoId, {
+          id: l.productoId,
+          nombre: l.productoNombre,
+          barras: l.productoCodigo || ''
+        });
+      }
+    }
+  }
 
   // Fecha de referencia (hoy según mock)
   const HOY = new Date('2026-04-22T10:00:00');
@@ -441,7 +494,7 @@
   }
 
   function aplicarFiltros() {
-    return historialCajera.filter(op => {
+    return historialCompleto.filter(op => {
       // Rango
       const d = diasDesde(op.fechaEnvio);
       if (state.rango === 'mes' && d > 30) return false;
@@ -468,7 +521,7 @@
     document.getElementById('count-num').textContent = filtradas.length;
 
     const wrap = document.getElementById('hist-wrap');
-    if (historialCajera.length === 0) {
+    if (historialCompleto.length === 0) {
       wrap.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -528,7 +581,7 @@
     wrap.querySelectorAll('tr[data-op-id]').forEach(tr => {
       tr.addEventListener('click', () => {
         const opId = tr.dataset.opId;
-        const op = historialCajera.find(o => o.id === opId);
+        const op = historialCompleto.find(o => o.id === opId);
         if (op && op.estado === 'devuelta') {
           location.href = 'op-devuelta.html?id=' + opId;
         } else {

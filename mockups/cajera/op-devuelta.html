@@ -441,8 +441,22 @@
 </div>
 
 <script type="module">
-  import { cajeraActual, productos, historialCajera } from '../shared/mock-data.js';
+  import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
+
+  // Usuario real desde localStorage. Fallback al mock.
+  let cajeraActual = cajeraMock;
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      cajeraActual = {
+        id: u.id, nombre: u.nombre, rol: u.rol,
+        iniciales: u.iniciales || (u.nombre || '?').slice(0, 2).toUpperCase(),
+        localId: u.localId, localNombre: u.localNombre || cajeraMock.localNombre
+      };
+    }
+  } catch (_) {}
 
   document.getElementById('hello-name').textContent = cajeraActual.nombre;
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
@@ -450,10 +464,28 @@
 
   const params = new URLSearchParams(location.search);
   const opId = params.get('id') || 'op-1026';
-  let op = historialCajera.find(o => o.id === opId);
+
+  // Buscar primero en OPs reales (las que mandó esta cajera y fueron devueltas)
+  let op = null;
+  try {
+    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    const resoluciones = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+    const opR = todas.find(o => o.id === opId && o.cajeraId === cajeraActual.id);
+    if (opR) {
+      const resol = resoluciones[opId];
+      op = {
+        id: opR.id,
+        fechaEnvio: opR.fecha,
+        estado: resol ? resol.estado : 'enviada',
+        notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
+        lineas: opR.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+      };
+    }
+  } catch (_) {}
+
+  if (!op) op = historialCajera.find(o => o.id === opId);
   if (!op) op = historialCajera.find(o => o.estado === 'devuelta');
   if (!op) {
-    // fallback duro
     op = {
       id: opId,
       fechaEnvio: '2026-04-02 16:30',
@@ -475,6 +507,19 @@
   document.getElementById('info-unid').textContent = op.lineas.reduce((s, l) => s + l.cantidad, 0);
 
   const prodById = new Map(productos.map(p => [p.id, p]));
+  // Enriquecer con productos inline de OPs reales
+  try {
+    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    for (const opR of todas) {
+      for (const l of opR.lineas) {
+        if (!prodById.has(l.productoId) && l.productoNombre) {
+          prodById.set(l.productoId, {
+            id: l.productoId, nombre: l.productoNombre, barras: l.productoCodigo || ''
+          });
+        }
+      }
+    }
+  } catch (_) {}
   document.getElementById('prod-body').innerHTML = op.lineas.map(ln => {
     const p = prodById.get(ln.productoId);
     if (!p) return '';

@@ -473,14 +473,41 @@
 </div>
 
 <script type="module">
-  import { cajeraActual } from '../shared/mock-data.js';
+  import { cajeraActual as cajeraMock } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
+
+  // Usuario real desde localStorage. Fallback al mock.
+  let cajeraActual = cajeraMock;
+  try {
+    const raw = localStorage.getItem('multicompra:user');
+    if (raw) {
+      const u = JSON.parse(raw);
+      const nombre = u.nombre || cajeraMock.nombre;
+      cajeraActual = {
+        id: u.id, nombre, rol: u.rol,
+        iniciales: u.iniciales || nombre.slice(0, 2).toUpperCase(),
+        localId: u.localId,
+        localNombre: u.localNombre || cajeraMock.localNombre,
+        localSucursal: u.localSucursal || '',
+        localCodigo: (u.localNombre || nombre).replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase()
+      };
+    }
+  } catch (_) {}
 
   document.getElementById('hello-name').textContent = cajeraActual.nombre;
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
   document.getElementById('avatar-iniciales').textContent = cajeraActual.iniciales;
   document.getElementById('info-localp').textContent = cajeraActual.localNombre;
-  document.getElementById('info-localcod').textContent = cajeraActual.localCodigo;
+  if (document.getElementById('info-localcod')) {
+    document.getElementById('info-localcod').textContent = cajeraActual.localCodigo;
+  }
+  // Si la pantalla muestra otros datos del usuario en otros nodos, los actualizamos:
+  ['info-nombre','info-usuario','info-rol'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'info-nombre' || id === 'info-usuario') el.textContent = cajeraActual.nombre;
+    if (id === 'info-rol') el.textContent = cajeraActual.rol;
+  });
 
   // Theme toggle (header + preferencia) — sincronizados
   function updateThemeLabel() {

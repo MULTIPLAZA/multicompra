@@ -325,8 +325,14 @@
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
 <script type="module">
-  import { solicitudesAltaProducto, proveedores } from '../shared/mock-data.js';
+  import { solicitudesAltaProducto, proveedores as proveedoresMock } from '../shared/mock-data.js';
+  import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu } from '../shared/ui.js';
+
+  // Proveedores reales (los del ERP) mergeados con los del mock
+  const proveedores = isCargado()
+    ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc || '', contacto: p.contacto || '' })), ...proveedoresMock]
+    : proveedoresMock;
 
   // ---------- Storage helpers ----------
   const SOLICITUDES_KEY = 'multicompra:solicitudes_alta_producto';
