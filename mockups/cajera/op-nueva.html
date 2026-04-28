@@ -1363,23 +1363,34 @@
       ).slice(0, 8);
     }
 
+    // Estado del buscador con navegación por teclado.
+    // activeIdx = índice del resultado resaltado (-1 = ninguno)
+    let activeIdx = -1;
+    let currentItems = [];
+
     function renderResultados(items, term) {
+      currentItems = items || [];
       if (!term) {
         searchResults.classList.remove('visible');
         searchResults.innerHTML = '';
+        activeIdx = -1;
         return;
       }
       if (!items.length) {
         searchResults.innerHTML = `
           <div class="search-empty">
             No encontré productos que coincidan con <strong>"${term}"</strong>.
+            <div style="font-size:var(--fs-xs);color:var(--text-muted);margin-top:6px;">Probá otra palabra o escaneá el código.</div>
           </div>
         `;
+        activeIdx = -1;
       } else {
-        searchResults.innerHTML = items.map(p => {
+        // Por default, el primero queda resaltado para que Enter sea inmediato.
+        activeIdx = 0;
+        searchResults.innerHTML = items.map((p, i) => {
           const yaEsta = state.lineas.some(ln => ln.productoId === p.id);
           return `
-            <div class="search-result" data-pid="${p.id}" role="option">
+            <div class="search-result${i === activeIdx ? ' highlighted' : ''}" data-pid="${p.id}" data-idx="${i}" role="option" aria-selected="${i === activeIdx}">
               <div class="search-result-main">
                 <div class="search-result-name">${p.nombre}</div>
                 <div class="search-result-code">${p.barras}</div>
@@ -1392,6 +1403,37 @@
       searchResults.classList.add('visible');
     }
 
+    // Mueve el resaltado a otra fila y la trae a la vista si quedó tapada
+    function setActiveIdx(newIdx) {
+      const rows = searchResults.querySelectorAll('.search-result[data-pid]');
+      if (!rows.length) { activeIdx = -1; return; }
+      const max = rows.length - 1;
+      // Wrap-around (si pasa el último, vuelve al primero, y al revés)
+      if (newIdx < 0) newIdx = max;
+      else if (newIdx > max) newIdx = 0;
+      rows.forEach((r, i) => {
+        r.classList.toggle('highlighted', i === newIdx);
+        r.setAttribute('aria-selected', i === newIdx ? 'true' : 'false');
+      });
+      activeIdx = newIdx;
+      // Auto-scroll si el activo quedó fuera de vista
+      const active = rows[activeIdx];
+      if (active && active.scrollIntoView) {
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function elegirActivo() {
+      if (activeIdx < 0 || activeIdx >= currentItems.length) return false;
+      const p = currentItems[activeIdx];
+      agregarProducto(p.id, { focusQty: true });
+      searchInput.value = '';
+      searchResults.classList.remove('visible');
+      activeIdx = -1;
+      currentItems = [];
+      return true;
+    }
+
     searchInput.addEventListener('input', () => {
       renderResultados(filtrar(searchInput.value), searchInput.value);
     });
@@ -1402,12 +1444,20 @@
       }
     });
 
+    // Click sobre un resultado: lo agrega
     searchResults.addEventListener('click', (e) => {
       const item = e.target.closest('.search-result[data-pid]');
       if (!item) return;
-      agregarProducto(item.dataset.pid, { focusQty: true });
-      searchInput.value = '';
-      searchResults.classList.remove('visible');
+      activeIdx = parseInt(item.dataset.idx, 10);
+      elegirActivo();
+    });
+
+    // Hover: también muestra el resaltado en el item bajo el mouse
+    searchResults.addEventListener('mousemove', (e) => {
+      const item = e.target.closest('.search-result[data-pid]');
+      if (!item) return;
+      const idx = parseInt(item.dataset.idx, 10);
+      if (idx !== activeIdx) setActiveIdx(idx);
     });
 
     // Cerrar dropdown al clickear afuera
@@ -1417,19 +1467,43 @@
       }
     });
 
-    // Enter en el fallback: agregar el primero de la lista
+    /* ─────────────────────────────────────────────────────────────────
+       Navegación con teclado en el fallback de búsqueda
+         ↓ / ↑      mover el resaltado entre resultados (con wrap-around)
+         Enter      seleccionar el resaltado
+         Espacio    seleccionar el resaltado (alternativa a Enter)
+         Esc        cerrar el dropdown
+         Home/End   ir al primero / último
+       ───────────────────────────────────────────────────────────────── */
     searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const first = searchResults.querySelector('.search-result[data-pid]');
-        if (first) {
+      const visible = searchResults.classList.contains('visible') && currentItems.length > 0;
+      if (e.key === 'ArrowDown') {
+        if (visible) { e.preventDefault(); setActiveIdx(activeIdx + 1); }
+      } else if (e.key === 'ArrowUp') {
+        if (visible) { e.preventDefault(); setActiveIdx(activeIdx - 1); }
+      } else if (e.key === 'Home') {
+        if (visible) { e.preventDefault(); setActiveIdx(0); }
+      } else if (e.key === 'End') {
+        if (visible) { e.preventDefault(); setActiveIdx(currentItems.length - 1); }
+      } else if (e.key === 'Enter') {
+        // Si la lista está visible y hay un resaltado, lo agrega
+        if (visible && elegirActivo()) {
           e.preventDefault();
-          agregarProducto(first.dataset.pid, { focusQty: true });
-          searchInput.value = '';
-          searchResults.classList.remove('visible');
+        }
+      } else if (e.key === ' ' || e.code === 'Space') {
+        // Espacio agrega el resaltado SOLO si el cursor está al final del input
+        // (para no romper el escribir espacios en medio del término de búsqueda)
+        const atEnd = searchInput.selectionStart === searchInput.value.length
+                   && searchInput.selectionEnd === searchInput.value.length;
+        if (visible && atEnd) {
+          // Espacio "decisivo": termina la búsqueda y agrega
+          if (elegirActivo()) e.preventDefault();
         }
       } else if (e.key === 'Escape') {
         searchInput.value = '';
         searchResults.classList.remove('visible');
+        currentItems = [];
+        activeIdx = -1;
       }
     });
 
