@@ -549,7 +549,25 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     return `${d}/${m}/${y.slice(2)}`;
   }
 
-  const recientes = historialCajera.slice(0, 4);
+  // Mergear historial real (OPs enviadas por esta cajera desde la app) con el mock
+  let historialReal = [];
+  try {
+    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+    historialReal = todas
+      .filter(op => op.cajeraId === cajeraActual.id)
+      .map(op => ({
+        id:         op.id,
+        fechaEnvio: op.fecha,                  // ya viene en formato '2026-04-28 19:05'
+        estado:     op.estado || 'enviada',
+        lineas:     op.lineas.map(l => ({
+          productoId: l.productoId,
+          cantidad:   l.cantidad
+        }))
+      }));
+  } catch (_) {}
+
+  // Reales primero (más recientes arriba), después el mock para que la demo se vea poblada
+  const recientes = [...historialReal, ...historialCajera].slice(0, 4);
   listaHist.innerHTML = recientes.map(op => {
     const prod = op.lineas.length;
     const un = op.lineas.reduce((s, l) => s + l.cantidad, 0);

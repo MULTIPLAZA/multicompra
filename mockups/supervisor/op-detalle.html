@@ -475,8 +475,15 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
-  import { opsPendientes, historialCajera, ops, productos, locales, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { opsPendientes as opsPendientesMock, historialCajera, ops, productos, locales, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Mergear OPs reales (las que la cajera envió desde la app) con el mock ─
+  let opsReales = [];
+  try {
+    opsReales = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+  } catch (_) {}
+  const opsPendientes = [...opsReales, ...opsPendientesMock];
 
   // =====================================================================
   // Resolver OP por ?id=
@@ -485,7 +492,7 @@
   const opIdParam = (params.get('id') || 'op-1043').toLowerCase();
 
   function encontrarOp(id) {
-    // Buscar en opsPendientes (enviadas)
+    // Buscar en opsPendientes (reales + mock)
     let op = opsPendientes.find(o => o.id.toLowerCase() === id);
     if (op) return { op, contexto: 'pendiente' };
     // Buscar en ops agrupadas en OC-0042
@@ -501,7 +508,24 @@
   const op = resuelto.op;
   const contexto = resuelto.contexto;
   const local = locales.find(l => l.id === op.localId);
+
+  // productoById combina mock + productos inline de las OPs reales (las OPs
+  // de cajeras reales traen { productoId, productoNombre, productoCodigo }
+  // en cada línea, así que con eso enriquecemos el mapa).
   const productoById = new Map(productos.map(p => [p.id, p]));
+  for (const opReal of opsReales) {
+    for (const l of opReal.lineas) {
+      if (!productoById.has(l.productoId) && l.productoNombre) {
+        productoById.set(l.productoId, {
+          id: l.productoId,
+          nombre: l.productoNombre,
+          barras: l.productoCodigo || '',
+          costo:  l.productoCosto  || 0,
+          precio: l.productoPrecio || 0
+        });
+      }
+    }
+  }
 
   // =====================================================================
   // Render cabecera
