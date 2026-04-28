@@ -733,7 +733,186 @@
   <div class="screen-caption">Sirve para decidir si transferir desde otro local en lugar de comprar nuevo.</div>
 </div>
 
-<h3>5.4 Solicitudes de alta de producto</h3>
+<h3>5.4 Consolidar pedidos en una Orden de Compra (la pantalla central)</h3>
+
+<p>Esta es <strong>la pantalla núcleo del supervisor</strong>. Acá la supervisora junta varios pedidos de distintos locales y arma una orden de compra al proveedor:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/oc-nueva.html</div>
+  <div class="screen">
+    <div class="screen-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">/supervisor/oc-nueva</span></div>
+    <div class="screen-body">
+
+      <!-- Header de la OC -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div>
+          <div class="w-strong" style="font-size:12pt;">Nueva OC #0042 — borrador</div>
+          <div class="w-meta">3 OPs consolidadas · 18 productos · Total Gs. 1.250.000</div>
+        </div>
+        <div>
+          <span class="w-btn ghost">Guardar borrador</span>
+          <span class="w-btn">Enviar al proveedor</span>
+        </div>
+      </div>
+
+      <!-- Selección de proveedor -->
+      <div class="w-card" style="background:#f0fdfa;border-color:#14b8a6;">
+        <div class="w-row">
+          <span class="w-label">Proveedor:</span>
+          <span class="w-strong">ImportTech S.A.</span>
+          <span class="w-meta">· RUC 80012345-6 · Marcelo Ayala</span>
+        </div>
+      </div>
+
+      <!-- Tabla con productos consolidados -->
+      <div class="w-card" style="margin-top:8px;">
+        <div class="w-card-head">Productos a comprar
+          <span class="w-meta">(podés editar cantidades por local)</span>
+        </div>
+        <table style="margin:0;font-size:8.5pt;">
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th style="text-align:center;">MUL</th>
+            <th style="text-align:center;">SHM</th>
+            <th style="text-align:center;">CDE</th>
+            <th style="text-align:right;">Total</th>
+            <th style="text-align:right;">Costo</th>
+          </tr>
+          <tr>
+            <td class="w-mono">123</td>
+            <td>Cargador Samsung 1m</td>
+            <td style="text-align:center;">2</td>
+            <td style="text-align:center;">5</td>
+            <td style="text-align:center;">3</td>
+            <td style="text-align:right;"><strong>10</strong></td>
+            <td style="text-align:right;">Gs. 70.000</td>
+          </tr>
+          <tr>
+            <td class="w-mono">00001005</td>
+            <td>Glass iPhone 6 6s</td>
+            <td style="text-align:center;">1</td>
+            <td style="text-align:center;">3</td>
+            <td style="text-align:center;"><span class="w-chip warn">2</span></td>
+            <td style="text-align:right;"><strong>6</strong></td>
+            <td style="text-align:right;">Gs. 11.088</td>
+          </tr>
+          <tr>
+            <td class="w-mono">00001228</td>
+            <td>Protector LG G2 dorado</td>
+            <td style="text-align:center;">2</td>
+            <td style="text-align:center;">—</td>
+            <td style="text-align:center;">0</td>
+            <td style="text-align:right;"><strong>2</strong></td>
+            <td style="text-align:right;">Gs. 24.000</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="w-meta" style="margin-top:6px;font-size:8.5pt;">
+        🟡 Chip ámbar = "sobrepedido" (el local pidió mucho más de lo que vende). 🔴 Chip rojo = excepción manual del local.
+      </div>
+
+    </div>
+  </div>
+  <div class="screen-caption">Tipo planilla Excel: editable cantidad por local, con cálculo automático de total a comprar y costo. Sugerencias automáticas para detectar quién pide de más.</div>
+</div>
+
+<h3>5.5 Lista de Órdenes de Compra (seguimiento)</h3>
+
+<p>Una vez emitidas las OCs, la supervisora las puede consultar en cualquier momento:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/oc-lista.html</div>
+  <div class="screen">
+    <div class="screen-body">
+      <div style="margin-bottom:8px;">
+        <span class="w-chip">5 abiertas</span>
+        <span class="w-chip success" style="margin-left:4px;">12 cerradas</span>
+        <span class="w-chip danger" style="margin-left:4px;">1 rechazada</span>
+      </div>
+      <table style="margin:0;">
+        <tr>
+          <th>OC</th><th>Proveedor</th><th>Estado</th><th>Productos</th><th style="text-align:right;">Total</th>
+        </tr>
+        <tr>
+          <td class="w-mono">OC-0042</td>
+          <td>ImportTech S.A.</td>
+          <td><span class="w-chip">En camino</span></td>
+          <td>18 prod / 32 unid</td>
+          <td style="text-align:right;"><strong>Gs. 1.250.000</strong></td>
+        </tr>
+        <tr>
+          <td class="w-mono">OC-0041</td>
+          <td>Distribuidora Plus S.A.</td>
+          <td><span class="w-chip success">Cerrada</span></td>
+          <td>9 prod / 14 unid</td>
+          <td style="text-align:right;"><strong>Gs. 680.000</strong></td>
+        </tr>
+        <tr>
+          <td class="w-mono">OC-0040</td>
+          <td>NEW TECH</td>
+          <td><span class="w-chip">Esperando entrega</span></td>
+          <td>5 prod / 7 unid</td>
+          <td style="text-align:right;"><strong>Gs. 320.000</strong></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="screen-caption">Filtros por proveedor, estado, fecha. Click en una fila abre el detalle con el seguimiento completo y las OPs que la generaron.</div>
+</div>
+
+<h3>5.6 Verificar mercadería que llegó (Compra)</h3>
+
+<p>Cuando llega el camión del proveedor, la supervisora abre la OC, escanea o tilda lo que llegó, y eso queda registrado como Compra:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor/compra-verificar.html</div>
+  <div class="screen">
+    <div class="screen-body">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div>
+          <div class="w-strong" style="font-size:11.5pt;">Verificando OC-0042 — ImportTech S.A.</div>
+          <div class="w-meta">Factura 001-001-12345 · Llegó hoy a las 09:30</div>
+        </div>
+        <div>
+          <span class="w-btn">Cerrar OC y registrar Compra</span>
+        </div>
+      </div>
+
+      <table style="margin:0;font-size:9pt;">
+        <tr>
+          <th>Producto</th><th style="text-align:center;">Esperado</th><th style="text-align:center;">Recibido</th><th>Estado</th>
+        </tr>
+        <tr>
+          <td>Cargador Samsung 1m</td>
+          <td style="text-align:center;">10</td>
+          <td style="text-align:center;"><strong>10</strong></td>
+          <td><span class="w-chip success">✓ Completo</span></td>
+        </tr>
+        <tr>
+          <td>Glass iPhone 6 6s</td>
+          <td style="text-align:center;">6</td>
+          <td style="text-align:center;"><strong>5</strong></td>
+          <td><span class="w-chip warn">Falta 1</span></td>
+        </tr>
+        <tr>
+          <td>Protector LG G2 dorado</td>
+          <td style="text-align:center;">2</td>
+          <td style="text-align:center;"><strong>2</strong></td>
+          <td><span class="w-chip success">✓ Completo</span></td>
+        </tr>
+      </table>
+
+      <div class="w-meta" style="margin-top:6px;">Las diferencias quedan registradas. Si el proveedor mandó menos, podés dejar nota en la OC para reclamar después.</div>
+
+    </div>
+  </div>
+  <div class="screen-caption">Después de cerrar la OC, los productos pasan al stock del depósito central. Tu sistema actual los recibe automáticamente.</div>
+</div>
+
+<h3>5.7 Solicitudes de alta de producto</h3>
 
 <p>Cuando una cajera escanea un producto que no existe en el catálogo, manda una "solicitud de alta" para que la supervisora la apruebe o rechace:</p>
 
