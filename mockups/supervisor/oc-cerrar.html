@@ -849,8 +849,14 @@
      Scripts
      ================================================================= -->
 <script type="module">
-  import { oc, proveedor, proveedores, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { oc, proveedor, proveedores as proveedoresMock, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // Proveedores reales del ERP mergeados con los del mock
+  const proveedores = isCargado()
+    ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc || '', contacto: p.contacto || '' })), ...proveedoresMock]
+    : proveedoresMock;
 
   // ====================================================================
   // Resolver proveedor asignado (fallback: primer proveedor del catálogo)

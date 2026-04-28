@@ -475,8 +475,37 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
-  import { opsPendientes as opsPendientesMock, historialCajera, ops, productos, locales, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { opsPendientes as opsPendientesMock, historialCajera, ops, productos as productosMock, locales as localesMock, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProductos as _getProdReales, getLocales as _getLocReales, getStockProducto } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Datos reales con shape mock-compatible ─────────────────────────────
+  let productos = productosMock;
+  let locales   = localesMock;
+  if (isCargado()) {
+    const realLoc = _getLocReales({ incluirInactivos: true });
+    const realProd = _getProdReales();
+    locales = [...realLoc.map(l => ({
+      id: l.id,
+      nombre: l.Sucursal && l.Sucursal !== l.nombre ? `${l.Sucursal} · ${l.nombre}` : l.nombre,
+      codigo: (l.nombre || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase(),
+      activo: !!l.activo
+    })), ...localesMock];
+    productos = [...realProd.map(p => ({
+      id: p.id,
+      barras: String(p.codigo || ''),
+      nombre: p.descripcion || '',
+      costo: Number(p.costo) || 0,
+      precio: Number(p.precio) || 0,
+      stockCentral: 0,
+      // Stock real por cada depósito real (los reales tienen id numérico)
+      stockPorLocal: realLoc.reduce((acc, l) => {
+        acc[l.id] = getStockProducto(l.id, p.id);
+        return acc;
+      }, {}),
+      idProveedor: p.idProveedor
+    })), ...productosMock];
+  }
 
   // ─── Mergear OPs reales (las que la cajera envió desde la app) con el mock ─
   let opsReales = [];

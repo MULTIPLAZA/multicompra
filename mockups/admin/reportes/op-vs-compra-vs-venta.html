@@ -516,10 +516,15 @@
   </div>
 
   <script type="module">
-    import { productos, reporteOpvsCompravsVenta, fmtGs } from '../../shared/mock-data.js';
+    import { productos as productosMock, reporteOpvsCompravsVenta, fmtGs } from '../../shared/mock-data.js';
+    import { isCargado, getProductos as _getProdReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
     import { initDateRangePicker } from '../../shared/date-range-picker.js';
 
+    // Productos reales mergeados con mock (para que los nombres sean reales)
+    const productos = isCargado()
+      ? [..._getProdReales().map(p => ({ id: p.id, barras: String(p.codigo || ''), nombre: p.descripcion || '', costo: Number(p.costo) || 0 })), ...productosMock]
+      : productosMock;
     const prodById = new Map(productos.map(p => [p.id, p]));
 
     // Llenar select de productos

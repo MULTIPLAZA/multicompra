@@ -662,11 +662,25 @@
 
   <script type="module">
     import { dashboardAdmin, fmtGs } from '../shared/mock-data.js';
+    import { isCargado, getProductos, getLocales, getProveedores } from '../shared/data.js';
     import { initAvatarMenu } from '../shared/ui.js';
+
+    // Sumar OPs reales (las que las cajeras enviaron desde la app) al
+    // contador del mes — para que el KPI no quede solo con números demo.
+    let opsRealesCount = 0;
+    try {
+      const ops = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+      const haceMes = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      opsRealesCount = ops.filter(op => {
+        const d = new Date((op.fecha || '').replace(' ', 'T'));
+        return !isNaN(d) && d.getTime() >= haceMes;
+      }).length;
+    } catch (_) {}
 
     // ---------- KPIs -----------------------------------------------------
     var k = dashboardAdmin.kpis;
-    document.getElementById('kpi-ops').textContent = k.opsMes.valor;
+    const opsTotalMes = k.opsMes.valor + opsRealesCount;
+    document.getElementById('kpi-ops').textContent = opsTotalMes;
     document.getElementById('kpi-ops-delta').textContent = (k.opsMes.deltaPct > 0 ? '+' : '') + k.opsMes.deltaPct + '% vs mes pasado';
 
     document.getElementById('kpi-ocs').textContent = k.ocsCerradasMes.valor;

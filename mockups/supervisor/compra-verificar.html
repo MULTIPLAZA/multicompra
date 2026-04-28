@@ -960,8 +960,20 @@
      Scripts
      ================================================================= -->
 <script type="module">
-  import { compraActual, productos, oc, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { compraActual, productos as productosMock, oc, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { isCargado, getProductos as _getProdReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // Productos reales (con shape mock-compatible) mergeados con los del mock
+  const productos = isCargado()
+    ? [..._getProdReales().map(p => ({
+        id: p.id,
+        barras: String(p.codigo || ''),
+        nombre: p.descripcion || '',
+        costo: Number(p.costo) || 0,
+        precio: Number(p.precio) || 0
+      })), ...productosMock]
+    : productosMock;
 
   // Decisión 37: mínimo de caracteres para justificar diferencia total
   const TOTAL_DIFF_MIN = 30;
