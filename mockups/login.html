@@ -419,26 +419,216 @@
   <!-- ================================================================== -->
   <!-- Splash de carga — prefetch de catálogo + stock + locales + provs   -->
   <!-- ================================================================== -->
-  <div id="splash-backdrop" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:2000;padding:var(--sp-4);">
-    <div style="text-align:center;max-width:420px;width:100%;">
-      <div style="font-size:32px;font-weight:800;color:var(--primary);margin-bottom:var(--sp-2);">MultiCompra</div>
-      <div id="splash-msg" style="color:var(--text-muted);font-size:var(--fs-md);margin-bottom:var(--sp-5);">Cargando datos del sistema…</div>
+  <style>
+    /* ---------- Splash de carga (full screen) ----------------------- */
+    #splash-backdrop {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--primary) 4%, var(--bg)) 100%);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 2000; padding: var(--sp-4);
+      animation: splashFadeIn 0.4s ease-out;
+    }
+    @keyframes splashFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    .splash-card {
+      text-align: center;
+      max-width: 460px;
+      width: 100%;
+    }
 
-      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-4);text-align:left;">
-        <ul id="splash-steps" style="list-style:none;margin:0;padding:0;font-family:'Consolas',monospace;font-size:var(--fs-sm);">
-          <li data-step="Locales"     style="padding:6px 0;color:var(--text-muted);">⏳ Locales</li>
-          <li data-step="Proveedores" style="padding:6px 0;color:var(--text-muted);">⏳ Proveedores</li>
-          <li data-step="Productos"   style="padding:6px 0;color:var(--text-muted);">⏳ Productos</li>
-          <li data-step="Stock"       style="padding:6px 0;color:var(--text-muted);">⏳ Stock</li>
-        </ul>
+    /* Logo + nombre, con un pulso muy sutil */
+    .splash-brand {
+      margin-bottom: var(--sp-6);
+    }
+    .splash-brand-icon {
+      width: 64px; height: 64px;
+      margin: 0 auto var(--sp-3);
+      display: grid; place-items: center;
+      background: var(--primary);
+      color: var(--primary-on);
+      border-radius: 18px;
+      box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--primary) 50%, transparent);
+      animation: splashIconBounce 1.6s ease-in-out infinite;
+    }
+    @keyframes splashIconBounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%      { transform: translateY(-6px) scale(1.04); }
+    }
+    .splash-brand-name {
+      font-size: 28px; font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+
+    /* Mensaje principal que cambia */
+    .splash-msg {
+      color: var(--text);
+      font-size: var(--fs-lg);
+      font-weight: 500;
+      margin: var(--sp-2) 0 var(--sp-5);
+      min-height: 28px;
+      transition: opacity 0.18s ease;
+    }
+    .splash-msg-sub {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      margin-top: -8px;
+      margin-bottom: var(--sp-5);
+    }
+
+    /* Barra de progreso */
+    .splash-progress {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-elev-2, #e5e7eb);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: var(--sp-5);
+      position: relative;
+    }
+    .splash-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg,
+        var(--primary) 0%,
+        color-mix(in srgb, var(--primary) 70%, white) 100%);
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 40%, transparent);
+      position: relative;
+    }
+    /* Brillo que recorre la barra */
+    .splash-progress-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.4) 50%,
+        transparent 100%);
+      animation: splashShine 1.4s ease-in-out infinite;
+    }
+    @keyframes splashShine {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Chips de pasos (chiquitos, abajo) */
+    .splash-chips {
+      display: flex; flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-3);
+    }
+    .splash-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all 0.25s ease;
+    }
+    .splash-chip[data-status="loading"] {
+      background: color-mix(in srgb, var(--primary) 12%, var(--bg-elev));
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .splash-chip[data-status="ok"] {
+      background: color-mix(in srgb, var(--success, #16a34a) 12%, var(--bg-elev));
+      border-color: var(--success, #16a34a);
+      color: var(--success, #16a34a);
+    }
+    .splash-chip[data-status="error"] {
+      background: color-mix(in srgb, var(--danger, #dc2626) 14%, var(--bg-elev));
+      border-color: var(--danger, #dc2626);
+      color: var(--danger, #dc2626);
+    }
+    .splash-chip-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
+    }
+    .splash-chip[data-status="loading"] .splash-chip-dot {
+      animation: splashPulse 1s ease-in-out infinite;
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); opacity: 0.4; }
+      50%      { transform: scale(1.4); opacity: 1; }
+    }
+    .splash-chip[data-status="ok"] .splash-chip-dot::after {
+      content: '✓';
+      position: relative;
+      top: -8px; left: -2px;
+      font-size: 11px;
+      font-weight: 900;
+      color: currentColor;
+    }
+    .splash-chip[data-status="ok"] .splash-chip-dot {
+      background: transparent;
+    }
+
+    /* Caja de error/acciones */
+    .splash-error-box {
+      margin-top: var(--sp-4);
+      padding: var(--sp-3);
+      background: color-mix(in srgb, var(--danger, #dc2626) 8%, var(--bg-elev));
+      border: 1px solid var(--danger, #dc2626);
+      border-radius: var(--radius);
+      color: var(--danger, #dc2626);
+      font-size: var(--fs-sm);
+      text-align: left;
+      white-space: pre-line;
+    }
+    .splash-actions {
+      margin-top: var(--sp-4);
+      display: flex; gap: var(--sp-2); justify-content: center;
+    }
+  </style>
+
+  <div id="splash-backdrop">
+    <div class="splash-card">
+
+      <div class="splash-brand">
+        <div class="splash-brand-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/>
+            <circle cx="9" cy="20" r="1.5"/>
+            <circle cx="17" cy="20" r="1.5"/>
+          </svg>
+        </div>
+        <h1 class="splash-brand-name">MultiCompra</h1>
       </div>
 
-      <div id="splash-error" hidden style="background:var(--danger-soft, #fef2f2);border:1px solid var(--danger, #dc2626);color:var(--danger-text, #991b1b);border-radius:var(--radius);padding:var(--sp-3);margin-top:var(--sp-4);font-size:var(--fs-sm);text-align:left;"></div>
+      <div class="splash-msg" id="splash-msg">Conectando con el sistema…</div>
 
-      <div id="splash-actions" hidden style="margin-top:var(--sp-4);display:flex;gap:var(--sp-2);justify-content:center;">
+      <div class="splash-progress" aria-label="Progreso de carga">
+        <div class="splash-progress-fill" id="splash-progress-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      </div>
+
+      <div class="splash-chips" id="splash-chips">
+        <span class="splash-chip" data-step="Locales"     data-status="pending"><span class="splash-chip-dot"></span>Locales</span>
+        <span class="splash-chip" data-step="Proveedores" data-status="pending"><span class="splash-chip-dot"></span>Proveedores</span>
+        <span class="splash-chip" data-step="Productos"   data-status="pending"><span class="splash-chip-dot"></span>Productos</span>
+        <span class="splash-chip" data-step="Stock"       data-status="pending"><span class="splash-chip-dot"></span>Stock</span>
+      </div>
+
+      <div id="splash-error" class="splash-error-box" hidden></div>
+
+      <div id="splash-actions" class="splash-actions" hidden>
         <button type="button" id="splash-retry" class="btn">Reintentar</button>
-        <button type="button" id="splash-skip"  class="btn">Continuar sin caché</button>
+        <button type="button" id="splash-skip"  class="btn">Continuar igual</button>
       </div>
+
     </div>
   </div>
 
@@ -725,25 +915,49 @@
     /* =============================================================================
        Splash de carga — prefetch de las 4 colecciones
        ============================================================================= */
-    const splashBackdrop = document.getElementById('splash-backdrop');
-    const splashMsg      = document.getElementById('splash-msg');
-    const splashSteps    = document.getElementById('splash-steps');
-    const splashError    = document.getElementById('splash-error');
-    const splashActions  = document.getElementById('splash-actions');
-    const splashRetry    = document.getElementById('splash-retry');
-    const splashSkip     = document.getElementById('splash-skip');
+    const splashBackdrop  = document.getElementById('splash-backdrop');
+    const splashMsg       = document.getElementById('splash-msg');
+    const splashChips     = document.getElementById('splash-chips');
+    const splashProgress  = document.getElementById('splash-progress-fill');
+    const splashError     = document.getElementById('splash-error');
+    const splashActions   = document.getElementById('splash-actions');
+    const splashRetry     = document.getElementById('splash-retry');
+    const splashSkip      = document.getElementById('splash-skip');
+
+    // Mensajes dinámicos según qué se está cargando (más amigables que los nombres
+    // técnicos de los endpoints)
+    const SPLASH_MESSAGES = {
+      Locales:     'Trayendo los locales…',
+      Proveedores: 'Cargando proveedores…',
+      Productos:   'Sincronizando catálogo…',
+      Stock:       'Calculando stock por local…'
+    };
 
     function setSplashStep(label, status, count) {
-      const li = splashSteps.querySelector(`[data-step="${label}"]`);
-      if (!li) return;
-      let icon = '⏳';
-      let color = 'var(--text-muted)';
-      if (status === 'loading') { icon = '🔄'; color = 'var(--text)'; }
-      else if (status === 'ok') { icon = '✅'; color = 'var(--success, #16a34a)'; }
-      else if (status === 'error') { icon = '❌'; color = 'var(--danger, #dc2626)'; }
-      const countTxt = (status === 'ok' && typeof count === 'number') ? ` (${count.toLocaleString('es-PY')})` : '';
-      li.innerHTML = `${icon} ${label}${countTxt}`;
-      li.style.color = color;
+      const chip = splashChips.querySelector(`[data-step="${label}"]`);
+      if (!chip) return;
+      chip.setAttribute('data-status', status === 'pending' ? 'pending' : status);
+      // Con count, mostramos algo como "Productos (13.372)"
+      if (status === 'ok' && typeof count === 'number') {
+        chip.innerHTML = `<span class="splash-chip-dot"></span>${label} <strong>(${count.toLocaleString('es-PY')})</strong>`;
+      } else {
+        chip.innerHTML = `<span class="splash-chip-dot"></span>${label}`;
+      }
+    }
+
+    function setSplashProgress(currentIndex, totalSteps) {
+      const pct = Math.round((currentIndex / totalSteps) * 100);
+      splashProgress.style.width = pct + '%';
+      splashProgress.setAttribute('aria-valuenow', String(pct));
+    }
+
+    function setSplashMessage(text) {
+      // Pequeña transición de opacity para que el cambio sea suave
+      splashMsg.style.opacity = '0';
+      setTimeout(() => {
+        splashMsg.textContent = text;
+        splashMsg.style.opacity = '1';
+      }, 180);
     }
 
     function resetSplash() {
@@ -751,7 +965,9 @@
       splashError.hidden = true;
       splashError.textContent = '';
       splashActions.hidden = true;
-      splashMsg.textContent = 'Cargando datos del sistema…';
+      splashMsg.textContent = 'Conectando con el sistema…';
+      splashProgress.style.width = '0%';
+      splashProgress.setAttribute('aria-valuenow', '0');
     }
 
     function redirigirSegunRol(rol) {
@@ -780,16 +996,25 @@
       splashBackdrop.style.display = 'flex';
       resetSplash();
 
-      const result = await prefetchAll(({ label, status, count, error }) => {
+      const TOTAL_STEPS = 4;
+      const result = await prefetchAll(({ label, status, count, index }) => {
         setSplashStep(label, status, count);
+        if (status === 'loading') {
+          setSplashMessage(SPLASH_MESSAGES[label] || 'Cargando…');
+        }
+        if (status === 'ok' || status === 'error') {
+          // Avanzar la barra cada vez que termina un paso
+          setSplashProgress(index + 1, TOTAL_STEPS);
+        }
       });
 
       if (result.ok) {
-        splashMsg.textContent = '¡Listo! Entrando a tu panel…';
-        // Pequeña espera para que el usuario vea los ✅
-        setTimeout(() => redirigirSegunRol(user.rol), 600);
+        setSplashMessage(`¡Listo, ${user.nombre.split(' ')[0]}! Entrando a tu panel…`);
+        splashProgress.style.width = '100%';
+        // Pequeña espera para que el usuario vea el 100% y los chips verdes
+        setTimeout(() => redirigirSegunRol(user.rol), 800);
       } else {
-        splashMsg.textContent = 'Hubo errores cargando los datos.';
+        setSplashMessage('Hubo errores cargando los datos.');
         splashError.textContent = result.errores.map(e => `• ${e.label}: ${e.error}`).join('\n');
         splashError.hidden = false;
         splashActions.hidden = false;
