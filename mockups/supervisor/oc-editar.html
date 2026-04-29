@@ -727,6 +727,15 @@
     }
   }
 
+  // Debug hook ya disponible — aunque haya error después, podés inspeccionar
+  // la cache y los helpers desde la consola.
+  window.__debug = {
+    get oc() { return oc; },
+    getStockMap, getProductos, getLocales, getProductoPorId, getStockProducto
+  };
+  console.log('[oc-editar] window.__debug listo (oc se llena despues de cargar). productos:',
+    getProductos().length, 'depots:', Object.keys(getStockMap() || {}).length);
+
   // ─── Config de la planilla ───────────────────────────────────────────────
   const parametros = {
     oc: { umbralSobrepedidoPct: 30, usarSugeridoComoDefaultComprar: true }
@@ -953,17 +962,7 @@
     throw new Error('sin líneas');
   }
 
-  // ─── Debug hook (temporal) — expone oc y helpers a window para inspeccionar
-  // desde DevTools. Sacar cuando se cierre el debug.
-  window.__debug = {
-    oc,
-    getStockMap,
-    getProductos,
-    getLocales,
-    getProductoPorId,
-    getStockProducto
-  };
-  console.log('[oc-editar] debug hook listo. Usá window.__debug.oc, window.__debug.getStockMap(), etc.');
+  console.log('[oc-editar] oc cargado. grupos:', oc.grupos.length, 'opsOrigen:', oc.opsOrigen.length);
 
   // ─── Poblar header con datos reales de la OC ─────────────────────────────
   (function _poblarHeader() {
