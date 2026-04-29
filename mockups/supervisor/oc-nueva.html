@@ -903,6 +903,7 @@
   } from '../shared/mock-data.js';
   import {
     isCargado,
+    prefetchAll,
     getProductos as _getProductosReales,
     getLocales as _getLocalesReales,
     getProveedores as _getProveedoresReales,
@@ -922,6 +923,18 @@
   let proveedores   = [...proveedoresMock];
   let locales       = [...localesMock];
   let productos     = [...productosMock];
+
+  // Si la cache está vacía (sessionStorage expirado o nunca se hizo prefetch),
+  // disparar prefetch contra el ERP para tener datos reales antes de seguir.
+  if (!isCargado()) {
+    try {
+      console.log('[oc-nueva] cache vacia, ejecutando prefetchAll...');
+      const r = await prefetchAll();
+      console.log('[oc-nueva] prefetch resultado:', r.ok ? 'OK' : 'CON ERRORES', r.errores || '');
+    } catch (e) {
+      console.warn('[oc-nueva] prefetch fallo:', e);
+    }
+  }
 
   if (isCargado()) {
     const realLocales     = _getLocalesReales();
