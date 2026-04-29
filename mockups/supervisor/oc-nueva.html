@@ -904,7 +904,7 @@
     getStockTotal,
     getStockProducto
   } from '../shared/data.js';
-  import { crearOC, resolverOP } from '../shared/supabase.js';
+  import { crearOC, resolverOP, listarOPs, obtenerLineasOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Mergear datos reales (si la cache está cargada) con los mocks ───────
@@ -961,37 +961,85 @@
     productos = [...productosReales, ...productosMock];
   }
 
-  // ─── OPs pendientes: mergear las reales aprobadas y enviadas con el mock ──
+  // ─── OPs aprobadas: traerlas de Supabase + localStorage + mock ────────────
+  // Las OPs aprobadas son las que se pueden bundlear en una OC al proveedor.
+  // Devueltas no aparecen, en_oc tampoco (ya consolidadas).
+  let opsRealesParaOC = [];
+
+  // 1) Supabase (la verdad)
+  try {
+    const res = await listarOPs({ estado: 'aprobada', limit: 500 });
+    if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      const detalladas = await Promise.all(res.data.map(async (o) => {
+        const linRes = await obtenerLineasOP(o.id);
+        const lineas = (linRes.data || []).map(l => ({
+          productoId: l.producto_id_erp,
+          productoCodigo: l.producto_codigo,
+          productoNombre: l.producto_nombre,
+          productoCosto: l.producto_costo,
+          productoPrecio: l.producto_precio,
+          cantidad: l.cantidad
+        }));
+        return {
+          id: o.numero || o.id,
+          _uuid: o.id,
+          localId: o.local_id,
+          localNombre: o.local_nombre,
+          cajera: o.cajera_nombre,
+          cajeraId: o.cajera_id_erp,
+          fecha: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+          enviadaHace: 'reciente',
+          estado: 'aprobada',
+          esExcepcion: !!o.es_excepcion,
+          motivoExcepcion: o.motivo_excepcion || null,
+          esVieja: false,
+          lineas
+        };
+      }));
+      opsRealesParaOC.push(...detalladas);
+    }
+  } catch (e) {
+    console.warn('[oc-nueva] error Supabase listarOPs:', e);
+  }
+
+  // 2) Fallback localStorage (para compat con el flujo viejo y modo offline)
   try {
     const opsRealesArr = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
     const resoluciones = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
-    // Solo OPs aprobadas o enviadas (sin resolver) entran a la consolidación.
-    // Devueltas no aparecen acá.
-    const opsRealesParaOC = opsRealesArr
+    const desdeLocal = opsRealesArr
       .filter(op => {
         const r = resoluciones[op.id];
-        if (!r) return true; // sin resolver = enviada
+        if (!r) return true; // sin resolver = enviada (legacy)
         return r.estado === 'aprobada';
       })
-      .map(op => {
-        // Adaptar shape al esperado por oc-nueva: lineas con productoId
-        return {
-          ...op,
-          esVieja: false,
-          esExcepcion: !!op.esExcepcion,
-          motivoExcepcion: op.motivoExcepcion || null,
-          lineas: op.lineas.map(l => ({
-            productoId: l.productoId,
-            cantidad: l.cantidad
-          }))
-        };
-      });
-    opsPendientes = [...opsRealesParaOC, ...opsPendientesMock];
+      .map(op => ({
+        ...op,
+        esVieja: false,
+        esExcepcion: !!op.esExcepcion,
+        motivoExcepcion: op.motivoExcepcion || null,
+        lineas: op.lineas.map(l => ({
+          productoId: l.productoId,
+          cantidad: l.cantidad
+        }))
+      }));
+    // Dedupe por id contra Supabase
+    const idsYaTraidas = new Set(opsRealesParaOC.map(o => o.id));
+    for (const op of desdeLocal) {
+      if (!idsYaTraidas.has(op.id)) opsRealesParaOC.push(op);
+    }
+
+    // Solo agregamos el mock si NO hay nada real (modo demo total)
+    if (opsRealesParaOC.length === 0) {
+      opsPendientes = [...opsPendientesMock];
+    } else {
+      opsPendientes = [...opsRealesParaOC];
+    }
 
     // También enriquecer productos con los inline de las OPs reales
+    // (tanto las que vinieron de Supabase como las de localStorage)
     const idsExistentes = new Set(productos.map(p => p.id));
-    for (const op of opsRealesArr) {
-      for (const l of op.lineas) {
+    for (const op of opsRealesParaOC) {
+      for (const l of (op.lineas || [])) {
         if (!idsExistentes.has(l.productoId) && l.productoNombre) {
           productos.push({
             id: l.productoId,
