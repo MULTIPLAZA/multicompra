@@ -479,7 +479,8 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
      ===================================================================== -->
 <script type="module">
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
-  import { listarOPs } from '../shared/supabase.js';
+  import { listarOPs, suscribirseRealtime, obtenerOP } from '../shared/supabase.js';
+  import { playNotifAprobada, playNotifDevuelta } from '../shared/sonido.js';
   import { initAvatarMenu } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage (login real). Si no hay, fallback al mock.
@@ -611,7 +612,7 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     `;
   }).join('');
 
-  // Menú avatar unificado (tema + logout)
+  // Menú avatar unificado (tema + sonido + logout)
   initAvatarMenu({
     avatarBtnSelector: '#avatar-btn',
     logoutHref: '../logout.html',
@@ -620,6 +621,84 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     userRole: cajeraActual.rol,
     userLocal: cajeraActual.localNombre,
   });
+
+  /* =====================================================================
+     Realtime — la cajera escucha resoluciones del supervisor sobre SUS OPs
+     ===================================================================== */
+  function showToastCajeraTop(html, tipo = 'success') {
+    let host = document.getElementById('rt-toast-cajera');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'rt-toast-cajera';
+      host.style.cssText = 'position:fixed;top:84px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:1000;max-width:360px;';
+      document.body.appendChild(host);
+    }
+    const colors = {
+      success: { bg: 'var(--success-soft, #dcfce7)', border: 'var(--success, #22c55e)', text: 'var(--success-text, #15803d)' },
+      warning: { bg: 'var(--warning-soft, #fef3c7)', border: 'var(--warning, #f59e0b)', text: 'var(--warning-text, #b45309)' },
+      info:    { bg: 'var(--info-soft, #eff6ff)',    border: 'var(--info, #3b82f6)',    text: 'var(--info-text, #1d4ed8)' }
+    };
+    const c = colors[tipo] || colors.info;
+    const t = document.createElement('div');
+    t.style.cssText = `background:${c.bg};border:1px solid ${c.border};color:${c.text};padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(15,23,42,0.25);animation:rtSlide .25s ease-out;cursor:pointer;`;
+    t.innerHTML = html;
+    t.addEventListener('click', () => t.remove());
+    host.appendChild(t);
+    setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 320); }, 8000);
+  }
+  if (!document.getElementById('rt-toast-style-c')) {
+    const s = document.createElement('style');
+    s.id = 'rt-toast-style-c';
+    s.textContent = '@keyframes rtSlide { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+    document.head.appendChild(s);
+  }
+
+  // Cuando llega una resolución de Supabase, vemos si es una de MIS OPs y
+  // mostramos toast + sonido específico del estado.
+  let rtTimer = null;
+  async function manejarResolucionRealtime(resol) {
+    // resol viene con { op_id (uuid), estado, supervisor_nombre, nota, ... }
+    // Necesitamos verificar que la OP es de esta cajera. Pedimos los detalles.
+    try {
+      const { ok, data } = await obtenerOP(resol.op_id);
+      if (!ok || !data) return;
+      if (Number(data.cajera_id_erp) !== Number(cajeraActual.id)) return;
+
+      const num = (data.numero || data.id || '').toString().toUpperCase();
+      if (resol.estado === 'aprobada') {
+        showToastCajeraTop(
+          `<strong>✅ ¡${num} aprobada!</strong><br><span style="font-size:13px;opacity:0.9;">${resol.supervisor_nombre || 'El supervisor'} aprobó tu pedido.</span>`,
+          'success'
+        );
+        try { playNotifAprobada(); } catch (_) {}
+      } else if (resol.estado === 'devuelta') {
+        const notaPreview = (resol.nota || '').slice(0, 80);
+        showToastCajeraTop(
+          `<strong>↶ ${num} devuelta</strong><br><span style="font-size:13px;opacity:0.9;">${notaPreview}${notaPreview.length === 80 ? '…' : ''}</span><br><a href="op-devuelta.html?id=${data.numero || data.id}" style="font-size:13px;text-decoration:underline;color:inherit;">Ver detalles →</a>`,
+          'warning'
+        );
+        try { playNotifDevuelta(); } catch (_) {}
+      } else if (resol.estado === 'en_oc') {
+        showToastCajeraTop(
+          `<strong>📋 ${num} incluida en una OC</strong><br><span style="font-size:13px;opacity:0.9;">Tu pedido se va a comprar al proveedor.</span>`,
+          'info'
+        );
+        // Sin sonido para el caso 'en_oc' — es un cambio interno, no afecta a la cajera
+      }
+      // Refrescar el historial (debounced)
+      clearTimeout(rtTimer);
+      rtTimer = setTimeout(() => location.reload(), 1500);
+    } catch (e) {
+      console.warn('[realtime cajera] error procesando resolución:', e);
+    }
+  }
+
+  try {
+    const sub = await suscribirseRealtime({
+      onOpResolucion: manejarResolucionRealtime
+    });
+    if (sub.ok) console.log('[realtime] cajera dashboard suscripto');
+  } catch (e) { console.warn('[realtime cajera] no pude suscribir:', e); }
 </script>
 
 </body>

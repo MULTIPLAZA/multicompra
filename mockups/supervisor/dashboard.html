@@ -537,6 +537,7 @@
 <script type="module">
   import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { listarOPs, obtenerLineasOP, suscribirseRealtime } from '../shared/supabase.js';
+  import { playNotifSupervisor } from '../shared/sonido.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
@@ -1074,6 +1075,7 @@
       const delta = opsPendientes.length - cantAntes;
       if (delta > 0) {
         showToastTop(`<strong>📦 ${delta} OP${delta > 1 ? 's' : ''} nueva${delta > 1 ? 's' : ''}</strong> · La lista se actualizó.`, 'info');
+        try { playNotifSupervisor(); } catch (_) {}
       }
     }, 600);
   }

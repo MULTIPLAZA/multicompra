@@ -98,6 +98,8 @@ export function initAvatarMenu(opts = {}) {
   const iconMoon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
   const iconUser = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>`;
   const iconLogout = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+  const iconBellOn  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+  const iconBellOff = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
   menu.innerHTML = `
     <div class="avatar-menu-header" role="presentation">
@@ -119,6 +121,10 @@ export function initAvatarMenu(opts = {}) {
     <button type="button" class="avatar-menu-item" id="avatar-menu-theme" role="menuitem">
       <span class="avatar-menu-theme-icon">${iconSun}${iconMoon}</span>
       <span id="avatar-menu-theme-label">${themeLabel()}</span>
+    </button>
+    <button type="button" class="avatar-menu-item" id="avatar-menu-sonido" role="menuitem">
+      <span class="avatar-menu-sonido-icon">${iconBellOn}${iconBellOff}</span>
+      <span id="avatar-menu-sonido-label">Sonido: cargando…</span>
     </button>
     <div class="avatar-menu-divider" role="separator"></div>
     <a class="avatar-menu-item avatar-menu-item--danger" href="${logoutHref}" role="menuitem">
@@ -213,6 +219,35 @@ export function initAvatarMenu(opts = {}) {
       if (lbl) lbl.textContent = themeLabel();
       // Actualizar el btn-theme suelto si todavía existe en la página
       // (compatibilidad durante la transición)
+    });
+  }
+
+  // Toggle de sonido (carga lazy del módulo para que la pantalla no falle
+  // si shared/sonido.js todavía no está deployado en alguna versión)
+  const btnSonidoMenu = document.getElementById('avatar-menu-sonido');
+  if (btnSonidoMenu) {
+    let sonidoMod = null;
+    const lblSonido = document.getElementById('avatar-menu-sonido-label');
+    const refrescarLbl = () => {
+      if (!sonidoMod || !lblSonido) return;
+      const rol = sonidoMod.rolUsuarioActual();
+      const on = sonidoMod.getSonidoHabilitado(rol);
+      lblSonido.textContent = on ? 'Sonido: activado' : 'Sonido: silenciado';
+      btnSonidoMenu.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btnSonidoMenu.classList.toggle('avatar-menu-sonido-off', !on);
+    };
+    import('./sonido.js').then(mod => {
+      sonidoMod = mod;
+      refrescarLbl();
+    }).catch(() => {
+      if (lblSonido) lblSonido.textContent = 'Sonido: no disponible';
+    });
+    btnSonidoMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!sonidoMod) return;
+      const rol = sonidoMod.rolUsuarioActual();
+      sonidoMod.toggleSonido(rol);
+      refrescarLbl();
     });
   }
 
