@@ -462,6 +462,31 @@
       <label class="form-label" for="return-nota">Nota para la cajera</label>
       <textarea id="return-nota" placeholder="Ej: la cantidad de cargadores es muy alta para la rotación actual del local. Revisá y mandame el pedido corregido."></textarea>
       <div class="modal-counter" id="return-counter">0 / 20 caracteres mínimos</div>
+
+      <!-- Plantillas rápidas -->
+      <div id="plantillas-wrap" style="margin-top: var(--sp-3);">
+        <button type="button" id="btn-plantilla-toggle"
+                style="background:transparent;border:1px dashed var(--border-strong);color:var(--text-muted);padding:4px 10px;border-radius:var(--radius-sm);font-size:var(--fs-xs);cursor:pointer;width:100%;text-align:left;">
+          Plantilla rápida &#9660;
+        </button>
+        <div id="plantillas-list" hidden style="margin-top:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-1);">
+          <button type="button" class="plantilla-item"
+                  style="text-align:left;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-xs);color:var(--text);cursor:pointer;line-height:1.4;"
+                  data-texto="Pediste demasiado de [PRODUCTO], ya tenés stock suficiente.">
+            "Pediste demasiado de [PRODUCTO], ya tenés stock suficiente."
+          </button>
+          <button type="button" class="plantilla-item"
+                  style="text-align:left;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-xs);color:var(--text);cursor:pointer;line-height:1.4;"
+                  data-texto="El producto X se agotó, no podemos comprarlo esta semana.">
+            "El producto X se agotó, no podemos comprarlo esta semana."
+          </button>
+          <button type="button" class="plantilla-item"
+                  style="text-align:left;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-xs);color:var(--text);cursor:pointer;line-height:1.4;"
+                  data-texto="Te falta agregar [PRODUCTO] que sí está vendiendo bien.">
+            "Te falta agregar [PRODUCTO] que sí está vendiendo bien."
+          </button>
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btn-return-cancel">Cancelar</button>
@@ -806,9 +831,33 @@
   }
   returnNota.addEventListener('input', refreshReturnCounter);
 
+  // Plantillas rápidas — toggle + click en cada item pega el texto
+  const btnPlantillaToggle = document.getElementById('btn-plantilla-toggle');
+  const plantillasList     = document.getElementById('plantillas-list');
+  btnPlantillaToggle.addEventListener('click', () => {
+    const open = !plantillasList.hidden;
+    plantillasList.hidden = open;
+    btnPlantillaToggle.innerHTML = open
+      ? 'Plantilla rápida &#9660;'
+      : 'Plantilla rápida &#9650;';
+  });
+  plantillasList.addEventListener('click', (e) => {
+    const item = e.target.closest('.plantilla-item');
+    if (!item) return;
+    returnNota.value = item.dataset.texto;
+    refreshReturnCounter();
+    returnNota.focus();
+    // Cerrar la lista de plantillas
+    plantillasList.hidden = true;
+    btnPlantillaToggle.innerHTML = 'Plantilla rápida &#9660;';
+  });
+
   function abrirModal() {
     returnContext.innerHTML = `<strong>${IDU}</strong> &middot; ${op.localNombre} &middot; Cajera: <strong>${op.cajera}</strong>`;
     returnNota.value = '';
+    // Resetear plantillas al abrir
+    plantillasList.hidden = true;
+    btnPlantillaToggle.innerHTML = 'Plantilla rápida &#9660;';
     refreshReturnCounter();
     modalReturn.classList.add('show');
     setTimeout(() => returnNota.focus(), 50);
@@ -864,7 +913,7 @@
       } catch (err) {
         btnApr.disabled = false;
         btnApr.innerHTML = txtOriginal;
-        alert('No pude aprobar la OP:\n\n' + err.message);
+        showToast('No pude aprobar la OP: ' + err.message);
       }
     });
   }
@@ -905,7 +954,7 @@
     } catch (err) {
       btnReturnConfirm.disabled = false;
       btnReturnConfirm.textContent = txtOriginal;
-      alert('No pude devolver la OP:\n\n' + err.message);
+      showToast('No pude devolver la OP: ' + err.message);
     }
   });
 
