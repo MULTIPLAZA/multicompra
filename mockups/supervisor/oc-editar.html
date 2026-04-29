@@ -700,17 +700,28 @@
     obtenerOP, obtenerOC, crearOC, actualizarLineasOC,
     cambiarEstadoOC, resolverOP
   } from '../shared/supabase.js';
-  import { getProductoPorId, getLocales, getStockProducto, isCargado, prefetchAll } from '../shared/data.js';
+  import { getProductoPorId, getLocales, getStockProducto, getStockMap, getProductos, isCargado, prefetchAll } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Asegurar que la cache de productos/locales/stock esté cargada ───────
   // Sin esto, getStockProducto/getProductoPorId devuelven 0/null y la
   // planilla muestra valores en cero aunque las OPs sí lleguen de Supabase.
-  if (!isCargado()) {
+  // Verificamos: cache existe Y tiene productos Y tiene stock (sino una cache
+  // corrupta de un prefetch fallido pasado nos engaña).
+  function _cacheOk() {
+    if (!isCargado()) return false;
+    if (!getProductos().length) return false;
+    const sm = getStockMap();
+    if (!sm || Object.keys(sm).length === 0) return false;
+    return true;
+  }
+  if (!_cacheOk()) {
     try {
-      console.log('[oc-editar] cache vacia, ejecutando prefetchAll...');
+      console.log('[oc-editar] cache no apta (vacia o corrupta), ejecutando prefetchAll...');
       const r = await prefetchAll();
-      console.log('[oc-editar] prefetch resultado:', r.ok ? 'OK' : 'CON ERRORES', r.errores || '');
+      console.log('[oc-editar] prefetch resultado:', r.ok ? 'OK' : 'CON ERRORES', r.errores || '',
+        'productos:', getProductos().length,
+        'stockMap depots:', Object.keys(getStockMap() || {}).length);
     } catch (e) {
       console.warn('[oc-editar] prefetch fallo:', e);
     }
