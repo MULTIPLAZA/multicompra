@@ -909,7 +909,8 @@
     getStockTotal,
     getStockProducto
   } from '../shared/data.js';
-  import { crearOC, resolverOP, listarOPs, obtenerLineasOP } from '../shared/supabase.js';
+  // crearOC y resolverOP se movieron a oc-editar.html (se crean al "Cerrar OC" en la planilla)
+  import { listarOPs, obtenerLineasOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Mergear datos reales (si la cache está cargada) con los mocks ───────
@@ -1475,33 +1476,7 @@
       return;
     }
 
-    // Acumular líneas: { productoId, cantidad, costo, productoNombre, productoCodigo }
-    const lineasMap = new Map();
-    let totalGs = 0;
-    for (const opId of opIds) {
-      const op = opsPendientes.find(o => o.id === opId);
-      if (!op) continue;
-      for (const ln of op.lineas) {
-        const prod = productoById.get(String(ln.productoId));
-        if (!prod) continue;
-        const subtotal = (prod.costo || 0) * ln.cantidad;
-        totalGs += subtotal;
-        const acum = lineasMap.get(ln.productoId) || {
-          productoId: ln.productoId,
-          productoNombre: prod.nombre,
-          productoCodigo: prod.barras || '',
-          costo: prod.costo || 0,
-          cantidad: 0
-        };
-        acum.cantidad += ln.cantidad;
-        lineasMap.set(ln.productoId, acum);
-      }
-    }
-
-    // Construir OC
-    const ahora = new Date(), pad = (n) => String(n).padStart(2, '0');
-    const fechaStr = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())} ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`;
-    const ocNumero = 'OC-loc-' + Date.now().toString(36).toUpperCase();
+    // Obtener datos del supervisor para guardar en la sesión
     const supervisorObj = (() => {
       try { return JSON.parse(localStorage.getItem('multicompra:user') || '{}'); }
       catch (_) { return {}; }
@@ -1511,68 +1486,28 @@
 
     btn.style.opacity = '0.6';
     btn.style.pointerEvents = 'none';
-    btn.textContent = 'Creando OC…';
+    btn.textContent = 'Abriendo planilla…';
 
     try {
-      // Guardar la OC en Supabase
-      const lineasArr = [...lineasMap.values()];
-      const resOC = await crearOC({
-        numero: ocNumero,
-        proveedorIdErp: provId,
-        proveedorNombre: prov.nombre,
-        proveedorRuc: prov.ruc || '',
-        opIds, // serán resueltos por el wrapper si vienen como "numero" en lugar de UUID
-        lineas: lineasArr,
-        totalGs,
-        creadoPorIdErp: supervisorIdErp,
-        creadoPorNombre: supervisorNombre
-      });
-      if (!resOC.ok) throw new Error(resOC.error || 'Error al crear OC');
+      // NUEVO FLUJO: no crear la OC aquí.
+      // Guardar la selección en sessionStorage y redirigir a la planilla.
+      // La OC se crea recién cuando el supervisor hace click en "Cerrar OC"
+      // dentro de la planilla (oc-editar.html?fromNueva=1).
+      sessionStorage.setItem('multicompra:oc-en-armado', JSON.stringify({
+        opIds,
+        proveedorId:      provId,
+        proveedorNombre:  prov.nombre,
+        proveedorRuc:     prov.ruc || '',
+        supervisorId:     supervisorIdErp,
+        supervisorNombre
+      }));
 
-      // Marcar todas las OPs incluidas como 'en_oc' en Supabase
-      for (const opIdLegible of opIds) {
-        await resolverOP({
-          opId: opIdLegible,
-          estado: 'en_oc',
-          supervisorIdErp,
-          supervisorNombre,
-          ocId: resOC.ocId
-        });
-      }
-
-      // También guardar en localStorage para que la pantalla de oc-lista
-      // (que aún lee local) pueda mostrarla — esto se elimina cuando oc-lista
-      // se migre a leer de Supabase.
-      try {
-        const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
-        arr.unshift({
-          id: ocNumero, numero: ocNumero,
-          proveedorId: provId, proveedorNombre: prov.nombre,
-          opIds, lineas: lineasArr, totalGs,
-          fecha: fechaStr, estado: 'abierta', creadaPor: supervisorNombre
-        });
-        localStorage.setItem('multicompra:ocs_creadas', JSON.stringify(arr));
-      } catch (_) {}
-      try {
-        const resol = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
-        for (const opId of opIds) {
-          resol[opId] = { estado: 'en_oc', ocId: ocNumero, supervisor: supervisorNombre, fechaResolucion: fechaStr, nota: null };
-        }
-        localStorage.setItem('multicompra:ops_resoluciones', JSON.stringify(resol));
-      } catch (_) {}
-
-      mostrarModalOCCreada({
-        ocNumero,
-        opsCount: opIds.length,
-        productosCount: lineasArr.length,
-        totalGs,
-        proveedor: prov.nombre
-      });
+      window.location.href = 'oc-editar.html?fromNueva=1';
     } catch (err) {
       btn.style.opacity = '';
       btn.style.pointerEvents = '';
       btn.textContent = 'Armar OC y abrir planilla';
-      alert('No pude crear la OC:\n\n' + err.message);
+      showToast('No pude abrir la planilla: ' + err.message, 'error');
     }
   });
 
