@@ -476,6 +476,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { opsPendientes as opsPendientesMock, historialCajera, ops, productos as productosMock, locales as localesMock, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProductos as _getProdReales, getLocales as _getLocReales, getStockProducto } from '../shared/data.js';
   import { resolverOP, obtenerOP } from '../shared/supabase.js';

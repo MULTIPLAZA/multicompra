@@ -234,6 +234,9 @@
 </div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { ocsHistorico as ocsHistMock, proveedores as proveedoresMock, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { listarOCs } from '../shared/supabase.js';

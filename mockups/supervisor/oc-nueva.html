@@ -880,6 +880,9 @@
      Scripts
      ================================================================= -->
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import {
     opsPendientes as opsPendientesMock,
     proveedores as proveedoresMock,

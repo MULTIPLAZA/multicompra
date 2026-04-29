@@ -407,6 +407,9 @@
 </div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import {
     isCargado,
     getProductos as _getProductos,

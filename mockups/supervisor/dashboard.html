@@ -535,6 +535,9 @@
      Scripts
      ================================================================= -->
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { listarOPs, obtenerLineasOP, suscribirseRealtime } from '../shared/supabase.js';
   import { playNotifSupervisor } from '../shared/sonido.js';

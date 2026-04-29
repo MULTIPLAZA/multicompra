@@ -326,6 +326,9 @@
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { solicitudesAltaProducto, proveedores as proveedoresMock } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { listarSolicitudesAlta, resolverSolicitudAlta } from '../shared/supabase.js';
