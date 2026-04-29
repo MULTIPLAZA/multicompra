@@ -378,6 +378,116 @@ export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveed
   return { ok: true, ocId: ocRow.id, ocNumero: ocRow.numero };
 }
 
+/* =============================================================================
+   actualizarLineasOC — reemplaza todas las líneas de la OC y recalcula total
+   ----------------------------------------------------------------------------
+   ocId puede ser UUID o número legible (ej: 'OC-loc-xyz').
+   lineas: [{ productoId, productoCodigo, productoNombre, costo, cantidad }, ...]
+   Retorna { ok, error?, totalGs }
+   ============================================================================= */
+export async function actualizarLineasOC({ ocId, ocNumero, lineas }) {
+  const idRaw = ocId || ocNumero;
+  if (!idRaw) return { ok: false, error: 'Se requiere ocId u ocNumero' };
+
+  // Calcular total
+  const totalGs = lineas.reduce((s, l) => s + (Number(l.costo) || 0) * (Number(l.cantidad) || 0), 0);
+
+  const supa = await getClient();
+  if (!supa) {
+    // Fallback localStorage
+    const arr = lsGet(KEYS.OCS, []);
+    const idx = arr.findIndex(o => o.id === idRaw || o.numero === idRaw);
+    if (idx !== -1) {
+      arr[idx].lineas = lineas.map((l, i) => ({
+        productoId: l.productoId,
+        productoCodigo: l.productoCodigo,
+        productoNombre: l.productoNombre,
+        costo: Number(l.costo) || 0,
+        cantidad: Number(l.cantidad) || 0,
+        subtotal: (Number(l.costo) || 0) * (Number(l.cantidad) || 0),
+        orden: i
+      }));
+      arr[idx].totalGs = totalGs;
+      lsSet(KEYS.OCS, arr);
+    }
+    return { ok: true, fallback: true, totalGs };
+  }
+
+  // Resolver UUID
+  let uuid = idRaw;
+  if (!UUID_RE.test(idRaw)) {
+    const { data: ocByNum } = await supa.from('oc').select('id').eq('numero', idRaw).maybeSingle();
+    if (!ocByNum) return { ok: false, error: 'OC no encontrada en Supabase', totalGs };
+    uuid = ocByNum.id;
+  }
+
+  // 1) DELETE lineas existentes
+  const { error: errDel } = await supa.from('oc_lineas').delete().eq('oc_id', uuid);
+  if (errDel) return { ok: false, error: errDel.message, totalGs };
+
+  // 2) INSERT nuevas líneas
+  if (lineas.length > 0) {
+    const lineasInsert = lineas.map((l, i) => ({
+      oc_id: uuid,
+      producto_id_erp: toInt(l.productoId),
+      producto_codigo: l.productoCodigo || null,
+      producto_nombre: l.productoNombre || '',
+      cantidad_pedida: Math.max(1, Number(l.cantidad) || 1),
+      costo_unitario: Number(l.costo) || 0,
+      subtotal: (Number(l.costo) || 0) * (Number(l.cantidad) || 0),
+      orden: i
+    }));
+    const { error: errIns } = await supa.from('oc_lineas').insert(lineasInsert);
+    if (errIns) return { ok: false, error: errIns.message, totalGs };
+  }
+
+  // 3) UPDATE total_gs (el trigger de BD también lo haría, pero actualizamos por si acaso)
+  const { error: errUpd } = await supa.from('oc').update({ total_gs: totalGs }).eq('id', uuid);
+  if (errUpd) return { ok: false, error: errUpd.message, totalGs };
+
+  return { ok: true, totalGs };
+}
+
+/* =============================================================================
+   cambiarEstadoOC — actualiza el estado de una OC
+   ----------------------------------------------------------------------------
+   Estados válidos: 'abierta'|'en_edicion'|'cerrada'|'enviada_a_proveedor'|'anulada'
+   Retorna { ok, error? }
+   ============================================================================= */
+export async function cambiarEstadoOC({ ocId, ocNumero, estado, supervisorIdErp, supervisorNombre }) {
+  const ESTADOS_VALIDOS = ['abierta', 'en_edicion', 'cerrada', 'enviada_a_proveedor',
+                            'parcialmente_recibida', 'recibida', 'cerrada_con_faltante', 'anulada'];
+  if (!ESTADOS_VALIDOS.includes(estado)) {
+    return { ok: false, error: `Estado inválido: ${estado}` };
+  }
+
+  const idRaw = ocId || ocNumero;
+  if (!idRaw) return { ok: false, error: 'Se requiere ocId u ocNumero' };
+
+  const supa = await getClient();
+  if (!supa) {
+    // Fallback localStorage
+    const arr = lsGet(KEYS.OCS, []);
+    const idx = arr.findIndex(o => o.id === idRaw || o.numero === idRaw);
+    if (idx !== -1) {
+      arr[idx].estado = estado;
+      lsSet(KEYS.OCS, arr);
+    }
+    return { ok: true, fallback: true };
+  }
+
+  // Resolver UUID
+  let uuid = idRaw;
+  if (!UUID_RE.test(idRaw)) {
+    const { data: ocByNum } = await supa.from('oc').select('id').eq('numero', idRaw).maybeSingle();
+    if (!ocByNum) return { ok: false, error: 'OC no encontrada en Supabase' };
+    uuid = ocByNum.id;
+  }
+
+  const { error } = await supa.from('oc').update({ estado }).eq('id', uuid);
+  return { ok: !error, error: error?.message };
+}
+
 export async function listarOCs({ estado, proveedorIdErp, limit = 100 } = {}) {
   const supa = await getClient();
   if (!supa) {
