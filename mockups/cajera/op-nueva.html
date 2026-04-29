@@ -868,7 +868,7 @@
       getStockTotal,
       buscarProductos
     } from '../shared/data.js';
-    import { guardarOP } from '../shared/supabase.js';
+    import { guardarOP, crearSolicitudAlta } from '../shared/supabase.js';
     import { initAvatarMenu } from '../shared/ui.js';
 
     // ─── Guard: si no hay cache cargada, mandar al login ────────────────
@@ -1463,7 +1463,7 @@
       }
     });
 
-    modalAltaEnviar.addEventListener('click', () => {
+    modalAltaEnviar.addEventListener('click', async () => {
       const desc = modalAltaDesc.value.trim();
       if (desc.length < 10) {
         modalAltaDescErr.hidden = false;
@@ -1472,39 +1472,36 @@
         return;
       }
 
-      const ahora = new Date();
-      const fechaStr = ahora.toISOString().slice(0, 10) + ' ' +
-                       ahora.toTimeString().slice(0, 5);
-      const solicitud = {
-        id: 'alt-loc-' + Date.now().toString(36),
-        fecha: fechaStr,
+      modalAltaEnviar.disabled = true;
+      const txtOriginal = modalAltaEnviar.textContent;
+      modalAltaEnviar.textContent = 'Enviando…';
+
+      const payload = {
         codigo: modalAltaCodigo.value.trim(),
         descripcion: desc,
         motivo: modalAltaMotivo.value.trim() || null,
         categoria: modalAltaCateg.value || null,
-        proveedorSugerido: modalAltaProv.value || null,
+        proveedorSugerido: modalAltaProv.value ? Number(modalAltaProv.value) || null : null,
         cajeraId: cajeraActual.id,
         cajera: cajeraActual.nombre,
-        local: cajeraActual.localNombre,
-        estado: 'pendiente',
-        notaSupervisor: null,
-        fechaResolucion: null
+        localId: cajeraActual.localId,
+        local: cajeraActual.localNombre
       };
 
       try {
-        const arr = JSON.parse(localStorage.getItem(SOLICITUDES_KEY) || '[]');
-        arr.push(solicitud);
-        localStorage.setItem(SOLICITUDES_KEY, JSON.stringify(arr));
-      } catch (e) {
-        showToast('No pude guardar la solicitud. Probá de nuevo.', 'error');
-        return;
+        const res = await crearSolicitudAlta(payload);
+        if (!res.ok) throw new Error(res.error || 'Error al guardar');
+        cerrarModalAlta();
+        limpiarFeedback();
+        lastCodigoNoEncontrado = '';
+        scanInput.value = '';
+        showToast(res.fallback ? 'Solicitud guardada offline.' : 'Solicitud enviada al supervisor.', 'success');
+      } catch (err) {
+        showToast('No pude guardar la solicitud: ' + err.message, 'error');
+      } finally {
+        modalAltaEnviar.disabled = false;
+        modalAltaEnviar.textContent = txtOriginal;
       }
-
-      cerrarModalAlta();
-      limpiarFeedback();
-      lastCodigoNoEncontrado = '';
-      scanInput.value = '';
-      showToast('Solicitud enviada al supervisor.', 'success');
     });
 
     // =====================================================================

@@ -401,6 +401,7 @@
 
 <script type="module">
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
+  import { obtenerOP, obtenerLineasOP } from '../shared/supabase.js';
   import { initAvatarMenu } from '../shared/ui.js';
 
   // Usuario real desde localStorage. Fallback al mock.
@@ -452,20 +453,49 @@
   // Hacer que el resto del script encuentre productoById como antes
   window.__productoById = _productoById;
 
-  // Buscar en OPs reales primero, después en historial mock
+  // Buscar primero en Supabase
   let op = null;
-  const opReal = opsRealesCajera.find(o => o.id === opId);
-  if (opReal) {
-    const resol = resolucionesOps[opId];
-    op = {
-      id: opReal.id,
-      fechaEnvio: opReal.fecha,
-      estado: resol ? resol.estado : (opReal.estado || 'enviada'),
-      esExcepcion: opReal.esExcepcion,
-      motivoExcepcion: opReal.motivoExcepcion,
-      notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
-      lineas: opReal.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
-    };
+  try {
+    const res = await obtenerOP(opId);
+    if (res.ok && res.data && !res.fallback) {
+      const o = res.data;
+      // Hidratar productoById con productos inline de las líneas
+      for (const l of (o.lineas || [])) {
+        if (!_productoById.has(l.producto_id_erp) && l.producto_nombre) {
+          _productoById.set(l.producto_id_erp, {
+            id: l.producto_id_erp,
+            nombre: l.producto_nombre,
+            barras: l.producto_codigo || ''
+          });
+        }
+      }
+      op = {
+        id: o.numero || o.id,
+        fechaEnvio: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: o.estado_resolucion || o.estado || 'enviada',
+        esExcepcion: o.es_excepcion,
+        motivoExcepcion: o.motivo_excepcion,
+        notaDevolucion: (o.estado_resolucion === 'devuelta') ? o.nota_supervisor : null,
+        lineas: (o.lineas || []).map(l => ({ productoId: l.producto_id_erp, cantidad: l.cantidad }))
+      };
+    }
+  } catch (e) { console.warn('[op-detalle cajera] Supabase falló, fallback local:', e); }
+
+  // Fallback: OPs reales del localStorage o historial mock
+  if (!op) {
+    const opReal = opsRealesCajera.find(o => o.id === opId);
+    if (opReal) {
+      const resol = resolucionesOps[opId];
+      op = {
+        id: opReal.id,
+        fechaEnvio: opReal.fecha,
+        estado: resol ? resol.estado : (opReal.estado || 'enviada'),
+        esExcepcion: opReal.esExcepcion,
+        motivoExcepcion: opReal.motivoExcepcion,
+        notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
+        lineas: opReal.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+      };
+    }
   }
   if (!op) op = historialCajera.find(o => o.id === opId);
   if (!op) {

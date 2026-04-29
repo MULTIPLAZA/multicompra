@@ -399,6 +399,7 @@
 
 <script type="module">
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
+  import { listarOPs } from '../shared/supabase.js';
   import { initAvatarMenu } from '../shared/ui.js';
 
   // Usuario real desde localStorage (login real). Fallback al mock.
@@ -420,29 +421,48 @@
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
   document.getElementById('avatar-iniciales').textContent = cajeraActual.iniciales;
 
-  // ─── Mergear OPs reales con el historial del mock ──────────────────────
+  // ─── Cargar historial desde Supabase ───────────────────────────────────
+  let historialReal = [];
   let opsRealesCajera = [];
   let resolucionesOps = {};
   try {
-    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
-    opsRealesCajera = todas.filter(op => op.cajeraId === cajeraActual.id);
-  } catch (_) {}
-  try {
-    resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
-  } catch (_) {}
+    const res = await listarOPs({ cajeraIdErp: cajeraActual.id, limit: 200 });
+    if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      historialReal = res.data.map(o => ({
+        id: o.numero || o.id,
+        fechaEnvio: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: o.estado_resolucion || o.estado || 'enviada',
+        lineas: Array.from({ length: o.productos_count || 0 }, (_, i) => ({
+          productoId: 'sb-' + i, cantidad: 1
+        })),
+        productosCount: o.productos_count,
+        unidadesCount: o.unidades_count,
+        _real: true
+      }));
+    }
+  } catch (e) { console.warn('[op-historial] Supabase falló, fallback local:', e); }
 
-  // Las OPs reales adaptadas al shape del mock (id, fechaEnvio, estado, lineas)
-  const historialReal = opsRealesCajera.map(op => {
-    const resol = resolucionesOps[op.id];
-    return {
-      id: op.id,
-      fechaEnvio: op.fecha,
-      estado: resol ? resol.estado : (op.estado || 'enviada'),
-      lineas: op.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad })),
-      _real: true,
-      _opOriginal: op
-    };
-  });
+  // Fallback al localStorage si Supabase no devolvió nada
+  if (historialReal.length === 0) {
+    try {
+      const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+      opsRealesCajera = todas.filter(op => op.cajeraId === cajeraActual.id);
+    } catch (_) {}
+    try {
+      resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+    } catch (_) {}
+    historialReal = opsRealesCajera.map(op => {
+      const resol = resolucionesOps[op.id];
+      return {
+        id: op.id,
+        fechaEnvio: op.fecha,
+        estado: resol ? resol.estado : (op.estado || 'enviada'),
+        lineas: op.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad })),
+        _real: true,
+        _opOriginal: op
+      };
+    });
+  }
 
   // Combinar — reales primero (más recientes)
   const historialCompleto = [...historialReal, ...historialCajera];

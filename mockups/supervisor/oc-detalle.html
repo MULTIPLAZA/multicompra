@@ -341,6 +341,7 @@
 <script type="module">
   import { ocsHistorico, oc as ocActual, ops, auditoria, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
+  import { obtenerOC } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   const ESTADO_BADGE = {
@@ -385,9 +386,46 @@
   const params = new URLSearchParams(window.location.search);
   const ocIdRaw = params.get('id') || 'oc-0039';
   const ocId = ocIdRaw.toLowerCase();
-  const ocMeta = todasLasOCs.find(o => o.id.toLowerCase() === ocId)
-              || todasLasOCs.find(o => (o.numero || '').toLowerCase() === ocId)
-              || ocsHistorico[3];
+
+  // Primero intentar Supabase
+  let ocMeta = null;
+  try {
+    const res = await obtenerOC(ocIdRaw);
+    if (res.ok && res.data && !res.fallback) {
+      const oc = res.data;
+      ocMeta = {
+        id: oc.numero || oc.id,
+        numero: oc.numero || oc.id,
+        proveedorId: oc.proveedor_id_erp,
+        proveedorNombre: oc.proveedor_nombre,
+        proveedor: { nombre: oc.proveedor_nombre, ruc: oc.proveedor_ruc || '' },
+        fecha: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        fechaCreacion: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: oc.estado || 'abierta',
+        productosCount: oc.productos_count || (oc.lineas || []).length,
+        unidadesCount: oc.unidades_count || 0,
+        total: Number(oc.total_gs) || 0,
+        totalGs: Number(oc.total_gs) || 0,
+        creadaPor: oc.creada_por_nombre,
+        lineas: (oc.lineas || []).map(l => ({
+          productoId: l.producto_id_erp,
+          productoNombre: l.producto_nombre,
+          productoCodigo: l.producto_codigo,
+          cantidad: l.cantidad_pedida,
+          costo: Number(l.costo_unitario) || 0,
+          subtotal: Number(l.subtotal) || 0
+        })),
+        opsIncluidas: (oc.ops || []).map(o => o.numero),
+        _real: true
+      };
+    }
+  } catch (e) { console.warn('[oc-detalle] Supabase falló, fallback:', e); }
+
+  if (!ocMeta) {
+    ocMeta = todasLasOCs.find(o => o.id.toLowerCase() === ocId)
+          || todasLasOCs.find(o => (o.numero || '').toLowerCase() === ocId)
+          || ocsHistorico[3];
+  }
 
   // Cabecera
   document.getElementById('breadcrumb-id').textContent = ocMeta.numero;

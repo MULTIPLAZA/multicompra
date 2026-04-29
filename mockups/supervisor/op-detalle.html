@@ -478,7 +478,7 @@
 <script type="module">
   import { opsPendientes as opsPendientesMock, historialCajera, ops, productos as productosMock, locales as localesMock, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProductos as _getProdReales, getLocales as _getLocReales, getStockProducto } from '../shared/data.js';
-  import { resolverOP } from '../shared/supabase.js';
+  import { resolverOP, obtenerOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Datos reales con shape mock-compatible ─────────────────────────────
@@ -535,11 +535,6 @@
     return null;
   }
 
-  const resuelto = encontrarOp(opIdParam) || encontrarOp('op-1043');
-  const op = resuelto.op;
-  const contexto = resuelto.contexto;
-  const local = locales.find(l => l.id === op.localId);
-
   // productoById combina mock + productos inline de las OPs reales (las OPs
   // de cajeras reales traen { productoId, productoNombre, productoCodigo }
   // en cada línea, así que con eso enriquecemos el mapa).
@@ -557,6 +552,54 @@
       }
     }
   }
+
+  // Primero intentar Supabase con el id legible
+  let resuelto = null;
+  try {
+    const res = await obtenerOP(opIdParam);
+    if (res.ok && res.data && !res.fallback) {
+      const o = res.data;
+      const opSupa = {
+        id: o.numero || o.id,
+        localId: o.local_id,
+        localNombre: o.local_nombre,
+        cajeraId: o.cajera_id_erp,
+        cajera: o.cajera_nombre,
+        fecha: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        enviadaHace: 'reciente',
+        estado: o.estado_resolucion || o.estado || 'enviada',
+        esExcepcion: o.es_excepcion,
+        motivoExcepcion: o.motivo_excepcion,
+        notaDevolucion: o.nota_supervisor,
+        lineas: (o.lineas || []).map(l => ({
+          productoId: l.producto_id_erp,
+          cantidad: l.cantidad,
+          productoNombre: l.producto_nombre,
+          productoCodigo: l.producto_codigo
+        }))
+      };
+      resuelto = { op: opSupa, contexto: 'pendiente' };
+      // Enriquecer productoById con productos inline de la OP de Supabase
+      for (const l of (o.lineas || [])) {
+        if (!productoById.has(l.producto_id_erp) && l.producto_nombre) {
+          productoById.set(l.producto_id_erp, {
+            id: l.producto_id_erp,
+            nombre: l.producto_nombre,
+            barras: l.producto_codigo || '',
+            costo: Number(l.producto_costo) || 0,
+            precio: Number(l.producto_precio) || 0,
+            stockCentral: 0,
+            stockPorLocal: {}
+          });
+        }
+      }
+    }
+  } catch (e) { console.warn('[supervisor/op-detalle] Supabase falló, fallback local/mock:', e); }
+
+  if (!resuelto) resuelto = encontrarOp(opIdParam) || encontrarOp('op-1043');
+  const op = resuelto.op;
+  const contexto = resuelto.contexto;
+  const local = locales.find(l => l.id === op.localId);
 
   // =====================================================================
   // Render cabecera

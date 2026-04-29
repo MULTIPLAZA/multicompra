@@ -328,7 +328,36 @@
 <script type="module">
   import { solicitudesAltaProducto, proveedores as proveedoresMock } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
+  import { listarSolicitudesAlta, resolverSolicitudAlta } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu } from '../shared/ui.js';
+
+  // Cargar solicitudes desde Supabase. Sirven en paralelo con las del mock.
+  let solicitudesSupabase = [];
+  try {
+    const res = await listarSolicitudesAlta({ limit: 200 });
+    if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      solicitudesSupabase = res.data.map(s => ({
+        id: s.id,
+        fecha: (s.fecha || '').replace('T', ' ').slice(0, 16),
+        codigo: s.codigo,
+        descripcion: s.descripcion,
+        motivo: s.motivo,
+        categoria: s.categoria,
+        proveedorSugerido: s.proveedor_sugerido_id,
+        cajeraId: s.cajera_id_erp,
+        cajera: s.cajera_nombre,
+        local: s.local_nombre,
+        estado: s.estado,
+        notaSupervisor: s.nota_supervisor,
+        fechaResolucion: s.fecha_resolucion ? s.fecha_resolucion.slice(0, 16).replace('T', ' ') : null,
+        _real: true
+      }));
+    }
+  } catch (e) { console.warn('[solicitudes-alta] Supabase falló:', e); }
+  // Inyectar en el array global que la pantalla recorre
+  if (solicitudesSupabase.length) {
+    solicitudesAltaProducto.unshift(...solicitudesSupabase);
+  }
 
   // Proveedores reales (los del ERP) mergeados con los del mock
   const proveedores = isCargado()

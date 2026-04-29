@@ -158,9 +158,103 @@ export async function obtenerLineasOP(opId) {
     const op = arr.find(o => o.id === opId || o.numero === opId);
     return { ok: !!op, data: op?.lineas || [] };
   }
+  // Resolver UUID si vino como número legible
+  const uuid = await resolverUuidOP(supa, opId);
+  if (!uuid) return { ok: false, error: 'OP no encontrada', data: [] };
   const { data, error } = await supa.from('op_lineas')
-    .select('*').eq('op_id', opId).order('orden');
+    .select('*').eq('op_id', uuid).order('orden');
   return { ok: !error, error: error?.message, data };
+}
+
+/* =============================================================================
+   Obtener UNA OP por número o UUID, con sus líneas y resolución
+   ============================================================================= */
+export async function obtenerOP(opIdOrNumero) {
+  const supa = await getClient();
+  if (!supa) {
+    const arr = lsGet(KEYS.OPS, []);
+    const op = arr.find(o => o.id === opIdOrNumero || o.numero === opIdOrNumero);
+    if (!op) return { ok: false };
+    const resol = lsGet(KEYS.OPS_RESOL, {})[op.id];
+    return { ok: true, fallback: true, data: { ...op, _resolucion: resol } };
+  }
+  const uuid = await resolverUuidOP(supa, opIdOrNumero);
+  if (!uuid) return { ok: false, error: 'OP no encontrada' };
+  // Traer la OP con su resolución (vista) + líneas
+  const { data: op, error: errOp } = await supa.from('v_op_con_resolucion')
+    .select('*').eq('id', uuid).maybeSingle();
+  if (errOp || !op) return { ok: false, error: errOp?.message };
+  const { data: lineas, error: errL } = await supa.from('op_lineas')
+    .select('*').eq('op_id', uuid).order('orden');
+  if (errL) return { ok: false, error: errL.message };
+  return { ok: true, data: { ...op, lineas: lineas || [] } };
+}
+
+/* =============================================================================
+   Obtener UNA OC por número o UUID, con sus líneas y las OPs incluidas
+   ============================================================================= */
+export async function obtenerOC(ocIdOrNumero) {
+  const supa = await getClient();
+  if (!supa) {
+    const arr = lsGet(KEYS.OCS, []);
+    const oc = arr.find(o => o.id === ocIdOrNumero || o.numero === ocIdOrNumero);
+    return { ok: !!oc, fallback: true, data: oc };
+  }
+  // Resolver UUID
+  let uuid = ocIdOrNumero;
+  if (!UUID_RE.test(ocIdOrNumero)) {
+    const { data: ocByNum } = await supa.from('oc').select('id').eq('numero', ocIdOrNumero).maybeSingle();
+    if (!ocByNum) return { ok: false, error: 'OC no encontrada' };
+    uuid = ocByNum.id;
+  }
+  const { data: oc, error: errOc } = await supa.from('oc')
+    .select('*').eq('id', uuid).maybeSingle();
+  if (errOc || !oc) return { ok: false, error: errOc?.message };
+  const { data: lineas } = await supa.from('oc_lineas')
+    .select('*').eq('oc_id', uuid);
+  // OPs incluidas (números legibles)
+  const { data: opsLink } = await supa.from('oc_ops')
+    .select('op_id, op:op_id (numero, cajera_nombre, local_nombre)')
+    .eq('oc_id', uuid);
+  return { ok: true, data: {
+    ...oc,
+    lineas: lineas || [],
+    ops: (opsLink || []).map(l => l.op).filter(Boolean)
+  }};
+}
+
+/* =============================================================================
+   Solicitudes de alta — listar / resolver
+   ============================================================================= */
+export async function listarSolicitudesAlta({ estado, limit = 200 } = {}) {
+  const supa = await getClient();
+  if (!supa) {
+    const arr = lsGet(KEYS.SOL_ALTA, []);
+    const filtradas = estado ? arr.filter(s => s.estado === estado) : arr;
+    return { ok: true, fallback: true, data: filtradas.slice(0, limit) };
+  }
+  let q = supa.from('solicitudes_alta').select('*').order('fecha', { ascending: false }).limit(limit);
+  if (estado) q = q.eq('estado', estado);
+  const { data, error } = await q;
+  return { ok: !error, error: error?.message, data };
+}
+
+export async function resolverSolicitudAlta({ id, estado, supervisorIdErp, supervisorNombre, nota = null }) {
+  const supa = await getClient();
+  if (!supa) {
+    const all = lsGet(KEYS.SOL_ALTA_RES, {});
+    all[id] = { estado, supervisor: supervisorNombre, nota, fechaResolucion: formatearFecha(new Date()) };
+    lsSet(KEYS.SOL_ALTA_RES, all);
+    return { ok: true, fallback: true };
+  }
+  const { error } = await supa.from('solicitudes_alta').update({
+    estado,
+    nota_supervisor: nota,
+    supervisor_id_erp: supervisorIdErp,
+    supervisor_nombre: supervisorNombre,
+    fecha_resolucion: new Date().toISOString()
+  }).eq('id', id);
+  return { ok: !error, error: error?.message };
 }
 
 /* =============================================================================

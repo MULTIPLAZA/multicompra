@@ -443,6 +443,7 @@
 
 <script type="module">
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
+  import { obtenerOP } from '../shared/supabase.js';
   import { initAvatarMenu } from '../shared/ui.js';
 
   // Usuario real desde localStorage. Fallback al mock.
@@ -466,23 +467,45 @@
   const params = new URLSearchParams(location.search);
   const opId = params.get('id') || 'op-1026';
 
-  // Buscar primero en OPs reales (las que mandó esta cajera y fueron devueltas)
+  // Buscar primero en Supabase
   let op = null;
   try {
-    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
-    const resoluciones = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
-    const opR = todas.find(o => o.id === opId && o.cajeraId === cajeraActual.id);
-    if (opR) {
-      const resol = resoluciones[opId];
+    const res = await obtenerOP(opId);
+    if (res.ok && res.data && !res.fallback) {
+      const o = res.data;
       op = {
-        id: opR.id,
-        fechaEnvio: opR.fecha,
-        estado: resol ? resol.estado : 'enviada',
-        notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
-        lineas: opR.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+        id: o.numero || o.id,
+        fechaEnvio: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: o.estado_resolucion || o.estado || 'devuelta',
+        notaDevolucion: o.nota_supervisor || null,
+        lineas: (o.lineas || []).map(l => ({
+          productoId: l.producto_id_erp,
+          cantidad: l.cantidad,
+          productoNombre: l.producto_nombre,
+          productoCodigo: l.producto_codigo
+        }))
       };
     }
-  } catch (_) {}
+  } catch (e) { console.warn('[op-devuelta] Supabase falló:', e); }
+
+  // Fallback localStorage
+  if (!op) {
+    try {
+      const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+      const resoluciones = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+      const opR = todas.find(o => o.id === opId && o.cajeraId === cajeraActual.id);
+      if (opR) {
+        const resol = resoluciones[opId];
+        op = {
+          id: opR.id,
+          fechaEnvio: opR.fecha,
+          estado: resol ? resol.estado : 'enviada',
+          notaDevolucion: resol && resol.estado === 'devuelta' ? resol.nota : null,
+          lineas: opR.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+        };
+      }
+    } catch (_) {}
+  }
 
   if (!op) op = historialCajera.find(o => o.id === opId);
   if (!op) op = historialCajera.find(o => o.estado === 'devuelta');
@@ -508,7 +531,14 @@
   document.getElementById('info-unid').textContent = op.lineas.reduce((s, l) => s + l.cantidad, 0);
 
   const prodById = new Map(productos.map(p => [p.id, p]));
-  // Enriquecer con productos inline de OPs reales
+  // Enriquecer con productos inline (de Supabase o de OPs locales)
+  for (const l of (op.lineas || [])) {
+    if (!prodById.has(l.productoId) && l.productoNombre) {
+      prodById.set(l.productoId, {
+        id: l.productoId, nombre: l.productoNombre, barras: l.productoCodigo || ''
+      });
+    }
+  }
   try {
     const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
     for (const opR of todas) {
