@@ -235,6 +235,7 @@
 <script type="module">
   import { ocsHistorico as ocsHistMock, proveedores as proveedoresMock, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
+  import { listarOCs } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // Mergear proveedores reales con los del mock
@@ -242,17 +243,37 @@
     ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc, contacto: p.contacto })), ...proveedoresMock]
     : proveedoresMock;
 
-  // Leer OCs reales (las que el supervisor creó desde oc-nueva) y mergear
-  // arriba del histórico mock para que se vean primero.
-  let ocsReales = [];
+  // Cargar OCs desde Supabase (la verdad) + fallback localStorage + mock.
+  let ocsSupabase = [];
+  try {
+    const res = await listarOCs({ limit: 200 });
+    if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      ocsSupabase = res.data.map(oc => ({
+        id: oc.numero || oc.id,
+        _uuid: oc.id,
+        proveedorId: oc.proveedor_id_erp,
+        proveedor: oc.proveedor_nombre,
+        fecha: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        fechaCreacion: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: oc.estado || 'abierta',
+        productosCount: oc.productos_count || 0,
+        unidadesCount: oc.unidades_count || 0,
+        total: Number(oc.total_gs) || 0,
+        opsIncluidas: [],
+        _real: true
+      }));
+    }
+  } catch (e) {
+    console.warn('[oc-lista] error Supabase, fallback local:', e);
+  }
+
+  // Fallback: las que estén SOLO en localStorage (modo offline o demo)
+  let ocsLocal = [];
   try {
     const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
-    ocsReales = arr.map(oc => ({
-      id: oc.id,
-      proveedorId: oc.proveedorId,
-      proveedor: oc.proveedorNombre,
-      fecha: oc.fecha,
-      fechaCreacion: oc.fecha,
+    ocsLocal = arr.map(oc => ({
+      id: oc.id, proveedorId: oc.proveedorId, proveedor: oc.proveedorNombre,
+      fecha: oc.fecha, fechaCreacion: oc.fecha,
       estado: oc.estado || 'abierta',
       productosCount: (oc.lineas || []).length,
       unidadesCount: (oc.lineas || []).reduce((s, l) => s + l.cantidad, 0),
@@ -262,7 +283,17 @@
     }));
   } catch (_) {}
 
-  const ocsHistorico = [...ocsReales, ...ocsHistMock];
+  // Combinar deduplicando por id
+  const seen = new Set();
+  const ocsCombinadas = [];
+  for (const arr of [ocsSupabase, ocsLocal, ocsHistMock]) {
+    for (const oc of arr) {
+      if (!oc || seen.has(oc.id)) continue;
+      seen.add(oc.id);
+      ocsCombinadas.push(oc);
+    }
+  }
+  const ocsHistorico = ocsCombinadas;
 
   const ESTADO_BADGE = {
     abierta:                { cls: 'badge-abierta',              txt: 'Abierta' },

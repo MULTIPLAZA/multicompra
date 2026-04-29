@@ -535,6 +535,7 @@
      ================================================================= -->
 <script type="module">
   import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
+  import { listarOPs, obtenerLineasOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
@@ -552,29 +553,75 @@
     }
   } catch (_) {}
 
-  // ─── Mergear OPs reales (las que la cajera envió) con las del mock ─────
+  // ─── Cargar OPs desde Supabase + fallback localStorage + mock ──────────
+  // Mostramos las OPs en estado 'enviada' (sin resolución final) porque las
+  // ya aprobadas/devueltas/en_oc no tienen que aparecer como pendientes.
   const OPS_KEY = 'multicompra:ops_enviadas';
   const OPS_RESOL_KEY = 'multicompra:ops_resoluciones';
-  let opsReales = [];
+  let opsLocal = [];
   let resoluciones = {};
-  try {
-    opsReales = JSON.parse(localStorage.getItem(OPS_KEY) || '[]');
-  } catch (_) {}
-  try {
-    resoluciones = JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}');
-  } catch (_) {}
+  try { opsLocal = JSON.parse(localStorage.getItem(OPS_KEY) || '[]'); } catch (_) {}
+  try { resoluciones = JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}'); } catch (_) {}
 
-  // Filtrar OPs ya resueltas (aprobadas/devueltas/en_oc) del listado de
-  // pendientes: si tiene una resolución, no aparece más en el panel del
-  // supervisor. en_oc significa que ya está incluida en una OC.
   function tieneResolucionFinal(opId) {
     const r = resoluciones[opId];
     return r && (r.estado === 'aprobada' || r.estado === 'devuelta' || r.estado === 'en_oc');
   }
 
-  // Las reales primero (más recientes), después el mock (para que la demo se vea poblada)
-  const opsPendientes = [...opsReales, ...opsPendientesMock]
-    .filter(op => !tieneResolucionFinal(op.id));
+  // Adaptar OPs de Supabase al shape mock-compatible
+  async function cargarOPsSupabase() {
+    const res = await listarOPs({ estado: 'enviada', limit: 200 });
+    if (!res.ok || res.fallback) return [];
+    const ops = res.data || [];
+    // Para cada OP traer sus líneas y armar el shape
+    const detalladas = await Promise.all(ops.map(async (o) => {
+      const linRes = await obtenerLineasOP(o.id);
+      const lineas = (linRes.data || []).map(l => ({
+        productoId: l.producto_id_erp,
+        productoCodigo: l.producto_codigo,
+        productoNombre: l.producto_nombre,
+        productoCosto: l.producto_costo,
+        productoPrecio: l.producto_precio,
+        cantidad: l.cantidad
+      }));
+      return {
+        id: o.numero || o.id,                   // usamos el número legible para mantener compat
+        _uuid: o.id,
+        localId: o.local_id,
+        localNombre: o.local_nombre,
+        cajera: o.cajera_nombre,
+        cajeraId: o.cajera_id_erp,
+        fecha: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        enviadaHace: 'reciente',
+        estado: o.estado_resolucion || o.estado,
+        esExcepcion: o.es_excepcion,
+        motivoExcepcion: o.motivo_excepcion,
+        esVieja: false,
+        lineas
+      };
+    }));
+    return detalladas;
+  }
+
+  let opsSupabase = [];
+  try {
+    opsSupabase = await cargarOPsSupabase();
+  } catch (e) {
+    console.warn('[dashboard supervisor] error cargando OPs de Supabase, sigo con local:', e);
+  }
+
+  // Combinar — Supabase primero (la verdad), después localStorage (compat),
+  // después mock. Deduplicar por id.
+  const seenIds = new Set();
+  const opsTodas = [];
+  for (const arr of [opsSupabase, opsLocal, opsPendientesMock]) {
+    for (const op of arr) {
+      if (!op || seenIds.has(op.id)) continue;
+      seenIds.add(op.id);
+      opsTodas.push(op);
+    }
+  }
+  const opsPendientes = opsTodas.filter(op => !tieneResolucionFinal(op.id));
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
@@ -602,13 +649,13 @@
     }
   };
 
-  // Map de productos del mock + productos inline de las OPs reales.
-  // Las OPs reales traen { productoId, productoCodigo, productoNombre, ... } en
-  // cada línea, así que armamos un map combinado para que el render encuentre
+  // Map de productos del mock + productos inline de las OPs (Supabase y localStorage).
+  // Las OPs traen { productoId, productoCodigo, productoNombre, ... } en cada
+  // línea, así que armamos un map combinado para que el render encuentre
   // siempre nombre y código por id, sin importar de dónde vino la OP.
   const productoById = new Map(productos.map(p => [p.id, p]));
-  for (const op of opsReales) {
-    for (const l of op.lineas) {
+  for (const op of [...opsSupabase, ...opsLocal]) {
+    for (const l of (op.lineas || [])) {
       if (!productoById.has(l.productoId) && l.productoNombre) {
         productoById.set(l.productoId, {
           id: l.productoId,

@@ -478,6 +478,7 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
      ===================================================================== -->
 <script type="module">
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
+  import { listarOPs } from '../shared/supabase.js';
   import { initAvatarMenu } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage (login real). Si no hay, fallback al mock.
@@ -558,25 +559,38 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     resolucionesOps = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
   } catch (_) {}
 
+  // Primero intentar Supabase
   try {
-    const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
-    historialReal = todas
-      .filter(op => op.cajeraId === cajeraActual.id)
-      .map(op => {
-        // Si la supervisora ya resolvió, mostrar ese estado
-        const resol = resolucionesOps[op.id];
-        const estadoActualizado = resol ? resol.estado : (op.estado || 'enviada');
-        return {
-          id:         op.id,
-          fechaEnvio: op.fecha,
-          estado:     estadoActualizado,
-          lineas:     op.lineas.map(l => ({
-            productoId: l.productoId,
-            cantidad:   l.cantidad
-          }))
-        };
-      });
-  } catch (_) {}
+    const res = await listarOPs({ cajeraIdErp: cajeraActual.id, limit: 30 });
+    if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      historialReal = res.data.map(o => ({
+        id: o.numero || o.id,
+        fechaEnvio: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        estado: o.estado_resolucion || o.estado || 'enviada',
+        lineas: Array.from({ length: o.productos_count || 0 }, () => ({}))
+      }));
+    }
+  } catch (e) {
+    console.warn('[dashboard cajera] error Supabase, fallback local:', e);
+  }
+  // Si no vino nada de Supabase, fallback al localStorage
+  if (historialReal.length === 0) {
+    try {
+      const todas = JSON.parse(localStorage.getItem('multicompra:ops_enviadas') || '[]');
+      historialReal = todas
+        .filter(op => op.cajeraId === cajeraActual.id)
+        .map(op => {
+          const resol = resolucionesOps[op.id];
+          const estadoActualizado = resol ? resol.estado : (op.estado || 'enviada');
+          return {
+            id:         op.id,
+            fechaEnvio: op.fecha,
+            estado:     estadoActualizado,
+            lineas:     op.lineas.map(l => ({ productoId: l.productoId, cantidad: l.cantidad }))
+          };
+        });
+    } catch (_) {}
+  }
 
   // Reales primero (más recientes arriba), después el mock para que la demo se vea poblada
   const recientes = [...historialReal, ...historialCajera].slice(0, 4);
