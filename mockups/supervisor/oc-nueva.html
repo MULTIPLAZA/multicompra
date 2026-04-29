@@ -759,6 +759,11 @@
             Solo viejas <span class="chip-badge" id="chip-vieja-count">0</span>
           </button>
 
+          <button class="chip" id="chip-solo-aprobadas" aria-pressed="false" title="Ocultar OPs pendientes, mostrar solo las aprobadas">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Solo aprobadas
+          </button>
+
           <div class="grow"></div>
 
           <div class="bulk-select">
@@ -961,45 +966,65 @@
     productos = [...productosReales, ...productosMock];
   }
 
-  // ─── OPs aprobadas: traerlas de Supabase + localStorage + mock ────────────
-  // Las OPs aprobadas son las que se pueden bundlear en una OC al proveedor.
-  // Devueltas no aparecen, en_oc tampoco (ya consolidadas).
+  // ─── OPs aprobadas + pendientes: traerlas de Supabase + localStorage + mock ─
+  // Se muestran ambas para que Shirley pueda seleccionar directamente sin tener
+  // que aprobar una por una. Las aprobadas llevan chip verde; las pendientes chip
+  // naranja. En_oc y devueltas no aparecen (ya consolidadas o rechazadas).
   let opsRealesParaOC = [];
 
-  // 1) Supabase (la verdad)
+  // Helper para mapear una fila de Supabase a la forma interna
+  async function mapearOpSupabase(o, estadoLocal) {
+    const linRes = await obtenerLineasOP(o.id);
+    const lineas = (linRes.data || []).map(l => ({
+      productoId: l.producto_id_erp,
+      productoCodigo: l.producto_codigo,
+      productoNombre: l.producto_nombre,
+      productoCosto: l.producto_costo,
+      productoPrecio: l.producto_precio,
+      cantidad: l.cantidad
+    }));
+    return {
+      id: o.numero || o.id,
+      _uuid: o.id,
+      localId: o.local_id,
+      localNombre: o.local_nombre,
+      cajera: o.cajera_nombre,
+      cajeraId: o.cajera_id_erp,
+      fecha: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+      enviadaHace: 'reciente',
+      estado: estadoLocal,
+      esExcepcion: !!o.es_excepcion,
+      motivoExcepcion: o.motivo_excepcion || null,
+      esVieja: false,
+      lineas
+    };
+  }
+
+  // 1) Supabase — aprobadas
   try {
     const res = await listarOPs({ estadoResolucion: 'aprobada', limit: 500 });
     if (res.ok && !res.fallback && Array.isArray(res.data)) {
-      const detalladas = await Promise.all(res.data.map(async (o) => {
-        const linRes = await obtenerLineasOP(o.id);
-        const lineas = (linRes.data || []).map(l => ({
-          productoId: l.producto_id_erp,
-          productoCodigo: l.producto_codigo,
-          productoNombre: l.producto_nombre,
-          productoCosto: l.producto_costo,
-          productoPrecio: l.producto_precio,
-          cantidad: l.cantidad
-        }));
-        return {
-          id: o.numero || o.id,
-          _uuid: o.id,
-          localId: o.local_id,
-          localNombre: o.local_nombre,
-          cajera: o.cajera_nombre,
-          cajeraId: o.cajera_id_erp,
-          fecha: (o.fecha_envio || o.fecha_creacion || '').replace('T', ' ').slice(0, 16),
-          enviadaHace: 'reciente',
-          estado: 'aprobada',
-          esExcepcion: !!o.es_excepcion,
-          motivoExcepcion: o.motivo_excepcion || null,
-          esVieja: false,
-          lineas
-        };
-      }));
+      const detalladas = await Promise.all(res.data.map(o => mapearOpSupabase(o, 'aprobada')));
       opsRealesParaOC.push(...detalladas);
     }
   } catch (e) {
-    console.warn('[oc-nueva] error Supabase listarOPs:', e);
+    console.warn('[oc-nueva] error Supabase listarOPs aprobadas:', e);
+  }
+
+  // 1b) Supabase — pendientes (sin resolución)
+  try {
+    const resPend = await listarOPs({ estadoResolucion: 'sin_resolucion', limit: 500 });
+    if (resPend.ok && !resPend.fallback && Array.isArray(resPend.data)) {
+      const idsYaTraidas = new Set(opsRealesParaOC.map(o => o._uuid || o.id));
+      const detalladas = await Promise.all(
+        resPend.data
+          .filter(o => !idsYaTraidas.has(o.id))
+          .map(o => mapearOpSupabase(o, 'pendiente'))
+      );
+      opsRealesParaOC.push(...detalladas);
+    }
+  } catch (e) {
+    console.warn('[oc-nueva] error Supabase listarOPs pendientes:', e);
   }
 
   // 2) Fallback localStorage (para compat con el flujo viejo y modo offline)
@@ -1009,19 +1034,24 @@
     const desdeLocal = opsRealesArr
       .filter(op => {
         const r = resoluciones[op.id];
-        if (!r) return true; // sin resolver = enviada (legacy)
+        // Incluir aprobadas y sin resolución (pendientes); excluir en_oc/devueltas/anuladas
+        if (!r) return true; // sin resolver = pendiente (legacy)
         return r.estado === 'aprobada';
       })
-      .map(op => ({
-        ...op,
-        esVieja: false,
-        esExcepcion: !!op.esExcepcion,
-        motivoExcepcion: op.motivoExcepcion || null,
-        lineas: op.lineas.map(l => ({
-          productoId: l.productoId,
-          cantidad: l.cantidad
-        }))
-      }));
+      .map(op => {
+        const r = resoluciones[op.id];
+        return {
+          ...op,
+          esVieja: false,
+          esExcepcion: !!op.esExcepcion,
+          motivoExcepcion: op.motivoExcepcion || null,
+          estado: (r && r.estado === 'aprobada') ? 'aprobada' : 'pendiente',
+          lineas: op.lineas.map(l => ({
+            productoId: l.productoId,
+            cantidad: l.cantidad
+          }))
+        };
+      });
     // Dedupe por id contra Supabase
     const idsYaTraidas = new Set(opsRealesParaOC.map(o => o.id));
     for (const op of desdeLocal) {
@@ -1068,7 +1098,8 @@
       local: '',
       fecha: '',
       excepcion: false,
-      vieja: false
+      vieja: false,
+      soloAprobadas: false
     },
     previewExpanded: false
   };
@@ -1158,6 +1189,14 @@
   function opCardHTML(op) {
     const selected = state.selectedOps.has(op.id);
     const badgesArr = [];
+
+    // Chip de estado: aprobada (verde) o pendiente/sin aprobar (naranja)
+    if (op.estado === 'aprobada') {
+      badgesArr.push(`<span class="badge badge-aprobada" title="OP aprobada por supervisora">Aprobada</span>`);
+    } else {
+      badgesArr.push(`<span class="badge badge-devuelta" title="OP sin aprobación — se incluirá igual en la OC">Sin aprobar</span>`);
+    }
+
     if (op.esExcepcion) {
       const motivo = (op.motivoExcepcion || '').replace(/"/g, '&quot;');
       badgesArr.push(`<span class="badge badge-excepcion" data-tooltip="${motivo}" title="OP de excepción">Excepción</span>`);
@@ -1241,6 +1280,7 @@
       if (state.filter.fecha === 'hoy' && op.enviadaHace !== 'hoy') return false;
       if (state.filter.fecha === 'semana' && op.esVieja) return false;
       if (state.filter.fecha === 'vieja' && !op.esVieja) return false;
+      if (state.filter.soloAprobadas && op.estado !== 'aprobada') return false;
 
       if (q) {
         const hayEnLocal = op.localNombre.toLowerCase().includes(q);
@@ -1612,6 +1652,7 @@
   }
   document.getElementById('chip-excepcion').addEventListener('click', (e) => toggleChip(e.currentTarget, 'excepcion'));
   document.getElementById('chip-vieja').addEventListener('click', (e) => toggleChip(e.currentTarget, 'vieja'));
+  document.getElementById('chip-solo-aprobadas').addEventListener('click', (e) => toggleChip(e.currentTarget, 'soloAprobadas'));
 
   document.getElementById('chk-all').addEventListener('change', (e) => {
     const filtradas = aplicarFiltros();
