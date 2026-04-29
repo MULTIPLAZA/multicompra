@@ -467,8 +467,9 @@
     });
   }
 
-  // Combinar — reales primero (más recientes)
-  const historialCompleto = [...historialReal, ...historialCajera];
+  // Combinar — reales primero. El mock SOLO se usa si no hay historial real
+  // (modo demo total). Una vez que la cajera tiene OPs propias, se ocultan.
+  const historialCompleto = historialReal.length > 0 ? historialReal : historialCajera;
 
   // Estado de filtros
   const state = {

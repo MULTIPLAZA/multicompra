@@ -613,8 +613,9 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     } catch (_) {}
   }
 
-  // Reales primero (más recientes arriba), después el mock para que la demo se vea poblada
-  const recientes = [...historialReal, ...historialCajera].slice(0, 4);
+  // Reales primero. El mock SOLO se usa si la cajera no tiene historial real
+  // (primer login / demo total). Una vez que crea una OP real, el mock se oculta.
+  const recientes = (historialReal.length > 0 ? historialReal : historialCajera).slice(0, 4);
   listaHist.innerHTML = recientes.map(op => {
     const prod = op.lineas.length;
     const un = op.lineas.reduce((s, l) => s + l.cantidad, 0);
