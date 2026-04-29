@@ -703,6 +703,16 @@
   import { getProductoPorId, getLocales, getStockProducto, getStockMap, getProductos, isCargado, prefetchAll } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
+  // ─── Debug hook AL TOPE — setear ANTES de cualquier await ────────────────
+  // Asi window.__debug existe ni bien empieza a correr el modulo.
+  console.log('[oc-editar] script type=module empezo a correr — version 2026-04');
+  let _ocRef = null;
+  window.__debug = {
+    get oc() { return _ocRef; },
+    getStockMap, getProductos, getLocales, getProductoPorId, getStockProducto,
+    version: 'oc-editar-debug-v2'
+  };
+
   // ─── Asegurar que la cache de productos/locales/stock esté cargada ───────
   // Sin esto, getStockProducto/getProductoPorId devuelven 0/null y la
   // planilla muestra valores en cero aunque las OPs sí lleguen de Supabase.
@@ -727,13 +737,7 @@
     }
   }
 
-  // Debug hook ya disponible — aunque haya error después, podés inspeccionar
-  // la cache y los helpers desde la consola.
-  window.__debug = {
-    get oc() { return oc; },
-    getStockMap, getProductos, getLocales, getProductoPorId, getStockProducto
-  };
-  console.log('[oc-editar] window.__debug listo (oc se llena despues de cargar). productos:',
+  console.log('[oc-editar] post-prefetch productos:',
     getProductos().length, 'depots:', Object.keys(getStockMap() || {}).length);
 
   // ─── Config de la planilla ───────────────────────────────────────────────
@@ -956,6 +960,7 @@
     location.href = 'oc-lista.html';
     throw new Error('sin parámetros');
   }
+  _ocRef = oc; // Exponer al debug hook
   if (!oc.grupos || oc.grupos.length === 0) {
     alert('Las OPs seleccionadas no tienen líneas. Cancelo y vuelvo al listado.');
     location.href = 'oc-lista.html';
