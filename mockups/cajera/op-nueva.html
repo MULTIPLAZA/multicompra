@@ -1814,11 +1814,31 @@
           throw new Error(res.error || 'Error desconocido al guardar');
         }
 
-        // Limpiar el draft y volver al dashboard
+        // Limpiar el draft
         localStorage.removeItem(DRAFT_KEY);
-        const dest = res.fallback ? '(modo offline)' : '(guardado en la nube)';
-        alert(`OP ${numero.toUpperCase()} enviada a Shirley ${dest}.\n\n${lineas.length} productos · ${lineas.reduce((s, l) => s + l.cantidad, 0)} unidades totales.`);
-        window.location.href = 'dashboard.html';
+
+        // Mostrar modal de éxito (auto-redirect después de ~3s)
+        const totalUnid = lineas.reduce((s, l) => s + l.cantidad, 0);
+        const backdrop = document.getElementById('enviado-backdrop');
+        document.getElementById('enviado-prod').textContent = lineas.length;
+        document.getElementById('enviado-unid').textContent = totalUnid;
+        document.getElementById('enviado-codigo').textContent = numero.toUpperCase();
+        document.getElementById('enviado-meta-text').innerHTML = res.fallback
+          ? '⚠ Sin conexión — se sincronizará cuando vuelva la red.'
+          : '✓ <strong>Sincronizado en la nube.</strong> Shirley ya lo puede ver.';
+        document.getElementById('enviado-sub').textContent = res.fallback
+          ? 'Quedó guardado en este dispositivo.'
+          : 'Tu pedido ya está en la lista de Shirley.';
+        backdrop.hidden = false;
+
+        // Barra de progreso de la cuenta regresiva
+        const progress = document.getElementById('enviado-progress');
+        requestAnimationFrame(() => progress.classList.add('running'));
+
+        // Botón "Volver al inicio" o auto-redirect a 3.2s
+        const irAlInicio = () => { window.location.href = 'dashboard.html'; };
+        document.getElementById('enviado-btn-ok').addEventListener('click', irAlInicio, { once: true });
+        setTimeout(irAlInicio, 3200);
       } catch (err) {
         btnEnviar.disabled = false;
         btnEnviar.textContent = txtOriginal;
@@ -1904,6 +1924,214 @@
 
 <!-- ===== Toast container ===== -->
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ===== Modal: ¡Pedido enviado! ===== -->
+<div class="enviado-backdrop" id="enviado-backdrop" hidden>
+  <div class="enviado-card" role="dialog" aria-modal="true" aria-labelledby="enviado-title">
+    <div class="enviado-check" aria-hidden="true">
+      <svg viewBox="0 0 52 52" width="56" height="56">
+        <circle cx="26" cy="26" r="24" class="check-circle"/>
+        <path d="M14 27 l8 8 l16-18" class="check-path" fill="none"/>
+      </svg>
+    </div>
+    <h2 id="enviado-title" class="enviado-title">¡Pedido enviado!</h2>
+    <p class="enviado-sub" id="enviado-sub">Tu pedido ya está en la lista de Shirley.</p>
+
+    <div class="enviado-stats">
+      <div class="enviado-stat">
+        <span class="enviado-stat-value" id="enviado-prod">0</span>
+        <span class="enviado-stat-label">productos</span>
+      </div>
+      <div class="enviado-divider"></div>
+      <div class="enviado-stat">
+        <span class="enviado-stat-value" id="enviado-unid">0</span>
+        <span class="enviado-stat-label">unidades</span>
+      </div>
+    </div>
+
+    <div class="enviado-codigo" id="enviado-codigo">OP-—</div>
+    <div class="enviado-meta">
+      <span id="enviado-meta-text">Se está sincronizando…</span>
+    </div>
+
+    <button type="button" class="btn btn-primary enviado-btn" id="enviado-btn-ok">
+      Volver al inicio
+      <span class="enviado-progress" id="enviado-progress"></span>
+    </button>
+  </div>
+</div>
+
+<style>
+  .enviado-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--sp-4);
+    animation: enviadoFadeIn 0.25s ease-out;
+  }
+  .enviado-backdrop[hidden] { display: none; }
+  @keyframes enviadoFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .enviado-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: var(--sp-6) var(--sp-6) var(--sp-5);
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.4);
+    text-align: center;
+    animation: enviadoPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes enviadoPopIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  .enviado-check {
+    width: 80px; height: 80px;
+    margin: 0 auto var(--sp-4);
+    border-radius: 50%;
+    background: var(--success-soft, #dcfce7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .enviado-check::before {
+    content: '';
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    background: var(--success, #22c55e);
+    opacity: 0.18;
+    animation: enviadoPulse 1.4s ease-out infinite;
+  }
+  @keyframes enviadoPulse {
+    0%   { transform: scale(0.85); opacity: 0.4; }
+    100% { transform: scale(1.4);  opacity: 0; }
+  }
+  .enviado-check svg .check-circle {
+    fill: var(--success, #22c55e);
+    stroke: var(--success, #22c55e);
+    stroke-width: 1;
+  }
+  .enviado-check svg .check-path {
+    stroke: #fff;
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: enviadoCheckDraw 0.5s 0.2s ease-out forwards;
+  }
+  @keyframes enviadoCheckDraw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .enviado-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 0 var(--sp-2) 0;
+    letter-spacing: -0.3px;
+  }
+  .enviado-sub {
+    font-size: var(--fs-md);
+    color: var(--text-muted);
+    margin: 0 0 var(--sp-5) 0;
+    line-height: 1.5;
+  }
+
+  .enviado-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-4);
+    background: var(--bg-elev-2);
+    border-radius: var(--radius-lg);
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-4);
+  }
+  .enviado-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .enviado-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .enviado-stat-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .enviado-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--border-strong);
+  }
+
+  .enviado-codigo {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    background: var(--bg-elev-2);
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    margin-bottom: var(--sp-2);
+  }
+  .enviado-meta {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-bottom: var(--sp-5);
+    line-height: 1.5;
+  }
+  .enviado-meta strong { color: var(--text); }
+
+  .enviado-btn {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    font-size: var(--fs-md);
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--success, #22c55e);
+    color: #fff;
+    border-color: var(--success, #22c55e);
+  }
+  .enviado-btn:hover {
+    filter: brightness(1.05);
+  }
+  .enviado-progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.5);
+    width: 0%;
+    transition: width linear;
+  }
+  .enviado-progress.running {
+    width: 100%;
+    transition-duration: 3.2s;
+  }
+</style>
 
 </body>
 
