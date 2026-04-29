@@ -1,45 +1,50 @@
 /* =============================================================================
-   MultiCompra — cliente Supabase (stub listo para conectar)
+   MultiCompra — cliente Supabase
    ----------------------------------------------------------------------------
-   ESTADO: stub. Cuando se cree el proyecto Supabase, completar SUPABASE_URL
-   y SUPABASE_ANON_KEY abajo. Las funciones ya están escritas con la lógica
-   completa — solo descomenta el cliente y el código se conecta solo.
+   Carga el cliente @supabase/supabase-js desde esm.sh la primera vez que se
+   necesita. No requiere agregar nada al HTML.
 
-   Migración del frontend (cuando esté listo):
-   1) Agregar al index.html antes de los scripts:
-      <script type="module">
-        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-        window.__supabaseCreateClient = createClient;
-      </script>
-   2) Setear SUPABASE_URL y SUPABASE_ANON_KEY en este archivo.
-   3) Donde hoy se hace localStorage.setItem('multicompra:ops_enviadas', ...)
-      llamar a guardarOP(op).
-   4) Donde hoy se hace JSON.parse(localStorage.getItem('multicompra:ops_enviadas'))
-      llamar a listarOPs(filtros).
-
-   Fallback automático: si Supabase no está configurado (URL vacía), todas
-   las funciones caen al localStorage actual. Eso permite migrar gradual.
+   Si SUPABASE_URL queda vacío, todas las funciones caen al localStorage
+   actual (fallback transparente para mockups sin backend).
    ============================================================================= */
 
-// ─── Configuración (TODO: completar cuando se cree el proyecto Supabase) ───
-const SUPABASE_URL  = ''; // ej: 'https://xxxxx.supabase.co'
-const SUPABASE_ANON_KEY = ''; // ej: 'eyJhbGciOi...'
+// ─── Configuración del proyecto Supabase ────────────────────────────────────
+// La anon key es pública por diseño (se ve en el browser); la seguridad real
+// viene de las políticas RLS en cada tabla.
+const SUPABASE_URL      = 'https://asangpkbfuxvysdcbyms.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzYW5ncGtiZnV4dnlzZGNieW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjU5MTMsImV4cCI6MjA5MzA0MTkxM30.UgI3yX5S6_KOXRPeoRyH_2iAamgHlzaCt1Lhfc_2-rk';
 
 let _client = null;
+let _clientLoading = null;
 
-function getClient() {
+async function getClient() {
   if (_client) return _client;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
-  if (typeof window.__supabaseCreateClient !== 'function') {
-    console.warn('[supabase] createClient no encontrado. Importar @supabase/supabase-js antes.');
-    return null;
-  }
-  _client = window.__supabaseCreateClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  return _client;
+  if (_clientLoading) return _clientLoading;
+
+  _clientLoading = (async () => {
+    try {
+      const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+      _client = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false },  // usamos auth propio del ERP por ahora
+        global: { headers: { 'x-app': 'multicompra-pwa' } }
+      });
+      return _client;
+    } catch (err) {
+      console.error('[supabase] Error cargando cliente:', err);
+      return null;
+    }
+  })();
+
+  return _clientLoading;
 }
 
-export function isSupabaseConectado() {
-  return !!getClient();
+export async function isSupabaseConectado() {
+  return !!(await getClient());
+}
+
+export function tieneConfigSupabase() {
+  return !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 }
 
 /* =============================================================================
@@ -67,7 +72,7 @@ function lsSet(key, val) {
    USUARIOS — registrar / actualizar usuario en Supabase tras login real
    ============================================================================= */
 export async function upsertUsuario({ id_erp, usuario, nombre, rol, activo = true }) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) return { ok: true, fallback: true };
   const { error } = await supa.from('usuarios_app').upsert({
     id_erp, usuario, nombre, rol, activo, ultimo_login: new Date().toISOString()
@@ -83,7 +88,7 @@ export async function guardarOP(op) {
   //       lineas: [{ productoId, productoCodigo, productoNombre, productoCosto,
   //                  productoPrecio, idProveedor, cantidad }],
   //       esExcepcion, motivoExcepcion }
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     // Fallback: localStorage (lo que hace hoy op-nueva.html)
     const arr = lsGet(KEYS.OPS, []);
@@ -130,7 +135,7 @@ export async function guardarOP(op) {
 }
 
 export async function listarOPs({ cajeraIdErp, estado, limit = 100 } = {}) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     let arr = lsGet(KEYS.OPS, []);
     if (cajeraIdErp != null) arr = arr.filter(o => o.cajeraId === cajeraIdErp);
@@ -147,7 +152,7 @@ export async function listarOPs({ cajeraIdErp, estado, limit = 100 } = {}) {
 }
 
 export async function obtenerLineasOP(opId) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     const arr = lsGet(KEYS.OPS, []);
     const op = arr.find(o => o.id === opId || o.numero === opId);
@@ -162,7 +167,7 @@ export async function obtenerLineasOP(opId) {
    OP_RESOLUCIONES — supervisor aprueba / devuelve / marca como en_oc
    ============================================================================= */
 export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNombre, nota = null, ocId = null }) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     const all = lsGet(KEYS.OPS_RESOL, {});
     all[opId] = {
@@ -185,7 +190,7 @@ export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNomb
    ============================================================================= */
 export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveedorRuc,
                                 opIds, lineas, totalGs, creadoPorIdErp, creadoPorNombre }) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     const arr = lsGet(KEYS.OCS, []);
     const oc = {
@@ -226,7 +231,7 @@ export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveed
 }
 
 export async function listarOCs({ estado, proveedorIdErp, limit = 100 } = {}) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     let arr = lsGet(KEYS.OCS, []);
     if (estado) arr = arr.filter(o => o.estado === estado);
@@ -246,7 +251,7 @@ export async function listarOCs({ estado, proveedorIdErp, limit = 100 } = {}) {
 export async function registrarCompra({ ocId, facturaProveedor, lineas,
                                         recibidaPorIdErp, recibidaPorNombre,
                                         observaciones }) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     const arr = lsGet(KEYS.COMPRAS, []);
     const compra = {
@@ -269,7 +274,7 @@ export async function registrarCompra({ ocId, facturaProveedor, lineas,
    SOLICITUDES_ALTA — productos nuevos que pide la cajera
    ============================================================================= */
 export async function crearSolicitudAlta(payload) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     const arr = lsGet(KEYS.SOL_ALTA, []);
     arr.unshift({
@@ -300,7 +305,7 @@ export async function crearSolicitudAlta(payload) {
    BORRADORES_OP — guardar el draft de la cajera entre sesiones
    ============================================================================= */
 export async function guardarBorrador({ cajeraIdErp, localId, contenido }) {
-  const supa = getClient();
+  const supa = await getClient();
   if (!supa) {
     localStorage.setItem('multicompra:draft:op', JSON.stringify(contenido));
     return { ok: true, fallback: true };
