@@ -4,43 +4,27 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MultiCompra — Editar OC</title>
-  <!-- Anti-flash: setear data-theme antes del CSS para evitar parpadeo -->
+  <title>MultiCompra — Planilla OC</title>
+  <!-- Anti-flash: setear data-theme antes del CSS -->
   <script>
     (function () {
       try {
         var t = localStorage.getItem('multicompra:theme');
-        if (!t) {
-          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        }
+        if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
     })();
   </script>
   <link rel="stylesheet" href="../shared/styles.css" />
   <style>
     /* =====================================================================
-       Layout específico de edición de OC
+       Layout planilla V3
        ===================================================================== */
-    .table-area {
-      overflow: hidden;
+    .planilla-layout {
       display: flex;
       flex-direction: column;
       flex: 1;
       min-height: 0;
-    }
-    .table-wrap {
-      flex: 1;
-      min-height: 0;
-      overflow: auto;
-    }
-    .table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: var(--bg-elev-2);
     }
 
     /* Banner de OC no editable */
@@ -56,17 +40,6 @@
       font-weight: 500;
     }
     .banner-no-editable svg { flex-shrink: 0; }
-
-    /* Toolbar de acciones */
-    .action-bar {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      padding: var(--sp-2) var(--sp-4);
-      background: var(--bg-elev);
-      border-bottom: 1px solid var(--border);
-    }
-    .action-bar .grow { flex: 1; }
 
     /* Encabezado de la OC */
     .oc-meta {
@@ -89,9 +62,117 @@
     .oc-meta .meta-value { color: var(--text-strong); font-weight: 500; }
     .oc-meta .meta-value.mono { font-family: var(--font-mono); }
 
-    /* Inputs en tabla */
-    .input-qty, .input-cost {
-      width: 80px;
+    /* Toolbar de filtros y bulks */
+    .planilla-toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-2) var(--sp-4);
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .planilla-toolbar .sep-v {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 var(--sp-1);
+    }
+    .planilla-toolbar .grow { flex: 1; }
+
+    /* Área de tabla */
+    .table-area {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    /* Tabla planilla */
+    .planilla-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    .planilla-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--bg-elev-2);
+      padding: var(--sp-2) var(--sp-3);
+      text-align: left;
+      border-bottom: 2px solid var(--border-strong);
+      white-space: nowrap;
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+    }
+    .planilla-table thead th.col-num { text-align: right; }
+    .planilla-table tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+    .planilla-table tbody tr:hover { background: var(--bg-elev-2); }
+    .planilla-table td {
+      padding: var(--sp-2) var(--sp-3);
+      vertical-align: middle;
+    }
+    .planilla-table td.col-num { text-align: right; }
+
+    /* Fila de grupo (producto) */
+    tr.grupo-header td {
+      background: var(--bg-elev-2);
+      font-weight: 600;
+      color: var(--text-strong);
+      font-size: var(--fs-sm);
+      border-top: 2px solid var(--border-strong);
+    }
+    tr.grupo-header.grupo-alerta td { background: var(--danger-soft); }
+
+    /* Fila de pedido individual */
+    tr.pedido-row td { font-size: var(--fs-sm); }
+    tr.pedido-row.row-comprar { background: var(--primary-soft); }
+    [data-theme="dark"] tr.pedido-row.row-comprar { background: rgba(var(--primary-rgb, 59,130,246), 0.12); }
+    tr.pedido-row.row-no-necesita { opacity: 0.55; }
+    tr.pedido-row.row-repone { background: var(--success-soft, #f0fdf4); }
+    [data-theme="dark"] tr.pedido-row.row-repone { background: rgba(34,197,94, 0.1); }
+
+    /* Badge de decisión */
+    .badge-decision {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-comprar      { background: var(--primary-soft);  color: var(--primary); border: 1px solid var(--primary); }
+    .badge-repone       { background: var(--success-soft, #f0fdf4); color: var(--success, #16a34a); border: 1px solid var(--success, #16a34a); }
+    .badge-no-necesita  { background: var(--bg-elev-2); color: var(--text-muted); border: 1px solid var(--border-strong); }
+
+    /* Select de decisión */
+    .select-decision {
+      padding: 2px 6px;
+      font-size: var(--fs-xs);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--bg-elev);
+      color: var(--text-strong);
+      cursor: pointer;
+    }
+    .select-decision:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+
+    /* Input cantidad a comprar */
+    .input-comprar {
+      width: 70px;
       padding: 2px 6px;
       font-family: var(--font-mono);
       font-size: var(--fs-sm);
@@ -101,39 +182,51 @@
       background: var(--bg-elev);
       color: var(--text-strong);
     }
-    .input-qty:focus, .input-cost:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: var(--focus-ring);
+    .input-comprar:disabled { background: var(--bg-elev-2); color: var(--text-subtle); cursor: not-allowed; }
+    .input-comprar:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+
+    /* Valor numérico con color */
+    .num-neg { color: var(--danger); font-family: var(--font-mono); }
+    .num-pos { color: var(--success, #16a34a); font-family: var(--font-mono); }
+    .num-zero { color: var(--text-muted); font-family: var(--font-mono); }
+    .mono { font-family: var(--font-mono); }
+
+    /* Alerta stock central insuficiente */
+    .icon-alerta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
     }
-    .input-cost { width: 110px; }
 
-    /* Fila sucia (modificada) */
-    tr.row-dirty td { background: var(--primary-soft) !important; }
-
-    /* Botón eliminar línea */
-    .btn-del-row {
-      width: 26px; height: 26px;
-      border-radius: var(--radius-sm);
-      display: inline-flex; align-items: center; justify-content: center;
-      border: 1px solid var(--border);
-      background: var(--bg-elev);
+    /* Resumen grupal */
+    .grupo-resumen {
+      display: inline-flex;
+      gap: var(--sp-3);
+      font-size: var(--fs-xs);
       color: var(--text-muted);
-      cursor: pointer;
+      font-family: var(--font-mono);
     }
-    .btn-del-row:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+    .grupo-resumen span { white-space: nowrap; }
 
-    /* Footer de tabla con total */
+    /* Footer total */
     .table-footer {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: var(--sp-3);
       padding: var(--sp-3) var(--sp-4);
       border-top: 2px solid var(--border-strong);
       background: var(--bg-elev-2);
       font-size: var(--fs-sm);
     }
+    .table-footer .footer-actions { display: flex; gap: var(--sp-2); align-items: center; }
     .table-footer .total-label { color: var(--text-muted); }
     .table-footer .total-value {
       font-family: var(--font-mono);
@@ -141,111 +234,11 @@
       font-weight: 700;
       color: var(--primary);
     }
-
-    /* Botón agregar producto */
-    .btn-add-row {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      padding: var(--sp-2) var(--sp-3);
-      margin: var(--sp-2) var(--sp-4);
-      border: 1px dashed var(--border-strong);
-      border-radius: var(--radius);
-      background: transparent;
+    .table-footer .total-info {
+      font-size: var(--fs-xs);
       color: var(--text-muted);
-      cursor: pointer;
-      font-size: var(--fs-sm);
+      font-family: var(--font-mono);
     }
-    .btn-add-row:hover { background: var(--bg-elev-2); color: var(--primary); border-color: var(--primary); }
-
-    /* =====================================================================
-       Modal de búsqueda de producto
-       ===================================================================== */
-    .modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 100;
-      display: flex; align-items: center; justify-content: center;
-      padding: var(--sp-4);
-    }
-    .modal-backdrop.hidden { display: none; }
-    .modal-box {
-      background: var(--bg-elev);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 560px;
-      display: flex;
-      flex-direction: column;
-      max-height: 80vh;
-    }
-    .modal-header {
-      display: flex; align-items: center; gap: var(--sp-3);
-      padding: var(--sp-3) var(--sp-4);
-      border-bottom: 1px solid var(--border);
-    }
-    .modal-header h2 { flex: 1; font-size: var(--fs-md); margin: 0; }
-    .modal-body { flex: 1; overflow-y: auto; padding: var(--sp-3) var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); }
-    .modal-footer { padding: var(--sp-3) var(--sp-4); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
-
-    .product-list { display: flex; flex-direction: column; gap: 2px; }
-    .product-item {
-      display: flex; align-items: center; gap: var(--sp-3);
-      padding: var(--sp-2) var(--sp-3);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: var(--fs-sm);
-    }
-    .product-item:hover { background: var(--bg-elev-2); }
-    .product-item .prod-code { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-muted); width: 100px; flex-shrink: 0; }
-    .product-item .prod-name { flex: 1; color: var(--text-strong); }
-    .product-item .prod-cost { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--text-muted); }
-    .prod-empty { color: var(--text-muted); font-size: var(--fs-sm); text-align: center; padding: var(--sp-4); }
-
-    /* =====================================================================
-       Modal de confirmación genérico
-       ===================================================================== */
-    .confirm-box {
-      background: var(--bg-elev);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
-      width: 100%;
-      max-width: 420px;
-      padding: var(--sp-5);
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-    }
-    .confirm-box h3 { margin: 0; font-size: var(--fs-md); }
-    .confirm-box p { margin: 0; font-size: var(--fs-sm); color: var(--text-muted); }
-    .confirm-actions { display: flex; justify-content: flex-end; gap: var(--sp-2); }
-
-    /* Toast */
-    .toast-container {
-      position: fixed;
-      bottom: var(--sp-5);
-      right: var(--sp-5);
-      z-index: 200;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-    }
-    .toast {
-      padding: var(--sp-3) var(--sp-4);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
-      font-size: var(--fs-sm);
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      animation: toast-in 0.2s ease;
-    }
-    .toast.toast-ok { background: var(--success); color: #fff; }
-    .toast.toast-err { background: var(--danger); color: #fff; }
-    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     /* Estado de carga */
     .loading-state {
@@ -278,44 +271,115 @@
       text-align: center;
     }
     .error-state strong { color: var(--danger); font-size: var(--fs-md); }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: var(--sp-5);
+      right: var(--sp-5);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .toast {
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      font-size: var(--fs-sm);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      animation: toast-in 0.2s ease;
+      max-width: 360px;
+    }
+    .toast.toast-ok  { background: var(--success, #16a34a); color: #fff; }
+    .toast.toast-err { background: var(--danger); color: #fff; }
+    .toast.toast-warn { background: var(--warning); color: var(--warning-text, #92400e); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Modal confirm genérico */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--sp-4);
+    }
+    .modal-backdrop.hidden { display: none; }
+    .confirm-box {
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 420px;
+      padding: var(--sp-5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+    .confirm-box h3 { margin: 0; font-size: var(--fs-md); }
+    .confirm-box p  { margin: 0; font-size: var(--fs-sm); color: var(--text-muted); }
+    .confirm-actions { display: flex; justify-content: flex-end; gap: var(--sp-2); }
+
+    /* Chip activo */
+    .chip.chip-active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Columna sugerido */
+    .col-sugerido { color: var(--text-muted); font-style: italic; font-family: var(--font-mono); font-size: var(--fs-xs); }
+
+    /* Vacío planilla */
+    .planilla-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-3);
+      padding: var(--sp-8);
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
 <div class="app page-dense" id="app">
 
-  <!-- =================================================================
+  <!-- ===================================================================
        Header
-       ================================================================= -->
+       =================================================================== -->
   <header class="app-header" role="banner">
     <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
-
     <div class="logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
       <span class="logo-text">MultiCompra</span>
     </div>
-
     <nav class="breadcrumbs" aria-label="Ubicación">
       <a href="oc-lista.html">OC</a>
       <span class="sep">&rsaquo;</span>
-      <span id="breadcrumb-id" class="current">...</span>
+      <span id="breadcrumb-id" class="current">Nueva</span>
       <span class="sep">&rsaquo;</span>
-      <span class="current">Editar</span>
+      <span class="current">Planilla</span>
     </nav>
-
     <div class="grow"></div>
-
     <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
       <span class="avatar" id="avatar-iniciales" aria-hidden="true">SV</span>
       <span id="avatar-nombre">Supervisor</span>
     </div>
   </header>
 
-  <!-- =================================================================
+  <!-- ===================================================================
        Sidebar
-       ================================================================= -->
+       =================================================================== -->
   <aside class="app-sidebar" aria-label="Navegación principal">
     <nav class="nav">
       <a class="nav-item" href="dashboard.html" data-label="Dashboard">
@@ -345,6 +409,7 @@
       <a class="nav-item" href="solicitudes-alta.html" data-label="Altas pendientes">
         <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
         <span class="nav-item-label">Altas pendientes</span>
+        <span class="nav-item-count" id="nav-count-altas" hidden>0</span>
       </a>
       <a class="nav-item" href="catalogo.html" data-label="Catálogo">
         <span class="nav-item-icon" aria-hidden="true">
@@ -355,129 +420,135 @@
     </nav>
   </aside>
 
-  <!-- =================================================================
+  <!-- ===================================================================
        Main
-       ================================================================= -->
+       =================================================================== -->
   <main class="app-main" id="main-content">
 
     <!-- Estado de carga inicial -->
     <div id="loading-state" class="loading-state">
       <div class="spinner"></div>
-      Cargando OC…
-    </div>
-
-    <!-- Contenido real (oculto hasta que cargue) -->
-    <div id="page-content" style="display:none; flex: 1; overflow: hidden; flex-direction: column;">
-
-      <!-- Banner "no editable" — visible solo si la OC no puede editarse -->
-      <div id="banner-no-editable" class="banner-no-editable" style="display:none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span id="banner-no-editable-text">Esta OC ya no se puede editar.</span>
-      </div>
-
-      <!-- Encabezado de la OC -->
-      <div class="screen-subheader">
-        <h1 class="screen-title">
-          <span class="screen-title-mono" id="oc-numero">…</span>
-        </h1>
-        <span class="badge badge-abierta" id="oc-estado-badge">Abierta</span>
-        <span class="meta-item"><strong>Proveedor:</strong>&nbsp;<span id="oc-proveedor-nombre">—</span></span>
-        <span class="divider-v" aria-hidden="true"></span>
-        <span class="meta-item"><strong>RUC:</strong>&nbsp;<span id="oc-proveedor-ruc" class="text-mono">—</span></span>
-        <span class="divider-v" aria-hidden="true"></span>
-        <span class="meta-item"><strong>Creada:</strong>&nbsp;<span id="oc-fecha-creacion" class="text-mono">—</span></span>
-      </div>
-
-      <!-- Barra de acciones -->
-      <div class="action-bar">
-        <button class="btn btn-primary" id="btn-guardar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Guardar cambios
-        </button>
-        <button class="btn btn-warning" id="btn-cerrar-oc">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-          Cerrar OC
-        </button>
-        <div class="grow"></div>
-        <button class="btn btn-ghost" id="btn-cancelar">
-          Cancelar
-        </button>
-      </div>
-
-      <!-- Tabla editable de líneas -->
-      <div class="table-area">
-        <div class="table-wrap">
-          <table class="table" id="tabla-lineas">
-            <thead>
-              <tr>
-                <th style="width: 36px; text-align: center;">#</th>
-                <th style="width: 130px;">Código</th>
-                <th>Producto</th>
-                <th class="col-num" style="width: 110px;">Cantidad</th>
-                <th class="col-num" style="width: 140px;">Costo unit. Gs</th>
-                <th class="col-num" style="width: 150px;">Subtotal Gs</th>
-                <th style="width: 48px;"></th>
-              </tr>
-            </thead>
-            <tbody id="tabla-body"></tbody>
-          </table>
-        </div>
-
-        <!-- Footer con total -->
-        <div class="table-footer">
-          <span class="total-label">Total OC:</span>
-          <span class="total-value" id="total-oc">Gs. 0</span>
-        </div>
-      </div>
-
-      <!-- Botón agregar producto -->
-      <button class="btn-add-row" id="btn-agregar-producto">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Agregar producto
-      </button>
-
+      Cargando planilla…
     </div>
 
     <!-- Estado de error -->
     <div id="error-state" class="error-state" style="display:none;">
       <strong id="error-titulo">Error</strong>
-      <p id="error-msg">Ocurrió un error al cargar la OC.</p>
+      <p id="error-msg">Ocurrió un error.</p>
       <a href="oc-lista.html" class="btn btn-secondary">Volver al listado</a>
     </div>
 
+    <!-- Contenido principal de la planilla -->
+    <div id="page-content" class="planilla-layout" style="display:none;">
+
+      <!-- Banner "no editable" -->
+      <div id="banner-no-editable" class="banner-no-editable" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="banner-no-editable-text">Esta OC ya no se puede editar.</span>
+      </div>
+
+      <!-- Encabezado OC -->
+      <div class="oc-meta">
+        <div class="meta-block">
+          <span class="meta-label">OC</span>
+          <span class="meta-value mono" id="oc-numero">—</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">Proveedor</span>
+          <span class="meta-value" id="oc-proveedor">—</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">RUC</span>
+          <span class="meta-value mono" id="oc-ruc">—</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">OPs incluidas</span>
+          <span class="meta-value mono" id="oc-ops-count">—</span>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">Modo</span>
+          <span class="meta-value" id="oc-modo-label">—</span>
+        </div>
+        <div class="grow"></div>
+        <span class="badge badge-abierta" id="oc-estado-badge" style="display:none;">Borrador</span>
+      </div>
+
+      <!-- Toolbar de filtros y acciones bulk -->
+      <div class="planilla-toolbar">
+
+        <!-- Filtros tipo chip -->
+        <span class="text-xs text-muted" style="font-weight:600;">Filtros:</span>
+        <button class="chip chip-sm" id="chip-solo-editados"    aria-pressed="false" title="Solo filas con cantidad a comprar > 0 modificada">Solo editados</button>
+        <button class="chip chip-sm" id="chip-no-necesita"      aria-pressed="false" title="Solo filas marcadas como 'No necesita'">No necesita</button>
+        <button class="chip chip-sm" id="chip-comprar-gt0"      aria-pressed="false" title="Solo filas con cantidad a comprar &gt; 0">Comprar &gt; 0</button>
+        <button class="chip chip-sm" id="chip-alerta-central"   aria-pressed="false" title="Solo productos con stock central insuficiente">⚠ Central insuficiente</button>
+
+        <div class="sep-v"></div>
+
+        <!-- Acciones bulk -->
+        <span class="text-xs text-muted" style="font-weight:600;">Bulk:</span>
+        <button class="btn btn-ghost btn-sm" id="btn-bulk-no-necesita" title="Marcar TODOS los pedidos visibles como 'No necesita'">Ninguno compra</button>
+        <button class="btn btn-ghost btn-sm" id="btn-bulk-comprar-todo" title="Marcar TODOS los pedidos visibles como 'Comprar' con la cantidad sugerida">Comprar todo</button>
+        <button class="btn btn-ghost btn-sm" id="btn-bulk-repone" title="Para los que el central alcanza, marcar 'Repone central'; los demás 'Comprar'">Repone si alcanza</button>
+
+        <div class="grow"></div>
+
+        <!-- Resumen en toolbar -->
+        <span class="text-xs text-muted" id="toolbar-resumen">0 líneas · Gs. 0</span>
+      </div>
+
+      <!-- Tabla planilla -->
+      <div class="table-area">
+        <div class="table-wrap">
+          <table class="planilla-table" id="planilla-table">
+            <thead>
+              <tr>
+                <th style="width:220px;">Producto</th>
+                <th class="col-num" style="width:80px;" title="Stock en depósito central">Stk.Central</th>
+                <th style="width:130px;">Local</th>
+                <th style="width:100px;">Cajera</th>
+                <th class="col-num" style="width:65px;" title="Cantidad pedida">Pidió</th>
+                <th class="col-num" style="width:70px;" title="Stock en el local al momento del pedido">Stk.Local</th>
+                <th class="col-num" style="width:70px;" title="stockLocal - pidió (negativo = falta)">Excedente</th>
+                <th class="col-num" style="width:70px;" title="Cantidad sugerida a comprar (calculada)">Sugerido</th>
+                <th style="width:130px;">Decisión</th>
+                <th class="col-num" style="width:80px;">A comprar</th>
+                <th class="col-num" style="width:110px;" title="costo × cantidadComprar">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="planilla-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Footer con total y acciones principales -->
+        <div class="table-footer">
+          <div class="footer-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-guardar-borrador">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Guardar borrador
+            </button>
+            <button class="btn btn-primary" id="btn-cerrar-oc">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Cerrar OC
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btn-cancelar">Cancelar</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--sp-4);">
+            <span class="total-info" id="total-info">0 productos · 0 unidades</span>
+            <div>
+              <span class="total-label">Total OC:&nbsp;</span>
+              <span class="total-value" id="total-oc">Gs. 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
 
 </div>
 
-<!-- =================================================================
-     Modal: buscar y agregar producto
-     ================================================================= -->
-<div class="modal-backdrop hidden" id="modal-producto" role="dialog" aria-modal="true" aria-label="Agregar producto">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2>Agregar producto</h2>
-      <button class="btn btn-ghost btn-icon btn-sm" id="modal-close" aria-label="Cerrar modal">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div style="position: relative;">
-        <input type="search" id="modal-search" class="input input-search" placeholder="Buscar por código o nombre…" autocomplete="off" aria-label="Buscar producto" style="width: 100%; padding-left: 32px;" />
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-subtle);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <div class="product-list" id="modal-product-list">
-        <p class="prod-empty">Escribí para buscar productos…</p>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" id="modal-cancel-btn">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- =================================================================
-     Modal: confirmación genérica
-     ================================================================= -->
+<!-- Modal confirm genérico -->
 <div class="modal-backdrop hidden" id="modal-confirm" role="dialog" aria-modal="true">
   <div class="confirm-box">
     <h3 id="confirm-titulo">Confirmar</h3>
@@ -499,39 +570,61 @@
   import { requireRol, getUserActual } from '../shared/auth-guard.js';
   requireRol('supervisor', 'admin');
 
-  import { obtenerOC, actualizarLineasOC, cambiarEstadoOC } from '../shared/supabase.js';
-  import { getProductos, buscarProductos, isCargado } from '../shared/data.js';
+  import {
+    obtenerOP, obtenerOC, crearOC, actualizarLineasOC,
+    cambiarEstadoOC, resolverOP, listarSolicitudesAlta
+  } from '../shared/supabase.js';
+
+  import {
+    getProductoPorId, getLocalPorId, getStockProducto,
+    getLocales, isCargado
+  } from '../shared/data.js';
+
   import { initSidebarClickOutside, initAvatarMenu } from '../shared/ui.js';
 
-  // ─── Estado global ──────────────────────────────────────────────────────────
-  let ocData = null;        // datos de la OC tal como vinieron de Supabase / LS
-  let lineas = [];          // array de líneas actuales (editables)
-  let dirty = false;        // flag: hay cambios sin guardar
-  let ocIdParam = null;     // número de OC de la URL
-
-  const ESTADOS_EDITABLES = ['abierta', 'en_edicion'];
-
-  const ESTADO_BADGE = {
-    abierta:                { cls: 'badge-abierta',              txt: 'Abierta' },
-    en_edicion:             { cls: 'badge-en-edicion',           txt: 'En edición' },
-    cerrada:                { cls: 'badge-cerrada',              txt: 'Cerrada' },
-    enviada_a_proveedor:    { cls: 'badge-enviada-proveedor',    txt: 'Enviada al proveedor' },
-    parcialmente_recibida:  { cls: 'badge-parcial',              txt: 'Parcialmente recibida' },
-    recibida:               { cls: 'badge-recibida',             txt: 'Recibida' },
-    cerrada_con_faltante:   { cls: 'badge-cerrada-con-faltante', txt: 'Cerrada con faltante' },
-    anulada:                { cls: 'badge-anulada',              txt: 'Anulada' }
+  // ─── Parámetros de config ─────────────────────────────────────────────────
+  const parametros = {
+    oc: {
+      umbralSobrepedidoPct: 30,
+      usarSugeridoComoDefaultComprar: true
+    }
   };
 
-  // ─── Helpers ────────────────────────────────────────────────────────────────
+  // ─── Estado global ────────────────────────────────────────────────────────
+  let oc = null;           // objeto con shape descrito en el spec
+  let modo = null;         // 'nueva' | 'edicion'
+  let ocIdParam = null;    // para modo edición
+  let ocSesion = null;     // datos de sessionStorage (modo nueva)
+  let editMode = true;     // false si la OC no es editable
+  let filtroPredicate = () => true;  // filtro activo sobre filas
+
+  // Flags de chip activos
+  const chips = {
+    soloEditados: false,
+    noNecesita: false,
+    comprarGt0: false,
+    alertaCentral: false
+  };
+
+  // ─── Helpers básicos ──────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   function fmtGs(n) {
-    const num = Number(n) || 0;
-    return 'Gs. ' + num.toLocaleString('es-PY', { maximumFractionDigits: 0 });
+    const v = Number(n) || 0;
+    return 'Gs. ' + v.toLocaleString('es-PY', { maximumFractionDigits: 0 });
+  }
+
+  function fmtNum(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('es-PY');
   }
 
   function fmtFecha(isoStr) {
     if (!isoStr) return '—';
     const d = new Date(isoStr.replace(' ', 'T'));
-    if (isNaN(d)) return isoStr.slice(0, 16).replace('T', ' ');
+    if (isNaN(d)) return String(isoStr).slice(0, 16).replace('T', ' ');
     const p = n => String(n).padStart(2, '0');
     return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
   }
@@ -541,14 +634,7 @@
     el.className = `toast toast-${tipo}`;
     el.textContent = msg;
     document.getElementById('toast-container').appendChild(el);
-    setTimeout(() => el.remove(), 3500);
-  }
-
-  function setDirty(val) {
-    dirty = val;
-    // Indicar al usuario con asterisco en el título
-    const num = ocData?.numero || ocIdParam || '…';
-    document.title = `MultiCompra — ${dirty ? '* ' : ''}Editar ${num}`;
+    setTimeout(() => el.remove(), 3800);
   }
 
   function showError(titulo, msg) {
@@ -559,7 +645,6 @@
     document.getElementById('error-msg').textContent = msg;
   }
 
-  // ─── Confirmación genérica ──────────────────────────────────────────────────
   function confirmar({ titulo, msg, labelOk = 'Confirmar', peligroso = false }) {
     return new Promise(resolve => {
       const modal = document.getElementById('modal-confirm');
@@ -569,13 +654,12 @@
       btnOk.textContent = labelOk;
       btnOk.className = peligroso ? 'btn btn-danger' : 'btn btn-primary';
       modal.classList.remove('hidden');
-
-      function cleanup(result) {
+      const cleanup = result => {
         modal.classList.add('hidden');
         btnOk.removeEventListener('click', onOk);
         document.getElementById('confirm-cancel').removeEventListener('click', onCancel);
         resolve(result);
-      }
+      };
       const onOk     = () => cleanup(true);
       const onCancel = () => cleanup(false);
       btnOk.addEventListener('click', onOk);
@@ -583,230 +667,630 @@
     });
   }
 
-  // ─── Render tabla ───────────────────────────────────────────────────────────
-  function calcSubtotal(costo, cantidad) {
-    return (Number(costo) || 0) * (Number(cantidad) || 0);
+  // ─── Cálculo de sugerido ──────────────────────────────────────────────────
+  // Sugerido = Math.max(0, pidio - stockLocal)
+  // (cuánto le falta al local para cubrir su pedido con el stock que tiene)
+  function calcularSugerido(pidio, stockLocal) {
+    if (!pidio || pidio <= 0) return null;
+    return Math.max(0, pidio - stockLocal);
   }
 
-  function recalcularTotal() {
-    const total = lineas.reduce((s, l) => s + calcSubtotal(l.costo, l.cantidad), 0);
-    document.getElementById('total-oc').textContent = fmtGs(total);
-    return total;
+  // Decisión default:
+  //   'repone_central' si stockCentral >= pidio
+  //   'comprar'       si stockCentral < pidio
+  function calcularDecisionDefault(pidio, stockCentral) {
+    if (!pidio || pidio <= 0) return 'no_necesita';
+    return stockCentral >= pidio ? 'repone_central' : 'comprar';
   }
 
-  function renderTabla() {
-    const tbody = document.getElementById('tabla-body');
-    if (lineas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:var(--sp-5);color:var(--text-muted);">Sin líneas. Agregá productos con el botón de abajo.</td></tr>`;
+  // ─── Construcción del objeto oc desde OPs (modo fromNueva=1) ─────────────
+  async function construirOcDesdeOps(sesion) {
+    const { opIds, proveedorId, proveedorNombre, proveedorRuc } = sesion;
+
+    // Obtener el local/depósito central
+    // Por convención: local con codigo='central' o id=0. Si no, el primero.
+    const locales   = getLocales();
+    const lCentral  = locales.find(l =>
+      String(l.codigo || '').toLowerCase() === 'central' ||
+      String(l.id) === '0' ||
+      String(l.id) === '1'
+    ) || locales[0] || null;
+    const idCentral = lCentral ? lCentral.id : 0;
+
+    // Cargar todas las OPs en paralelo
+    const opsResultados = await Promise.all(opIds.map(id => obtenerOP(id)));
+
+    // Agrupar líneas por productoId
+    const gruposMap = new Map(); // productoId → grupo
+
+    for (const res of opsResultados) {
+      if (!res.ok || !res.data) continue;
+      const op = res.data;
+      const localId    = op.local_id  ?? op.localId  ?? 0;
+      const localNombre= op.local_nombre ?? op.localNombre ?? '—';
+      const cajera     = op.cajera_nombre ?? op.cajera ?? '—';
+      const fecha      = fmtFecha(op.fecha_envio ?? op.fecha ?? null);
+      const opNumero   = op.numero ?? op.id;
+
+      for (const ln of (op.lineas || [])) {
+        const productoId  = ln.producto_id_erp ?? ln.productoId;
+        const pidio       = Number(ln.cantidad) || 0;
+
+        // Obtener info del producto desde cache
+        const prod        = getProductoPorId(productoId) || {};
+        const nombre      = ln.producto_nombre ?? prod.descripcion ?? prod.nombre ?? `Producto #${productoId}`;
+        const costoUnit   = Number(ln.producto_costo ?? prod.costo) || 0;
+        const stockLocal  = getStockProducto(localId, productoId);
+        const excedente   = stockLocal - pidio;
+        const sugerido    = calcularSugerido(pidio, stockLocal);
+
+        if (!gruposMap.has(productoId)) {
+          const stockCentral = getStockProducto(idCentral, productoId);
+          gruposMap.set(productoId, {
+            productoId,
+            nombre,
+            stockCentral,
+            costoEstimado: costoUnit,
+            pedidos: []
+          });
+        }
+
+        const g = gruposMap.get(productoId);
+        const decision = calcularDecisionDefault(pidio, g.stockCentral);
+        const cantidadComprar = (decision === 'comprar')
+          ? (parametros.oc.usarSugeridoComoDefaultComprar && sugerido != null ? sugerido : pidio)
+          : 0;
+
+        g.pedidos.push({
+          opId:          opNumero,
+          localId,
+          localNombre,
+          localCodigo:   localNombre.slice(0, 3).toUpperCase(),
+          cajera,
+          fecha,
+          pidio,
+          stockLocal,
+          excedente,
+          sugerido,
+          decision,
+          cantidadComprar,
+          cantidadComprarDefault: cantidadComprar
+        });
+      }
+    }
+
+    // Construir lista de opsOrigen
+    const opsOrigen = opsResultados
+      .filter(r => r.ok && r.data)
+      .map(r => ({
+        id: r.data.numero ?? r.data.id,
+        localNombre: r.data.local_nombre ?? r.data.localNombre ?? '—',
+        cajera: r.data.cajera_nombre ?? r.data.cajera ?? '—',
+        fecha: fmtFecha(r.data.fecha_envio ?? r.data.fecha ?? null)
+      }));
+
+    // Generar numero de OC
+    const ahora = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const ocNumero = 'OC-loc-' + Date.now().toString(36).toUpperCase();
+
+    return {
+      numero: ocNumero,
+      proveedorNombre,
+      proveedorRuc: proveedorRuc || '—',
+      grupos: [...gruposMap.values()],
+      opsOrigen,
+      _fromNueva: true
+    };
+  }
+
+  // ─── Construcción del objeto oc desde OC existente (modo ?id=) ───────────
+  async function construirOcDesdeExistente(ocNumero) {
+    const res = await obtenerOC(ocNumero);
+    if (!res.ok || !res.data) return null;
+
+    const ocRaw = res.data;
+
+    // Verificar editabilidad
+    const ESTADOS_EDITABLES = ['abierta', 'en_edicion'];
+    if (!ESTADOS_EDITABLES.includes(ocRaw.estado)) {
+      return { _noEditable: true, estado: ocRaw.estado, numero: ocRaw.numero ?? ocNumero };
+    }
+
+    const locales   = getLocales();
+    const lCentral  = locales.find(l =>
+      String(l.codigo || '').toLowerCase() === 'central' ||
+      String(l.id) === '0' ||
+      String(l.id) === '1'
+    ) || locales[0] || null;
+    const idCentral = lCentral ? lCentral.id : 0;
+
+    // Las OPs vinculadas vienen en ocRaw.ops (desde oc_ops via obtenerOC)
+    const opsVinculadas = ocRaw.ops || [];
+
+    // Construir grupos desde oc_lineas
+    // Para cada línea de la OC, crear un grupo. Los pedidos individuales se
+    // obtienen de las OPs si están disponibles, sino se usa un pseudo-pedido.
+    const gruposMap = new Map();
+
+    // Intentar cargar OPs vinculadas para tener el desglose por local
+    const opsDetalle = [];
+    for (const opRef of opsVinculadas) {
+      // opRef puede tener { numero, cajera_nombre, local_nombre }
+      const opId = opRef.numero || opRef.id;
+      if (opId) {
+        const rOp = await obtenerOP(opId);
+        if (rOp.ok && rOp.data) opsDetalle.push(rOp.data);
+      }
+    }
+
+    // Indexar lineas de OPs por productoId
+    const pedidosPorProducto = new Map(); // productoId → [pedidos]
+    for (const op of opsDetalle) {
+      const localId     = op.local_id     ?? op.localId     ?? 0;
+      const localNombre = op.local_nombre ?? op.localNombre ?? '—';
+      const cajera      = op.cajera_nombre ?? op.cajera     ?? '—';
+      const fecha       = fmtFecha(op.fecha_envio ?? op.fecha ?? null);
+      const opNumero    = op.numero ?? op.id;
+
+      for (const ln of (op.lineas || [])) {
+        const productoId = ln.producto_id_erp ?? ln.productoId;
+        const pidio      = Number(ln.cantidad) || 0;
+        const stockLocal = getStockProducto(localId, productoId);
+        const excedente  = stockLocal - pidio;
+        const sugerido   = calcularSugerido(pidio, stockLocal);
+
+        if (!pedidosPorProducto.has(productoId)) pedidosPorProducto.set(productoId, []);
+        pedidosPorProducto.get(productoId).push({
+          opId: opNumero, localId, localNombre,
+          localCodigo: localNombre.slice(0, 3).toUpperCase(),
+          cajera, fecha, pidio, stockLocal, excedente, sugerido,
+          decision: 'comprar', cantidadComprar: 0, cantidadComprarDefault: 0
+        });
+      }
+    }
+
+    // Construir grupos desde oc_lineas
+    for (const linea of (ocRaw.lineas || [])) {
+      const productoId  = linea.producto_id_erp ?? linea.productoId;
+      const nombre      = linea.producto_nombre ?? linea.productoNombre ?? `Producto #${productoId}`;
+      const costoUnit   = Number(linea.costo_unitario ?? linea.costo) || 0;
+      const cantOC      = Number(linea.cantidad_pedida ?? linea.cantidad) || 0;
+      const stockCentral = getStockProducto(idCentral, productoId);
+
+      // Obtener pedidos individuales si los tenemos
+      let pedidos = pedidosPorProducto.get(productoId) || [];
+
+      if (pedidos.length === 0) {
+        // TODO: No se pudieron reconstruir pedidos individuales desde las OPs.
+        // Crear un pseudo-pedido con los datos de la línea OC.
+        const sugerido = cantOC > 0 ? cantOC : null;
+        pedidos = [{
+          opId: '—',
+          localId: 0,
+          localNombre: '(sin desglose)',
+          localCodigo: '???',
+          cajera: '—',
+          fecha: '—',
+          pidio: cantOC,
+          stockLocal: 0,
+          excedente: -cantOC,
+          sugerido,
+          decision: 'comprar',
+          cantidadComprar: cantOC,
+          cantidadComprarDefault: cantOC
+        }];
+      } else {
+        // Distribuir la cantidad OC entre los pedidos individualmente
+        // proporcional al pidio de cada pedido, o según decisión default
+        for (const p of pedidos) {
+          const dec = calcularDecisionDefault(p.pidio, stockCentral);
+          const cDef = dec === 'comprar'
+            ? (parametros.oc.usarSugeridoComoDefaultComprar && p.sugerido != null ? p.sugerido : p.pidio)
+            : 0;
+          p.decision = dec;
+          p.cantidadComprar = cDef;
+          p.cantidadComprarDefault = cDef;
+        }
+      }
+
+      gruposMap.set(productoId, {
+        productoId,
+        nombre,
+        stockCentral,
+        costoEstimado: costoUnit,
+        pedidos
+      });
+    }
+
+    return {
+      id:              ocRaw.id,
+      numero:          ocRaw.numero ?? ocNumero,
+      estado:          ocRaw.estado,
+      proveedorNombre: ocRaw.proveedor_nombre ?? ocRaw.proveedorNombre ?? '—',
+      proveedorRuc:    ocRaw.proveedor_ruc    ?? ocRaw.proveedorRuc    ?? '—',
+      grupos:          [...gruposMap.values()],
+      opsOrigen:       opsVinculadas.map(o => ({
+        id: o.numero ?? o.id,
+        localNombre: o.local_nombre ?? '—',
+        cajera: o.cajera_nombre ?? '—',
+        fecha: '—'
+      })),
+      _fromNueva: false
+    };
+  }
+
+  // ─── Render de la planilla ────────────────────────────────────────────────
+  function getFilas() {
+    // Flattear: por cada grupo, por cada pedido → fila
+    const filas = [];
+    for (const g of (oc?.grupos || [])) {
+      for (const p of g.pedidos) {
+        filas.push({ grupo: g, pedido: p });
+      }
+    }
+    return filas;
+  }
+
+  function aplicarFiltro(filas) {
+    return filas.filter(({ grupo, pedido }) => {
+      if (chips.soloEditados && pedido.cantidadComprar === pedido.cantidadComprarDefault) return false;
+      if (chips.noNecesita  && pedido.decision !== 'no_necesita') return false;
+      if (chips.comprarGt0  && !(pedido.decision === 'comprar' && pedido.cantidadComprar > 0)) return false;
+      if (chips.alertaCentral && grupo.stockCentral >= pedido.pidio) return false;
+      return true;
+    });
+  }
+
+  function renderPlanilla() {
+    const tbody = document.getElementById('planilla-body');
+    const todasFilas = getFilas();
+    const filasFiltradas = aplicarFiltro(todasFilas);
+
+    if (filasFiltradas.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="11">
+          <div class="planilla-empty">
+            ${todasFilas.length === 0
+              ? 'No hay pedidos en esta OC.'
+              : 'No hay filas que coincidan con los filtros activos.'}
+          </div>
+        </td></tr>`;
       recalcularTotal();
       return;
     }
 
-    tbody.innerHTML = lineas.map((l, i) => {
-      const sub = calcSubtotal(l.costo, l.cantidad);
-      return `
-        <tr data-idx="${i}">
-          <td class="cell-center" style="color:var(--text-muted);font-size:var(--fs-xs);">${i + 1}</td>
-          <td style="font-family:var(--font-mono);font-size:var(--fs-sm);color:var(--text-muted);">${l.productoCodigo || '—'}</td>
-          <td style="font-size:var(--fs-sm);">${escapeHtml(l.productoNombre)}</td>
-          <td class="col-num">
-            <input type="number" class="input-qty" data-field="cantidad" min="1" step="1"
-                   value="${l.cantidad}" aria-label="Cantidad de ${escapeHtml(l.productoNombre)}" />
-          </td>
-          <td class="col-num">
-            <input type="number" class="input-cost" data-field="costo" min="0" step="1"
-                   value="${l.costo}" aria-label="Costo unitario de ${escapeHtml(l.productoNombre)}" />
-          </td>
-          <td class="col-num" style="font-family:var(--font-mono);font-size:var(--fs-sm);" data-subtotal="${i}">
-            ${fmtGs(sub)}
-          </td>
-          <td class="cell-center">
-            <button class="btn-del-row" data-del="${i}" aria-label="Eliminar línea de ${escapeHtml(l.productoNombre)}" title="Eliminar línea">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    let htmlStr = '';
+    let lastProdId = null;
 
+    for (const { grupo, pedido } of filasFiltradas) {
+      // Cabecera de grupo (cuando cambia de producto)
+      if (grupo.productoId !== lastProdId) {
+        lastProdId = grupo.productoId;
+        const centralInsuf = grupo.stockCentral < Math.max(...grupo.pedidos.map(p => p.pidio), 0);
+        const totalPedidoGrupo = grupo.pedidos.reduce((s, p) => s + p.pidio, 0);
+        const totalComprarGrupo = grupo.pedidos.reduce((s, p) =>
+          p.decision === 'comprar' ? s + p.cantidadComprar : s, 0);
+
+        htmlStr += `
+          <tr class="grupo-header${centralInsuf ? ' grupo-alerta' : ''}"
+              data-prod="${esc(grupo.productoId)}">
+            <td colspan="2">
+              <div style="display:flex;align-items:center;gap:var(--sp-2);">
+                ${centralInsuf ? '<span class="icon-alerta" title="Stock central insuficiente">!</span>' : ''}
+                <strong>${esc(grupo.nombre)}</strong>
+              </div>
+            </td>
+            <td colspan="5">
+              <span class="grupo-resumen">
+                <span>Central: <strong>${fmtNum(grupo.stockCentral)}</strong></span>
+                <span>Pedido total: <strong>${fmtNum(totalPedidoGrupo)}</strong></span>
+                <span>A comprar: <strong>${fmtNum(totalComprarGrupo)}</strong></span>
+                <span>Costo: <strong>${fmtGs(grupo.costoEstimado)}</strong></span>
+              </span>
+            </td>
+            <td colspan="4" style="text-align:right;">
+              <span class="mono" style="font-size:var(--fs-sm);font-weight:600;color:var(--primary);">
+                ${fmtGs(totalComprarGrupo * grupo.costoEstimado)}
+              </span>
+            </td>
+          </tr>`;
+      }
+
+      // Fila de pedido individual
+      const dec = pedido.decision;
+      const rowClass = dec === 'comprar' ? 'row-comprar'
+                     : dec === 'no_necesita' ? 'row-no-necesita'
+                     : 'row-repone';
+
+      const excClase = pedido.excedente < 0 ? 'num-neg'
+                     : pedido.excedente > 0 ? 'num-pos'
+                     : 'num-zero';
+
+      const sugeridoHtml = pedido.sugerido != null
+        ? `<span class="col-sugerido">${fmtNum(pedido.sugerido)}</span>`
+        : `<span class="col-sugerido">—</span>`;
+
+      const subtotal = dec === 'comprar'
+        ? pedido.cantidadComprar * grupo.costoEstimado
+        : 0;
+
+      const inputDisabled = (dec !== 'comprar' || !editMode) ? 'disabled' : '';
+
+      htmlStr += `
+        <tr class="pedido-row ${rowClass}"
+            data-prod="${esc(grupo.productoId)}"
+            data-op="${esc(pedido.opId)}"
+            data-local="${esc(pedido.localId)}">
+          <td style="color:var(--text-muted);font-size:var(--fs-xs);">${esc(pedido.opId)}</td>
+          <td class="col-num mono">${fmtNum(grupo.stockCentral)}</td>
+          <td>
+            <span class="badge badge-${esc(pedido.localCodigo.toLowerCase().replace(/\s+/g, '-'))}"
+                  style="background:var(--bg-elev-2);border:1px solid var(--border);color:var(--text);font-size:10px;padding:1px 6px;border-radius:var(--radius-pill);font-family:var(--font-mono);">
+              ${esc(pedido.localCodigo)}
+            </span>
+            <span style="font-size:var(--fs-xs);color:var(--text-muted);margin-left:4px;">${esc(pedido.localNombre)}</span>
+          </td>
+          <td style="font-size:var(--fs-xs);color:var(--text-muted);">${esc(pedido.cajera)}</td>
+          <td class="col-num mono">${fmtNum(pedido.pidio)}</td>
+          <td class="col-num mono">${fmtNum(pedido.stockLocal)}</td>
+          <td class="col-num"><span class="${excClase}">${pedido.excedente >= 0 ? '+' : ''}${fmtNum(pedido.excedente)}</span></td>
+          <td class="col-num">${sugeridoHtml}</td>
+          <td>
+            ${editMode ? `
+              <select class="select-decision"
+                      data-prod="${esc(grupo.productoId)}"
+                      data-op="${esc(pedido.opId)}"
+                      data-local="${esc(pedido.localId)}"
+                      aria-label="Decisión para ${esc(grupo.nombre)} en ${esc(pedido.localNombre)}">
+                <option value="comprar"        ${dec === 'comprar'        ? 'selected' : ''}>Comprar</option>
+                <option value="repone_central"  ${dec === 'repone_central'  ? 'selected' : ''}>Repone central</option>
+                <option value="no_necesita"    ${dec === 'no_necesita'    ? 'selected' : ''}>No necesita</option>
+              </select>
+            ` : `
+              <span class="badge-decision badge-${dec === 'comprar' ? 'comprar' : dec === 'repone_central' ? 'repone' : 'no-necesita'}">
+                ${dec === 'comprar' ? 'Comprar' : dec === 'repone_central' ? 'Repone central' : 'No necesita'}
+              </span>
+            `}
+          </td>
+          <td class="col-num">
+            <input type="number" class="input-comprar"
+                   data-prod="${esc(grupo.productoId)}"
+                   data-op="${esc(pedido.opId)}"
+                   data-local="${esc(pedido.localId)}"
+                   min="0" step="1"
+                   value="${dec === 'comprar' ? pedido.cantidadComprar : 0}"
+                   ${inputDisabled}
+                   aria-label="Cantidad a comprar" />
+          </td>
+          <td class="col-num mono" data-subtotal-prod="${esc(grupo.productoId)}" data-subtotal-op="${esc(pedido.opId)}" data-subtotal-local="${esc(pedido.localId)}">
+            ${fmtGs(subtotal)}
+          </td>
+        </tr>`;
+    }
+
+    tbody.innerHTML = htmlStr;
     recalcularTotal();
   }
 
-  function escapeHtml(str) {
-    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+  function recalcularTotal() {
+    let totalGs = 0;
+    let totalProductos = new Set();
+    let totalUnidades = 0;
 
-  // ─── Eventos de tabla ───────────────────────────────────────────────────────
-  document.getElementById('tabla-body').addEventListener('input', e => {
-    const input = e.target;
-    if (!input.matches('.input-qty, .input-cost')) return;
-    const tr = input.closest('tr');
-    const idx = Number(tr.dataset.idx);
-    const field = input.dataset.field;
-    const val = Math.max(field === 'cantidad' ? 1 : 0, Number(input.value) || 0);
-    lineas[idx][field] = val;
-    // Recalcular subtotal de esa fila
-    const sub = calcSubtotal(lineas[idx].costo, lineas[idx].cantidad);
-    tr.querySelector(`[data-subtotal="${idx}"]`).textContent = fmtGs(sub);
-    recalcularTotal();
-    setDirty(true);
-  });
-
-  document.getElementById('tabla-body').addEventListener('click', e => {
-    const btn = e.target.closest('[data-del]');
-    if (!btn) return;
-    const idx = Number(btn.dataset.del);
-    lineas.splice(idx, 1);
-    renderTabla();
-    setDirty(true);
-  });
-
-  // ─── Modal de producto ──────────────────────────────────────────────────────
-  const modalProducto = document.getElementById('modal-producto');
-
-  function abrirModalProducto() {
-    modalProducto.classList.remove('hidden');
-    const searchInput = document.getElementById('modal-search');
-    searchInput.value = '';
-    renderProductList('');
-    setTimeout(() => searchInput.focus(), 50);
-  }
-
-  function cerrarModalProducto() {
-    modalProducto.classList.add('hidden');
-  }
-
-  function renderProductList(query) {
-    const list = document.getElementById('modal-product-list');
-    if (!query || query.length < 2) {
-      list.innerHTML = '<p class="prod-empty">Escribí al menos 2 caracteres para buscar…</p>';
-      return;
+    for (const g of (oc?.grupos || [])) {
+      for (const p of g.pedidos) {
+        if (p.decision === 'comprar' && p.cantidadComprar > 0) {
+          totalGs += p.cantidadComprar * g.costoEstimado;
+          totalProductos.add(g.productoId);
+          totalUnidades += p.cantidadComprar;
+        }
+      }
     }
 
-    let productos = [];
-    if (isCargado()) {
-      productos = buscarProductos(query, 40);
-    } else {
-      // Fallback: sin cache de productos
-      list.innerHTML = '<p class="prod-empty">Catálogo no cargado. Ingresá el producto manualmente.</p>';
-      return;
-    }
+    document.getElementById('total-oc').textContent = fmtGs(totalGs);
+    document.getElementById('total-info').textContent =
+      `${totalProductos.size} producto${totalProductos.size !== 1 ? 's' : ''} · ${fmtNum(totalUnidades)} unidades`;
 
-    if (!productos.length) {
-      list.innerHTML = '<p class="prod-empty">Sin resultados para "' + escapeHtml(query) + '"</p>';
-      return;
-    }
-
-    list.innerHTML = productos.map(p => `
-      <div class="product-item" tabindex="0" role="button"
-           data-prod-id="${p.id}"
-           data-prod-codigo="${escapeHtml(p.codigo || '')}"
-           data-prod-nombre="${escapeHtml(p.descripcion || p.nombre || '')}"
-           data-prod-costo="${Number(p.costo) || 0}"
-           aria-label="Agregar ${escapeHtml(p.descripcion || p.nombre || '')}">
-        <span class="prod-code">${escapeHtml(p.codigo || '—')}</span>
-        <span class="prod-name">${escapeHtml(p.descripcion || p.nombre || '—')}</span>
-        <span class="prod-cost">${fmtGs(p.costo)}</span>
-      </div>
-    `).join('');
+    // Resumen en toolbar
+    document.getElementById('toolbar-resumen').textContent =
+      `${getFilas().length} líneas · ${fmtGs(totalGs)}`;
   }
 
-  function agregarProductoDesdeLista(productoId, productoCodigo, productoNombre, costo) {
-    // Si ya existe en líneas, sumar 1
-    const idx = lineas.findIndex(l => String(l.productoId) === String(productoId));
-    if (idx !== -1) {
-      lineas[idx].cantidad += 1;
-      showToast(`+1 a "${productoNombre}"`, 'ok');
-    } else {
-      lineas.push({
-        productoId,
-        productoCodigo,
-        productoNombre,
-        costo: Number(costo) || 0,
-        cantidad: 1
-      });
-    }
-    renderTabla();
-    setDirty(true);
-    cerrarModalProducto();
-  }
-
-  document.getElementById('modal-search').addEventListener('input', e => {
-    renderProductList(e.target.value.trim());
-  });
-
-  document.getElementById('modal-product-list').addEventListener('click', e => {
-    const item = e.target.closest('.product-item');
-    if (!item) return;
-    agregarProductoDesdeLista(
-      item.dataset.prodId,
-      item.dataset.prodCodigo,
-      item.dataset.prodNombre,
-      item.dataset.prodCosto
+  // ─── Eventos de la planilla ───────────────────────────────────────────────
+  function encontrarPedido(productoId, opId, localId) {
+    const g = oc?.grupos.find(x => String(x.productoId) === String(productoId));
+    if (!g) return null;
+    return g.pedidos.find(p =>
+      String(p.opId) === String(opId) &&
+      String(p.localId) === String(localId)
     );
-  });
+  }
 
-  document.getElementById('modal-product-list').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const item = e.target.closest('.product-item');
-      if (item) item.click();
+  // Change en select-decision
+  document.getElementById('planilla-body').addEventListener('change', (e) => {
+    const sel = e.target.closest('.select-decision');
+    if (!sel) return;
+    const { prod, op, local } = sel.dataset;
+    const pedido = encontrarPedido(prod, op, local);
+    if (!pedido) return;
+    pedido.decision = sel.value;
+    if (sel.value !== 'comprar') {
+      pedido.cantidadComprar = 0;
+    } else {
+      // Restaurar al valor default
+      pedido.cantidadComprar = pedido.cantidadComprarDefault || 0;
     }
+    renderPlanilla();
   });
 
-  document.getElementById('modal-close').addEventListener('click', cerrarModalProducto);
-  document.getElementById('modal-cancel-btn').addEventListener('click', cerrarModalProducto);
-  modalProducto.addEventListener('click', e => {
-    if (e.target === modalProducto) cerrarModalProducto();
+  // Input cantidad a comprar
+  document.getElementById('planilla-body').addEventListener('input', (e) => {
+    const inp = e.target.closest('.input-comprar');
+    if (!inp) return;
+    const { prod, op, local } = inp.dataset;
+    const pedido = encontrarPedido(prod, op, local);
+    if (!pedido) return;
+    pedido.cantidadComprar = Math.max(0, Number(inp.value) || 0);
+    // Actualizar subtotal en la celda sin re-renderizar
+    const g = oc.grupos.find(x => String(x.productoId) === String(prod));
+    if (g) {
+      const subtotal = pedido.cantidadComprar * g.costoEstimado;
+      const cellSub = document.querySelector(
+        `[data-subtotal-prod="${CSS.escape(prod)}"][data-subtotal-op="${CSS.escape(op)}"][data-subtotal-local="${CSS.escape(local)}"]`
+      );
+      if (cellSub) cellSub.textContent = fmtGs(subtotal);
+    }
+    recalcularTotal();
   });
 
-  document.getElementById('btn-agregar-producto').addEventListener('click', abrirModalProducto);
+  // ─── Chips de filtro ──────────────────────────────────────────────────────
+  function bindChip(id, key) {
+    const el = document.getElementById(id);
+    el.addEventListener('click', () => {
+      chips[key] = !chips[key];
+      el.classList.toggle('chip-active', chips[key]);
+      el.setAttribute('aria-pressed', chips[key]);
+      renderPlanilla();
+    });
+  }
+  bindChip('chip-solo-editados',  'soloEditados');
+  bindChip('chip-no-necesita',    'noNecesita');
+  bindChip('chip-comprar-gt0',    'comprarGt0');
+  bindChip('chip-alerta-central', 'alertaCentral');
 
-  // ─── Acciones principales ───────────────────────────────────────────────────
-  document.getElementById('btn-guardar').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-guardar');
+  // ─── Acciones bulk ────────────────────────────────────────────────────────
+  function getFilasAplicables() {
+    // Las filas actualmente visibles (con filtros) son las que se afectan
+    return aplicarFiltro(getFilas());
+  }
+
+  document.getElementById('btn-bulk-no-necesita').addEventListener('click', async () => {
+    const visibles = getFilasAplicables();
+    if (!visibles.length) return;
+    const ok = await confirmar({
+      titulo: 'Marcar como No necesita',
+      msg: `¿Marcar ${visibles.length} pedido(s) visibles como "No necesita"? La cantidad a comprar quedará en 0.`,
+      labelOk: 'Aplicar'
+    });
+    if (!ok) return;
+    for (const { pedido } of visibles) {
+      pedido.decision = 'no_necesita';
+      pedido.cantidadComprar = 0;
+    }
+    renderPlanilla();
+    showToast(`${visibles.length} pedido(s) marcados como "No necesita"`, 'ok');
+  });
+
+  document.getElementById('btn-bulk-comprar-todo').addEventListener('click', async () => {
+    const visibles = getFilasAplicables();
+    if (!visibles.length) return;
+    const ok = await confirmar({
+      titulo: 'Comprar todo',
+      msg: `¿Marcar ${visibles.length} pedido(s) como "Comprar" con la cantidad sugerida?`,
+      labelOk: 'Aplicar'
+    });
+    if (!ok) return;
+    for (const { pedido } of visibles) {
+      pedido.decision = 'comprar';
+      pedido.cantidadComprar = pedido.sugerido != null ? pedido.sugerido : pedido.pidio;
+      pedido.cantidadComprarDefault = pedido.cantidadComprar;
+    }
+    renderPlanilla();
+    showToast(`${visibles.length} pedido(s) marcados para comprar`, 'ok');
+  });
+
+  document.getElementById('btn-bulk-repone').addEventListener('click', async () => {
+    const visibles = getFilasAplicables();
+    if (!visibles.length) return;
+    const ok = await confirmar({
+      titulo: 'Repone si alcanza',
+      msg: `Para los pedidos donde el stock central alcanza: "Repone central". Para los demás: "Comprar".`,
+      labelOk: 'Aplicar'
+    });
+    if (!ok) return;
+    for (const { grupo, pedido } of visibles) {
+      const dec = calcularDecisionDefault(pedido.pidio, grupo.stockCentral);
+      pedido.decision = dec;
+      pedido.cantidadComprar = dec === 'comprar'
+        ? (pedido.sugerido != null ? pedido.sugerido : pedido.pidio)
+        : 0;
+      pedido.cantidadComprarDefault = pedido.cantidadComprar;
+    }
+    renderPlanilla();
+    showToast('Decisiones aplicadas según stock central', 'ok');
+  });
+
+  // ─── Construir líneas finales para crearOC / actualizarLineasOC ──────────
+  function construirLineasFinales() {
+    const lineasMap = new Map();
+    for (const g of (oc?.grupos || [])) {
+      for (const p of g.pedidos) {
+        if (p.decision !== 'comprar' || p.cantidadComprar <= 0) continue;
+        if (!lineasMap.has(g.productoId)) {
+          lineasMap.set(g.productoId, {
+            productoId:    g.productoId,
+            productoNombre: g.nombre,
+            productoCodigo: '',
+            costo: g.costoEstimado,
+            cantidad: 0
+          });
+        }
+        lineasMap.get(g.productoId).cantidad += p.cantidadComprar;
+      }
+    }
+    return [...lineasMap.values()].filter(l => l.cantidad > 0);
+  }
+
+  // ─── Guardar borrador (solo modo ?id=) ───────────────────────────────────
+  document.getElementById('btn-guardar-borrador').addEventListener('click', async () => {
+    if (modo === 'nueva') {
+      showToast('El borrador se guarda automáticamente al cerrar la planilla por primera vez', 'warn');
+      return;
+    }
+    const btn = document.getElementById('btn-guardar-borrador');
     btn.disabled = true;
     btn.textContent = 'Guardando…';
     try {
+      const lineas = construirLineasFinales();
       const user = getUserActual();
-      // 1) Actualizar líneas
-      const resLineas = await actualizarLineasOC({
-        ocId: ocData?.id,
-        ocNumero: ocIdParam,
-        lineas: lineas
+      const rL = await actualizarLineasOC({
+        ocId:    oc.id,
+        ocNumero: oc.numero,
+        lineas
       });
-      if (!resLineas.ok) throw new Error(resLineas.error || 'Error al guardar líneas');
+      if (!rL.ok) throw new Error(rL.error || 'Error al actualizar líneas');
 
-      // 2) Cambiar estado a 'en_edicion' (si era 'abierta')
-      if (ocData?.estado === 'abierta') {
-        await cambiarEstadoOC({
-          ocId: ocData?.id,
-          ocNumero: ocIdParam,
-          estado: 'en_edicion',
-          supervisorIdErp: user?.id,
-          supervisorNombre: user?.nombre
-        });
-        ocData.estado = 'en_edicion';
-        // Actualizar badge
-        const bd = ESTADO_BADGE['en_edicion'];
-        const badgeEl = document.getElementById('oc-estado-badge');
-        badgeEl.className = 'badge ' + bd.cls;
-        badgeEl.textContent = bd.txt;
-      }
+      const rE = await cambiarEstadoOC({
+        ocId:    oc.id,
+        ocNumero: oc.numero,
+        estado: 'en_edicion',
+        supervisorIdErp:   user?.id,
+        supervisorNombre:  user?.nombre
+      });
+      if (!rE.ok) throw new Error(rE.error || 'Error al actualizar estado');
 
-      setDirty(false);
-      showToast('Cambios guardados', 'ok');
+      showToast('Borrador guardado', 'ok');
     } catch (err) {
-      showToast('Error al guardar: ' + (err.message || err), 'err');
+      showToast('Error al guardar: ' + err.message, 'err');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar cambios`;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar borrador`;
     }
   });
 
+  // ─── Cerrar OC ───────────────────────────────────────────────────────────
   document.getElementById('btn-cerrar-oc').addEventListener('click', async () => {
+    const lineas = construirLineasFinales();
+    if (lineas.length === 0) {
+      showToast('No hay líneas con decisión "Comprar" y cantidad > 0. Revisá la planilla antes de cerrar.', 'warn');
+      return;
+    }
+    const totalGs = lineas.reduce((s, l) => s + (l.costo || 0) * (l.cantidad || 0), 0);
+
     const ok = await confirmar({
       titulo: 'Cerrar OC',
-      msg: '¿Cerrar la OC? Una vez cerrada ya no se podrá editar.',
+      msg: `¿Cerrar la OC con ${lineas.length} producto(s) por ${fmtGs(totalGs)}? Una vez cerrada no se puede editar.`,
       labelOk: 'Cerrar OC',
       peligroso: true
     });
@@ -815,149 +1299,228 @@
     const btn = document.getElementById('btn-cerrar-oc');
     btn.disabled = true;
     btn.textContent = 'Cerrando…';
+    const user = getUserActual();
+
     try {
-      const user = getUserActual();
-      // Guardar líneas antes de cerrar
-      const resLineas = await actualizarLineasOC({
-        ocId: ocData?.id,
-        ocNumero: ocIdParam,
-        lineas: lineas
-      });
-      if (!resLineas.ok) throw new Error(resLineas.error || 'Error al guardar líneas');
+      if (modo === 'nueva') {
+        // ── Caso A: fromNueva=1 ──────────────────────────────────────────
+        // Crear la OC ahora (nunca se creó antes)
+        const opIds = (oc.opsOrigen || []).map(o => o.id);
+        const res = await crearOC({
+          numero:           oc.numero,
+          proveedorIdErp:   ocSesion.proveedorId,
+          proveedorNombre:  oc.proveedorNombre,
+          proveedorRuc:     oc.proveedorRuc || '',
+          opIds,
+          lineas,
+          totalGs,
+          creadoPorIdErp:   user?.id    ?? ocSesion.supervisorId,
+          creadoPorNombre:  user?.nombre ?? ocSesion.supervisorNombre
+        });
+        if (!res.ok) throw new Error(res.error || 'Error al crear OC');
 
-      const res = await cambiarEstadoOC({
-        ocId: ocData?.id,
-        ocNumero: ocIdParam,
-        estado: 'cerrada',
-        supervisorIdErp: user?.id,
-        supervisorNombre: user?.nombre
-      });
-      if (!res.ok) throw new Error(res.error || 'Error al cerrar OC');
+        // Cambiar estado a 'cerrada'
+        await cambiarEstadoOC({
+          ocId:     res.ocId,
+          ocNumero: oc.numero,
+          estado: 'cerrada',
+          supervisorIdErp:  user?.id,
+          supervisorNombre: user?.nombre
+        });
 
-      setDirty(false);
-      showToast('OC cerrada', 'ok');
-      setTimeout(() => {
-        window.location.href = 'oc-detalle.html?id=' + encodeURIComponent(ocIdParam);
-      }, 800);
+        // Resolver cada OP como 'en_oc'
+        for (const opId of opIds) {
+          await resolverOP({
+            opId,
+            estado: 'en_oc',
+            supervisorIdErp:  user?.id    ?? ocSesion.supervisorId,
+            supervisorNombre: user?.nombre ?? ocSesion.supervisorNombre,
+            ocId: res.ocId
+          });
+        }
+
+        // Limpiar sessionStorage
+        sessionStorage.removeItem('multicompra:oc-en-armado');
+
+        showToast('OC creada y cerrada', 'ok');
+        setTimeout(() => {
+          window.location.href = 'oc-detalle.html?id=' + encodeURIComponent(oc.numero);
+        }, 800);
+
+      } else {
+        // ── Caso B: ?id= existente ─────────────────────────────────────
+        const rL = await actualizarLineasOC({
+          ocId:    oc.id,
+          ocNumero: oc.numero,
+          lineas
+        });
+        if (!rL.ok) throw new Error(rL.error || 'Error al actualizar líneas');
+
+        const rE = await cambiarEstadoOC({
+          ocId:    oc.id,
+          ocNumero: oc.numero,
+          estado: 'cerrada',
+          supervisorIdErp:  user?.id,
+          supervisorNombre: user?.nombre
+        });
+        if (!rE.ok) throw new Error(rE.error || 'Error al cerrar OC');
+
+        showToast('OC cerrada', 'ok');
+        setTimeout(() => {
+          window.location.href = 'oc-detalle.html?id=' + encodeURIComponent(ocIdParam);
+        }, 800);
+      }
     } catch (err) {
-      showToast('Error al cerrar: ' + (err.message || err), 'err');
+      showToast('Error al cerrar OC: ' + err.message, 'err');
       btn.disabled = false;
       btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Cerrar OC`;
     }
   });
 
+  // ─── Cancelar ────────────────────────────────────────────────────────────
   document.getElementById('btn-cancelar').addEventListener('click', async () => {
-    if (dirty) {
-      const ok = await confirmar({
-        titulo: 'Descartar cambios',
-        msg: 'Hay cambios sin guardar. ¿Volver al listado sin guardar?',
-        labelOk: 'Descartar',
-        peligroso: true
-      });
-      if (!ok) return;
-    }
+    const ok = await confirmar({
+      titulo: 'Cancelar planilla',
+      msg: modo === 'nueva'
+        ? 'Si cancelás, los cambios no se guardarán. La OC no se creará. ¿Volver al listado?'
+        : '¿Volver al listado? Los cambios no guardados se perderán.',
+      labelOk: 'Salir sin guardar',
+      peligroso: true
+    });
+    if (!ok) return;
+    if (modo === 'nueva') sessionStorage.removeItem('multicompra:oc-en-armado');
     window.location.href = 'oc-lista.html';
   });
 
-  // ─── Carga inicial ──────────────────────────────────────────────────────────
-  async function init() {
-    // 1) Leer ?id= de la URL
-    const params = new URLSearchParams(window.location.search);
-    ocIdParam = params.get('id') || null;
-
-    if (!ocIdParam) {
-      showError('Falta el id de OC', 'La URL no contiene el parámetro ?id=. Volvé al listado y abrí la OC desde ahí.');
-      return;
-    }
-
-    // 2) Cargar OC
-    let res;
+  // ─── Badge "Altas pendientes" en sidebar ─────────────────────────────────
+  async function actualizarBadgeAltas() {
     try {
-      res = await obtenerOC(ocIdParam);
-    } catch (e) {
-      showError('Error al cargar', 'No se pudo conectar para obtener la OC: ' + (e.message || e));
-      return;
-    }
+      const res = await listarSolicitudesAlta({ estado: 'pendiente', limit: 1 });
+      if (res.ok && res.data && res.data.length > 0) {
+        const el = document.getElementById('nav-count-altas');
+        if (el) { el.textContent = '!'; el.hidden = false; }
+      }
+    } catch (_) {}
+  }
 
-    if (!res.ok || !res.data) {
-      showError('OC no encontrada', `No se encontró la OC "${ocIdParam}". Verificá el id o volvé al listado.`);
-      return;
-    }
+  // ─── Init principal ───────────────────────────────────────────────────────
+  async function init() {
+    const params     = new URLSearchParams(window.location.search);
+    const fromNueva  = params.get('fromNueva') === '1';
+    ocIdParam        = params.get('id') || null;
 
-    ocData = res.data;
-
-    // 3) Normalizar campos (compatibilidad Supabase vs localStorage)
-    // Supabase usa snake_case, localStorage usa camelCase
-    if (!ocData.numero && ocData.id) ocData.numero = ocData.id;
-    if (!ocData.estado) ocData.estado = 'abierta';
-
-    // Normalizar las líneas al formato interno
-    const lineasRaw = ocData.lineas || [];
-    lineas = lineasRaw.map(l => ({
-      productoId:    l.producto_id_erp ?? l.productoId ?? null,
-      productoCodigo: l.producto_codigo  ?? l.productoCodigo ?? '',
-      productoNombre: l.producto_nombre  ?? l.productoNombre ?? '—',
-      costo:          Number(l.costo_unitario ?? l.costo) || 0,
-      cantidad:       Number(l.cantidad_pedida ?? l.cantidad) || 1
-    }));
-
-    // 4) Verificar si es editable
-    const editable = ESTADOS_EDITABLES.includes(ocData.estado);
-
-    // 5) Actualizar UI de cabecera
-    const numStr = ocData.numero || ocIdParam;
-    document.getElementById('breadcrumb-id').textContent = numStr;
-    document.getElementById('oc-numero').textContent = numStr;
-    document.title = `MultiCompra — Editar ${numStr}`;
-
-    const bd = ESTADO_BADGE[ocData.estado] || { cls: 'badge-cerrada', txt: ocData.estado };
-    const badgeEl = document.getElementById('oc-estado-badge');
-    badgeEl.className = 'badge ' + bd.cls;
-    badgeEl.textContent = bd.txt;
-
-    document.getElementById('oc-proveedor-nombre').textContent =
-      ocData.proveedor_nombre ?? ocData.proveedorNombre ?? '—';
-    document.getElementById('oc-proveedor-ruc').textContent =
-      ocData.proveedor_ruc ?? ocData.proveedorRuc ?? '—';
-    document.getElementById('oc-fecha-creacion').textContent =
-      fmtFecha(ocData.fecha_creacion ?? ocData.fecha ?? null);
-
-    // 6) Mostrar / ocultar controles según editabilidad
-    document.getElementById('loading-state').style.display = 'none';
-    const pageContent = document.getElementById('page-content');
-    pageContent.style.display = 'flex';
-    pageContent.style.flexDirection = 'column';
-    pageContent.style.flex = '1';
-    pageContent.style.overflow = 'hidden';
-
-    if (!editable) {
-      document.getElementById('banner-no-editable').style.display = 'flex';
-      document.getElementById('banner-no-editable-text').textContent =
-        `Esta OC ya no se puede editar (estado: ${bd.txt}).`;
-      // Deshabilitar controles de edición
-      document.getElementById('btn-guardar').disabled = true;
-      document.getElementById('btn-cerrar-oc').disabled = true;
-      document.getElementById('btn-agregar-producto').disabled = true;
-
-      // Redirect a detalle en 2s
-      setTimeout(() => {
-        window.location.href = 'oc-detalle.html?id=' + encodeURIComponent(ocIdParam);
-      }, 2000);
-    }
-
-    // 7) Render tabla
-    renderTabla();
-
-    // 8) Avatar del usuario logueado
+    // Actualizar UI de usuario
     const user = getUserActual();
     if (user) {
       document.getElementById('avatar-iniciales').textContent =
-        (user.iniciales || (user.nombre || 'SV').slice(0, 2).toUpperCase());
+        user.iniciales || (user.nombre || 'SV').slice(0, 2).toUpperCase();
       document.getElementById('avatar-nombre').textContent = 'Hola ' + (user.nombre || 'Supervisor');
     }
+
+    // ── Caso A: viene de oc-nueva con ?fromNueva=1 ────────────────────────
+    if (fromNueva) {
+      modo = 'nueva';
+      const raw = sessionStorage.getItem('multicompra:oc-en-armado');
+      if (!raw) {
+        showError(
+          'Sin datos de OC',
+          'No encontré datos de la OC en sesión. Empezá la armada de OC desde el listado de OPs.'
+        );
+        setTimeout(() => { window.location.href = 'oc-nueva.html'; }, 2000);
+        return;
+      }
+
+      try {
+        ocSesion = JSON.parse(raw);
+      } catch (_) {
+        showError('Error de sesión', 'Los datos de la OC en sesión están corruptos. Reintentá desde oc-nueva.');
+        return;
+      }
+
+      document.getElementById('oc-modo-label').textContent = 'Nueva (borrador)';
+      document.getElementById('oc-estado-badge').style.display = 'none';
+      // Guardar borrador deshabilitado en modo nueva
+      document.getElementById('btn-guardar-borrador').title =
+        'El borrador se guarda al cerrar la planilla';
+
+      oc = await construirOcDesdeOps(ocSesion);
+      if (!oc || !oc.grupos) {
+        showError('Sin líneas', 'No se pudieron cargar los pedidos de las OPs seleccionadas.');
+        return;
+      }
+
+    // ── Caso B: editar OC existente con ?id= ─────────────────────────────
+    } else if (ocIdParam) {
+      modo = 'edicion';
+      document.getElementById('oc-modo-label').textContent = 'Edición';
+
+      const resultado = await construirOcDesdeExistente(ocIdParam);
+      if (!resultado) {
+        showError('OC no encontrada', `No se encontró la OC "${ocIdParam}".`);
+        return;
+      }
+
+      if (resultado._noEditable) {
+        // Mostrar banner + redirect en 2s
+        oc = resultado;
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('page-content').style.display = 'flex';
+        document.getElementById('banner-no-editable').style.display = 'flex';
+        document.getElementById('banner-no-editable-text').textContent =
+          `Esta OC ya no se puede editar (estado: ${resultado.estado}).`;
+        editMode = false;
+        // Deshabilitar acciones de edición
+        document.getElementById('btn-guardar-borrador').disabled = true;
+        document.getElementById('btn-cerrar-oc').disabled = true;
+        document.getElementById('btn-bulk-no-necesita').disabled = true;
+        document.getElementById('btn-bulk-comprar-todo').disabled = true;
+        document.getElementById('btn-bulk-repone').disabled = true;
+        setTimeout(() => {
+          window.location.href = 'oc-detalle.html?id=' + encodeURIComponent(ocIdParam);
+        }, 2000);
+        return;
+      }
+
+      oc = resultado;
+
+      // Badge de estado
+      const ESTADO_BADGE = {
+        abierta:     { cls: 'badge-abierta',    txt: 'Abierta' },
+        en_edicion:  { cls: 'badge-en-edicion', txt: 'En edición' }
+      };
+      const bd = ESTADO_BADGE[oc.estado] || { cls: 'badge-abierta', txt: oc.estado };
+      const badgeEl = document.getElementById('oc-estado-badge');
+      badgeEl.className = 'badge ' + bd.cls;
+      badgeEl.textContent = bd.txt;
+      badgeEl.style.display = '';
+
+    // ── Caso C: sin parámetros ────────────────────────────────────────────
+    } else {
+      showError('Falta el parámetro de OC', 'La URL no tiene ni ?fromNueva=1 ni ?id=.');
+      return;
+    }
+
+    // ── Actualizar UI de cabecera ─────────────────────────────────────────
+    document.getElementById('breadcrumb-id').textContent = oc.numero || '…';
+    document.getElementById('oc-numero').textContent     = oc.numero || '—';
+    document.getElementById('oc-proveedor').textContent  = oc.proveedorNombre || '—';
+    document.getElementById('oc-ruc').textContent        = oc.proveedorRuc    || '—';
+    document.getElementById('oc-ops-count').textContent  = (oc.opsOrigen || []).length;
+    document.title = `MultiCompra — Planilla ${oc.numero || ''}`;
+
+    // ── Mostrar contenido ─────────────────────────────────────────────────
+    document.getElementById('loading-state').style.display = 'none';
+    const pc = document.getElementById('page-content');
+    pc.style.display = 'flex';
+
+    // ── Render inicial ────────────────────────────────────────────────────
+    renderPlanilla();
+
+    // Badge altas
+    actualizarBadgeAltas();
   }
 
-  // ─── Shell ──────────────────────────────────────────────────────────────────
+  // ─── Shell ────────────────────────────────────────────────────────────────
   const app = document.getElementById('app');
   const STORAGE_KEY_SIDEBAR = 'multicompra.sidebar.forceOpen';
 
@@ -979,15 +1542,18 @@
     avatarBtnSelector: '#avatar-btn',
     logoutHref: '../logout.html',
     perfilHref: null,
-    userName: getUserActual()?.nombre || 'Supervisor',
-    userRole: getUserActual()?.rol || 'supervisor',
+    userName:  getUserActual()?.nombre || 'Supervisor',
+    userRole:  getUserActual()?.rol    || 'supervisor',
     userLocal: null,
   });
 
-  // Esc cierra modal de producto
+  // Esc cierra modal confirm
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!modalProducto.classList.contains('hidden')) cerrarModalProducto();
+      const m = document.getElementById('modal-confirm');
+      if (!m.classList.contains('hidden')) {
+        document.getElementById('confirm-cancel').click();
+      }
     }
   });
 
