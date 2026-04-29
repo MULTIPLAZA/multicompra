@@ -1143,18 +1143,49 @@
         const role = btn.getAttribute('data-role');
         const u = DEMO_USERS[role];
         if (!u) return;
-        // Guardar user demo en localStorage
+        // Guardar user demo en localStorage (con localId placeholder; lo
+        // actualizamos a un local REAL del ERP después del prefetch para
+        // que el stock por local matchee).
         try {
           localStorage.setItem('multicompra:user', JSON.stringify({
             id: u.id, nombre: u.nombre, rol: u.rol, iniciales: u.iniciales,
             localId: u.localId, localNombre: u.localNombre
           }));
-          // Recordar el nombre del demo como último usuario
           localStorage.setItem('multicompra:last-user', u.nombre);
         } catch (_) {}
-        // Splash + prefetch (mismo que el login real). Cuando termina,
-        // redirige al dashboard correspondiente.
         await mostrarSplashYPrefetchar({ rol: u.rol, nombre: u.nombre });
+
+        // Después del prefetch, si la demo es de cajera, le asignamos un
+        // local REAL del ERP (el primero activo y diferente del DEPOSITO
+        // central) para que las consultas de stock por local funcionen.
+        // Para Shirley/Diego (supervisor/admin) dejamos el localId tal
+        // cual porque ellos miran TODO, no un local en particular.
+        if (u.rol === 'cajera') {
+          try {
+            const cache = JSON.parse(sessionStorage.getItem('multicompra:cache:v1') || 'null');
+            const locales = cache?.locales || [];
+            const realLocal = locales.find(l => {
+              const n = String(l.nombre || '').toLowerCase();
+              const s = String(l.Sucursal || '').toLowerCase();
+              const esDepo = n.includes('deposito') || n.includes('depósito') ||
+                             s.includes('deposito') || s.includes('depósito');
+              return l.activo && !esDepo;
+            }) || locales.find(l => l.activo) || locales[0];
+            if (realLocal) {
+              const userRaw = localStorage.getItem('multicompra:user');
+              const userObj = userRaw ? JSON.parse(userRaw) : {};
+              userObj.localId = realLocal.id;
+              userObj.localNombre = realLocal.Sucursal && realLocal.Sucursal !== realLocal.nombre
+                ? `${realLocal.Sucursal} · ${realLocal.nombre}`
+                : (realLocal.nombre || realLocal.Sucursal || 'Local');
+              userObj.localSucursal = realLocal.Sucursal || '';
+              localStorage.setItem('multicompra:user', JSON.stringify(userObj));
+              console.log('[demo] Carolina ahora opera desde local REAL:', userObj.localId, userObj.localNombre);
+            }
+          } catch (e) {
+            console.warn('[demo] no pude reasignar localId real:', e);
+          }
+        }
       });
     });
   </script>
