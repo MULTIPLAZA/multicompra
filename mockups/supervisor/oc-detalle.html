@@ -178,6 +178,234 @@
 
     .cta-primary { background: var(--primary); color: var(--primary-on); border-color: var(--primary); }
     .cta-primary:hover { background: var(--primary-hover); }
+
+    /* ── Botón descargar PDF ─────────────────────────────────────────────── */
+    #btn-descargar-pdf { display: none; } /* oculto por defecto; JS lo muestra */
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       @media print — documento formal de OC para proveedor
+       ═══════════════════════════════════════════════════════════════════════ */
+    @media print {
+      /* ── Ocultar todo el chrome de la app ── */
+      .app-header,
+      .app-sidebar,
+      .screen-subheader,
+      .header-search,
+      #btn-toggle-sidebar,
+      .breadcrumbs,
+      .logo,
+      .user-chip,
+      .actions-row,
+      .anulada-banner,
+      aside,                /* columna derecha: historial + OPs origen */
+      .detail-scroll > .page-grid > aside {
+        display: none !important;
+      }
+
+      /* ── Reset del layout de app ── */
+      html, body { height: auto; overflow: visible; }
+      .app { display: block; }
+      .app-main { margin: 0; padding: 0; overflow: visible; }
+      .detail-scroll { overflow: visible; padding: 0; }
+      .page-grid {
+        display: block;
+        max-width: none;
+        margin: 0;
+      }
+
+      /* ── Hoja A4 ── */
+      @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+      }
+
+      /* ── Ocultar cards normales de pantalla ── */
+      .card { display: none !important; }
+
+      /* ── Mostrar el documento print ── */
+      #print-doc { display: block !important; }
+
+      /* ── Tipografía base ── */
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11pt;
+        color: #000;
+        background: #fff;
+      }
+
+      /* ── Encabezado del documento ── */
+      .pd-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 12pt;
+        margin-bottom: 14pt;
+      }
+      .pd-header .pd-titulo {
+        font-size: 22pt;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0 0 4pt;
+      }
+      .pd-header .pd-numero {
+        font-size: 16pt;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        margin: 0 0 4pt;
+      }
+      .pd-header .pd-fecha {
+        font-size: 10pt;
+        color: #333;
+      }
+      .pd-header .pd-empresa {
+        font-size: 13pt;
+        font-weight: 700;
+        margin-bottom: 2pt;
+      }
+
+      /* ── Cajas emisor / proveedor ── */
+      .pd-parties {
+        display: flex;
+        gap: 20pt;
+        margin-bottom: 14pt;
+      }
+      .pd-box {
+        flex: 1;
+        border: 1px solid #555;
+        padding: 8pt 10pt;
+        border-radius: 3pt;
+      }
+      .pd-box-title {
+        font-size: 8pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #555;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4pt;
+        margin-bottom: 6pt;
+      }
+      .pd-box p {
+        margin: 0 0 2pt;
+        font-size: 10pt;
+        line-height: 1.4;
+      }
+      .pd-box strong { font-weight: 700; }
+
+      /* ── Tabla de productos ── */
+      .pd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+        margin-bottom: 10pt;
+        page-break-inside: auto;
+      }
+      .pd-table thead th {
+        background: #e8e8e8;
+        border: 1px solid #aaa;
+        padding: 5pt 6pt;
+        text-align: left;
+        font-size: 9pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .pd-table thead th.num { text-align: right; }
+      .pd-table tbody tr { page-break-inside: avoid; }
+      .pd-table tbody tr:nth-child(even) td { background: #f4f4f4; }
+      .pd-table tbody td {
+        border: 1px solid #ccc;
+        padding: 4pt 6pt;
+        vertical-align: middle;
+      }
+      .pd-table tbody td.num {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+      }
+      /* Fila total */
+      .pd-table tfoot td {
+        border: 1px solid #888;
+        padding: 5pt 6pt;
+        background: #e8e8e8;
+      }
+      .pd-table tfoot td.lbl-total {
+        text-align: right;
+        font-weight: 700;
+        font-size: 11pt;
+        text-transform: uppercase;
+      }
+      .pd-table tfoot td.val-total {
+        text-align: right;
+        font-weight: 700;
+        font-size: 12pt;
+        font-family: 'Courier New', monospace;
+      }
+
+      /* ── Observaciones ── */
+      .pd-obs {
+        border: 1px solid #888;
+        padding: 8pt 10pt;
+        min-height: 55pt;
+        margin-bottom: 20pt;
+        border-radius: 3pt;
+      }
+      .pd-obs-title {
+        font-size: 8pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #555;
+        margin-bottom: 5pt;
+      }
+      .pd-obs-lines { border-top: 1px solid #ccc; padding-top: 8pt; }
+      .pd-obs-lines p {
+        margin: 0 0 10pt;
+        border-bottom: 1px solid #e0e0e0;
+        min-height: 14pt;
+      }
+
+      /* ── Firmas ── */
+      .pd-signatures {
+        display: flex;
+        gap: 40pt;
+        margin-top: 30pt;
+        page-break-inside: avoid;
+      }
+      .pd-sig {
+        flex: 1;
+        text-align: center;
+      }
+      .pd-sig .pd-sig-name {
+        font-size: 10pt;
+        margin-bottom: 2pt;
+        font-weight: 600;
+      }
+      .pd-sig .pd-sig-role {
+        font-size: 9pt;
+        color: #555;
+        margin-bottom: 30pt; /* espacio para firma manuscrita */
+        display: block;
+      }
+      .pd-sig .pd-sig-line {
+        border-top: 1px solid #333;
+        margin-top: 2pt;
+        padding-top: 4pt;
+        font-size: 9pt;
+        color: #333;
+      }
+
+      /* ── Pie de página ── */
+      .pd-footer {
+        margin-top: 20pt;
+        border-top: 1px solid #ccc;
+        padding-top: 6pt;
+        text-align: center;
+        font-size: 8pt;
+        color: #777;
+      }
+    }
+
+    /* ── En pantalla, ocultar el documento print ── */
+    #print-doc { display: none; }
   </style>
 </head>
 <body>
@@ -255,6 +483,10 @@
       <span class="meta-item"><strong>Creada:</strong>&nbsp;<span id="subh-fecha" class="text-mono">&mdash;</span></span>
       <div class="grow"></div>
       <div class="actions-row" id="subh-actions"></div>
+      <button type="button" class="btn btn-secondary" id="btn-descargar-pdf" title="Descargar PDF formal de la OC" aria-label="Descargar PDF">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar PDF
+      </button>
     </div>
 
     <div class="detail-scroll">
@@ -333,6 +565,92 @@
 
       </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         DOCUMENTO PARA IMPRIMIR / EXPORTAR PDF
+         Invisible en pantalla (display:none). El @media print lo muestra.
+         Poblado por JS justo antes de window.print().
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div id="print-doc">
+
+      <!-- Encabezado -->
+      <div class="pd-header">
+        <div class="pd-empresa">MULTIPLAZA S.A.</div>
+        <div class="pd-titulo">Orden de Compra</div>
+        <div class="pd-numero" id="pd-numero">&mdash;</div>
+        <div class="pd-fecha">Fecha: <span id="pd-fecha">&mdash;</span></div>
+      </div>
+
+      <!-- Emisor / Proveedor -->
+      <div class="pd-parties">
+        <div class="pd-box">
+          <div class="pd-box-title">Emisor</div>
+          <p><strong>Multiplaza S.A.</strong></p>
+          <p>RUC: 80012345-6</p>
+          <p>Dirección: Av. Principal 1234, Asunción</p>
+          <p>Teléfono: (021) 000-0000</p>
+          <p>Solicitado por: <strong id="pd-creada-por">&mdash;</strong></p>
+        </div>
+        <div class="pd-box">
+          <div class="pd-box-title">Proveedor</div>
+          <p><strong id="pd-prov-nombre">&mdash;</strong></p>
+          <p id="pd-prov-ruc-row">RUC: <span id="pd-prov-ruc">&mdash;</span></p>
+          <p id="pd-prov-contacto-row" style="display:none;">Contacto: <span id="pd-prov-contacto">&mdash;</span></p>
+        </div>
+      </div>
+
+      <!-- Tabla de productos -->
+      <table class="pd-table">
+        <thead>
+          <tr>
+            <th style="width: 24pt;">#</th>
+            <th style="width: 90pt;">Código</th>
+            <th>Descripción</th>
+            <th class="num" style="width: 54pt;">Cantidad</th>
+            <th class="num" style="width: 80pt;">Costo unit. (Gs)</th>
+            <th class="num" style="width: 90pt;">Subtotal (Gs)</th>
+          </tr>
+        </thead>
+        <tbody id="pd-tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" class="lbl-total">Total Gs:</td>
+            <td class="val-total" id="pd-total">&mdash;</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Observaciones -->
+      <div class="pd-obs">
+        <div class="pd-obs-title">Observaciones</div>
+        <div class="pd-obs-lines">
+          <p></p>
+          <p></p>
+          <p></p>
+        </div>
+      </div>
+
+      <!-- Firmas -->
+      <div class="pd-signatures">
+        <div class="pd-sig">
+          <span class="pd-sig-role">Solicitado por</span>
+          <div class="pd-sig-line">
+            <div class="pd-sig-name" id="pd-firma-nombre">&mdash;</div>
+            Supervisor de Compras
+          </div>
+        </div>
+        <div class="pd-sig">
+          <span class="pd-sig-role">Recibido por</span>
+          <div class="pd-sig-line">&nbsp;</div>
+        </div>
+      </div>
+
+      <!-- Pie -->
+      <div class="pd-footer">
+        Documento generado por MultiCompra &mdash; Multiplaza S.A. &mdash; <span id="pd-footer-fecha"></span>
+      </div>
+
+    </div><!-- /#print-doc -->
 
   </main>
 
@@ -625,6 +943,74 @@
 
 
   updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
+
+  // ── Botón Descargar PDF ──────────────────────────────────────────────────
+  // Solo visible si la OC NO está en 'abierta' ni 'en_edicion'
+  const ESTADOS_SIN_PDF = new Set(['abierta', 'en_edicion']);
+  const btnPdf = document.getElementById('btn-descargar-pdf');
+
+  if (!ESTADOS_SIN_PDF.has(ocMeta.estado)) {
+    btnPdf.style.display = '';  // mostrar
+
+    btnPdf.addEventListener('click', () => {
+      // ── Poblar documento print con datos reales de la OC ────────────────
+
+      // Encabezado
+      document.getElementById('pd-numero').textContent = ocMeta.numero;
+      document.getElementById('pd-fecha').textContent = fmtFecha(ocMeta.fechaCreacion);
+
+      // Emisor
+      const creadoPorText = ocMeta.creadaPor || 'Supervisor';
+      document.getElementById('pd-creada-por').textContent = creadoPorText;
+      document.getElementById('pd-firma-nombre').textContent = creadoPorText;
+
+      // Proveedor
+      const prov = ocMeta.proveedor || {};
+      document.getElementById('pd-prov-nombre').textContent =
+        ocMeta.proveedorNombre || prov.nombre || '—';
+
+      const rucEl = document.getElementById('pd-prov-ruc');
+      const rucRow = document.getElementById('pd-prov-ruc-row');
+      if (prov.ruc) {
+        rucEl.textContent = prov.ruc;
+        rucRow.style.display = '';
+      } else {
+        rucRow.style.display = 'none';
+      }
+
+      const contactoEl = document.getElementById('pd-prov-contacto');
+      const contactoRow = document.getElementById('pd-prov-contacto-row');
+      if (prov.contacto) {
+        contactoEl.textContent = prov.contacto;
+        contactoRow.style.display = '';
+      }
+
+      // Tabla de productos
+      const tbody = document.getElementById('pd-tbody');
+      tbody.innerHTML = productosDesglose.map((p, i) => `
+        <tr>
+          <td class="num">${i + 1}</td>
+          <td style="font-family:'Courier New',monospace; font-size:9pt;">${p.barras || p.productoId || '—'}</td>
+          <td>${p.nombre || p.productoNombre || '—'}</td>
+          <td class="num">${Number(p.cantidad).toLocaleString('es-PY')}</td>
+          <td class="num">${fmtGs(p.costoUnit ?? p.costo ?? 0)}</td>
+          <td class="num"><strong>${fmtGs(p.subtotal ?? 0)}</strong></td>
+        </tr>
+      `).join('');
+
+      // Total
+      document.getElementById('pd-total').textContent = `Gs. ${fmtGs(totalCalculado)}`;
+
+      // Pie: fecha de generación
+      const hoy = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('pd-footer-fecha').textContent =
+        `Generado el ${pad(hoy.getDate())}/${pad(hoy.getMonth()+1)}/${hoy.getFullYear()}`;
+
+      // ── Disparar diálogo de impresión ────────────────────────────────────
+      window.print();
+    });
+  }
 </script>
 
 </body>
