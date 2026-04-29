@@ -745,7 +745,20 @@
   if (!ocMeta) {
     ocMeta = todasLasOCs.find(o => o.id.toLowerCase() === ocId)
           || todasLasOCs.find(o => (o.numero || '').toLowerCase() === ocId)
-          || ocsHistorico[3];
+          || ocsHistorico[3]
+          || null;
+  }
+
+  // Si después de todo no se encontró, mostrar error en lugar de crashear
+  if (!ocMeta) {
+    document.body.innerHTML = `
+      <div style="padding:64px 24px;text-align:center;font-family:system-ui,sans-serif;">
+        <h2 style="margin:0 0 12px;color:#b91c1c;">OC no encontrada</h2>
+        <p style="color:#6b7280;">No se encontró la OC <strong>${ocIdRaw}</strong> ni en Supabase ni en cache local.</p>
+        <p style="margin-top:24px;"><a href="oc-lista.html" style="color:#0e9488;text-decoration:underline;">← Volver al listado de OCs</a></p>
+      </div>
+    `;
+    throw new Error('OC no encontrada: ' + ocIdRaw);
   }
 
   // Cabecera
