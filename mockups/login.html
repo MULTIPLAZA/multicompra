@@ -693,30 +693,32 @@
 
       // Entrar como usuario demo
       var USERS = {
+        // IDs altos (90xx) para que no choquen con los reales del ERP.
+        // Son ints porque las columnas *_id_erp en Supabase son integer.
         cajera: {
-          id: 'user-carolina',
+          id: 9001,
           nombre: 'Carolina',
           rol: 'cajera',
           iniciales: 'CA',
-          localId: 'loc-10',
-          localNombre: 'Shopping del Sol',
+          localId: 1,
+          localNombre: 'Shopping del Sol (demo)',
           redirect: 'cajera/dashboard.html'
         },
         supervisor: {
-          id: 'user-shirley',
+          id: 9002,
           nombre: 'Shirley',
           rol: 'supervisor',
           iniciales: 'SH',
-          localId: null,
+          localId: 0,
           localNombre: 'Depósito central',
           redirect: 'supervisor/dashboard.html'
         },
         admin: {
-          id: 'user-diego',
+          id: 9003,
           nombre: 'Diego',
           rol: 'admin',
           iniciales: 'DG',
-          localId: null,
+          localId: 0,
           localNombre: 'Vista global',
           redirect: 'admin/dashboard.html'
         }

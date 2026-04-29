@@ -68,6 +68,16 @@ function lsSet(key, val) {
   catch (_) { return false; }
 }
 
+// Convierte cualquier valor a int. Si no es numérico válido, devuelve fallback.
+// Útil para defender las columnas *_id_erp que son INTEGER en Supabase y a
+// veces nos llegan strings (ej: 'user-shirley' del botón demo viejo, o
+// userObj.id que viene del localStorage como string).
+function toInt(v, fallback = 0) {
+  if (v === null || v === undefined || v === '') return fallback;
+  const n = Number(v);
+  return Number.isFinite(n) && Number.isInteger(n) ? n : fallback;
+}
+
 /* =============================================================================
    USUARIOS — registrar / actualizar usuario en Supabase tras login real
    ============================================================================= */
@@ -105,9 +115,9 @@ export async function guardarOP(op) {
   // Insert OP + líneas en transacción (vía RPC o secuencial)
   const { data: opRow, error: errOp } = await supa.from('op').insert({
     numero: op.numero,
-    cajera_id_erp: op.cajeraId,
+    cajera_id_erp: toInt(op.cajeraId),
     cajera_nombre: op.cajera,
-    local_id: op.localId,
+    local_id: toInt(op.localId),
     local_nombre: op.localNombre,
     sucursal_nombre: op.sucursal || op.localNombre,
     fecha_envio: new Date().toISOString(),
@@ -119,12 +129,12 @@ export async function guardarOP(op) {
 
   const lineas = op.lineas.map((l, i) => ({
     op_id: opRow.id,
-    producto_id_erp: l.productoId,
+    producto_id_erp: toInt(l.productoId),
     producto_codigo: l.productoCodigo,
     producto_nombre: l.productoNombre,
     producto_costo: l.productoCosto || 0,
     producto_precio: l.productoPrecio || 0,
-    proveedor_id_erp: l.idProveedor || null,
+    proveedor_id_erp: l.idProveedor ? toInt(l.idProveedor) : null,
     cantidad: l.cantidad,
     orden: i
   }));
@@ -250,7 +260,7 @@ export async function resolverSolicitudAlta({ id, estado, supervisorIdErp, super
   const { error } = await supa.from('solicitudes_alta').update({
     estado,
     nota_supervisor: nota,
-    supervisor_id_erp: supervisorIdErp,
+    supervisor_id_erp: toInt(supervisorIdErp),
     supervisor_nombre: supervisorNombre,
     fecha_resolucion: new Date().toISOString()
   }).eq('id', id);
@@ -296,7 +306,7 @@ export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNomb
     return { ok: true, fallback: true, reason: 'op_no_encontrada_en_supabase' };
   }
   const { error } = await supa.from('op_resoluciones').upsert({
-    op_id: uuid, estado, supervisor_id_erp: supervisorIdErp,
+    op_id: uuid, estado, supervisor_id_erp: toInt(supervisorIdErp),
     supervisor_nombre: supervisorNombre, nota, oc_id: ocId,
     fecha_resolucion: new Date().toISOString()
   }, { onConflict: 'op_id' });
@@ -322,16 +332,16 @@ export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveed
   }
 
   const { data: ocRow, error: errOc } = await supa.from('oc').insert({
-    numero, proveedor_id_erp: proveedorIdErp, proveedor_nombre: proveedorNombre,
+    numero, proveedor_id_erp: toInt(proveedorIdErp), proveedor_nombre: proveedorNombre,
     proveedor_ruc: proveedorRuc, fecha_creacion: new Date().toISOString(),
     estado: 'abierta', total_gs: totalGs,
-    creada_por_id_erp: creadoPorIdErp, creada_por_nombre: creadoPorNombre
+    creada_por_id_erp: toInt(creadoPorIdErp), creada_por_nombre: creadoPorNombre
   }).select().single();
   if (errOc) return { ok: false, error: errOc.message };
 
   const lineasInsert = lineas.map(l => ({
     oc_id: ocRow.id,
-    producto_id_erp: l.productoId,
+    producto_id_erp: toInt(l.productoId),
     producto_codigo: l.productoCodigo,
     producto_nombre: l.productoNombre,
     cantidad_pedida: l.cantidad,
@@ -416,10 +426,10 @@ export async function crearSolicitudAlta(payload) {
     descripcion: payload.descripcion,
     motivo: payload.motivo,
     categoria: payload.categoria,
-    proveedor_sugerido_id: payload.proveedorSugerido || null,
-    cajera_id_erp: payload.cajeraId,
+    proveedor_sugerido_id: payload.proveedorSugerido ? toInt(payload.proveedorSugerido) : null,
+    cajera_id_erp: toInt(payload.cajeraId),
     cajera_nombre: payload.cajera,
-    local_id: payload.localId,
+    local_id: toInt(payload.localId),
     local_nombre: payload.local
   });
   return { ok: !error, error: error?.message };
