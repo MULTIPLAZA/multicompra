@@ -796,12 +796,12 @@
 
           <div class="field">
             <label for="select-proveedor" class="field-label">
-              Proveedor<span class="required" aria-hidden="true">*</span>
+              Proveedor <span style="font-weight:400;color:var(--text-muted);font-size:var(--fs-xs);">(opcional)</span>
             </label>
-            <select class="select" id="select-proveedor" required>
-              <option value="">Elegí un proveedor…</option>
+            <select class="select" id="select-proveedor">
+              <option value="">— Sin proveedor / elegir después —</option>
             </select>
-            <span class="field-hint">Obligatorio para abrir la OC. 1 OC = 1 proveedor.</span>
+            <span class="field-hint">Podés armar la OC sin proveedor y asignarlo dentro de la planilla.</span>
             <div class="proveedor-info" id="proveedor-info"></div>
           </div>
 
@@ -1374,28 +1374,23 @@
       alertEl.style.display = 'none';
     }
 
-    // Botón primario
+    // Botón primario — solo OPs son obligatorias; proveedor es opcional
+    // (se puede elegir/cambiar dentro de la planilla también)
     const btn = document.getElementById('btn-armar');
-    const puede = sumOps > 0 && !!state.selectedProveedor;
+    const puede = sumOps > 0;
     if (puede) {
       btn.classList.remove('disabled');
       btn.removeAttribute('aria-disabled');
-      btn.href = '#'; // el handler se encarga
+      btn.href = '#';
       btn.removeAttribute('data-disabled-msg');
       btn.style.opacity = '';
-      // Permitir clicks aunque sea un <a> para que el handler pueda mostrar toast
       btn.style.pointerEvents = '';
     } else {
       btn.setAttribute('aria-disabled', 'true');
       btn.removeAttribute('href');
       btn.style.opacity = '0.5';
-      // NO deshabilitar pointer-events: dejar que el click llegue al handler
-      // para poder mostrar el toast explicativo.
       btn.style.pointerEvents = '';
-      const faltan = [];
-      if (sumOps === 0) faltan.push('al menos 1 OP');
-      if (!state.selectedProveedor) faltan.push('un proveedor');
-      btn.setAttribute('data-disabled-msg', 'Falta: ' + faltan.join(' y '));
+      btn.setAttribute('data-disabled-msg', 'Falta: al menos 1 OP');
     }
 
     // Aviso de proveedor mayoritario distinto al elegido
@@ -1446,35 +1441,23 @@
     if (!btn) return;
     if (btn.getAttribute('aria-disabled') === 'true') {
       e.preventDefault();
-      // Mostrar mensaje explicativo en lugar de silenciar el click
-      const opIds = [...state.selectedOps];
-      if (opIds.length === 0 && !state.selectedProveedor) {
-        showToast('Elegí al menos 1 OP y un proveedor antes de continuar', 'warning');
-      } else if (opIds.length === 0) {
-        showToast('Seleccioná al menos 1 OP para armar la OC', 'warning');
-      } else {
-        showToast('Elegí un proveedor antes de continuar', 'warning');
-      }
-      // Hacer foco en el select de proveedor si es lo que falta
-      if (!state.selectedProveedor) {
-        document.getElementById('select-proveedor')?.focus();
-      }
+      showToast('Seleccioná al menos 1 OP para armar la OC', 'warning');
       return;
     }
     e.preventDefault();
 
     const opIds = [...state.selectedOps];
-    const provId = state.selectedProveedor;
-    const prov = proveedorById.get(String(provId));
     if (!opIds.length) {
       showToast('Seleccioná al menos 1 OP', 'warning');
       return;
     }
-    if (!prov) {
-      console.warn('[oc-nueva] proveedor no encontrado en el map para id:', provId, 'Keys disponibles:', [...proveedorById.keys()]);
-      showToast('No encontré el proveedor seleccionado. Refrescá la página y volvé a elegir.', 'error');
-      return;
-    }
+
+    // Proveedor opcional: si no se eligió, usamos placeholders
+    const provId = state.selectedProveedor;
+    const prov = provId ? proveedorById.get(String(provId)) : null;
+    const provData = prov
+      ? { id: prov.id, nombre: prov.nombre, ruc: prov.ruc || '' }
+      : { id: 0, nombre: '(sin proveedor)', ruc: '' };
 
     // Obtener datos del supervisor para guardar en la sesión
     const supervisorObj = (() => {
@@ -1495,9 +1478,9 @@
       // dentro de la planilla (oc-editar.html?fromNueva=1).
       sessionStorage.setItem('multicompra:oc-en-armado', JSON.stringify({
         opIds,
-        proveedorId:      provId,
-        proveedorNombre:  prov.nombre,
-        proveedorRuc:     prov.ruc || '',
+        proveedorId:      provData.id,
+        proveedorNombre:  provData.nombre,
+        proveedorRuc:     provData.ruc,
         supervisorId:     supervisorIdErp,
         supervisorNombre
       }));
