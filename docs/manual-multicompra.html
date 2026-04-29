@@ -256,7 +256,7 @@
   <div class="big-subtitle">Guía visual para Diego — flujos, pantallas y cómo se usa</div>
   <div class="meta">
     <strong>Cliente:</strong> Diego — cadena de accesorios de celular<br>
-    <strong>Versión:</strong> 1.0 (mockup conectado a datos reales)<br>
+    <strong>Versión:</strong> 1.1 (app conectada a Supabase + tiempo real + voz)<br>
     <strong>Fecha:</strong> 28 de abril de 2026<br>
     <strong>URL:</strong> <code style="font-family:Consolas,monospace;background:#f0fdfa;color:#0f766e;padding:2px 8px;">https://multicompra.pages.dev/login</code>
   </div>
@@ -273,10 +273,11 @@
     <li><span class="n">3.</span> Flujo completo del pedido (visión panorámica)</li>
     <li><span class="n">4.</span> Pantallas — la cajera</li>
     <li><span class="n">5.</span> Pantallas — la supervisora</li>
-    <li><span class="n">6.</span> Pantallas — el admin</li>
-    <li><span class="n">7.</span> Conexión con tu sistema actual</li>
-    <li><span class="n">8.</span> Estado actual y qué falta</li>
-    <li><span class="n">9.</span> Cómo entrar a la app</li>
+    <li><span class="n">6.</span> Tiempo real y notificaciones por voz</li>
+    <li><span class="n">7.</span> Pantallas — el admin</li>
+    <li><span class="n">8.</span> Conexión con tu sistema actual</li>
+    <li><span class="n">9.</span> Estado actual y qué falta</li>
+    <li><span class="n">10.</span> Cómo entrar a la app</li>
   </ol>
 </section>
 
@@ -525,7 +526,7 @@
 
 <h3>4.5 Op nueva — el corazón de la cajera</h3>
 
-<p>Acá la cajera arma su pedido. Tiene un input grande arriba para escanear códigos de barra con un lector láser, y abajo se va llenando la lista:</p>
+<p>Acá la cajera arma su pedido. Tiene <strong>un solo buscador grande arriba</strong> que sirve para todo: pegar el código del lector láser, escribir parte del nombre del producto, o tipear una categoría. La lista se va completando abajo:</p>
 
 <div class="screen-wrap">
   <div class="screen-label">cajera/op-nueva.html</div>
@@ -539,9 +540,9 @@
         </div>
 
         <div class="w-card" style="background:#f0fdfa;border-color:#14b8a6;">
-          <div class="w-label">Escaneá o tipeá el código</div>
-          <div class="w-input" style="font-size:14pt;padding:10px 12px;">|</div>
-          <div style="margin-top:6px;font-size:8.5pt;color:#64748b;">o usá <em>"No tengo el código"</em> para buscar por descripción ↓</div>
+          <div class="w-label">Buscar producto</div>
+          <div class="w-input" style="font-size:12pt;padding:10px 12px;color:#94a3b8;">Buscar por código, descripción o categoría...</div>
+          <div style="margin-top:6px;font-size:8.5pt;color:#64748b;">Funciona con lector láser, teclado o tocando la pantalla. Si no aparece, hay un botón <em>"Solicitar alta"</em>.</div>
         </div>
 
         <div class="w-card" style="margin-top:10px;">
@@ -570,12 +571,12 @@
       </div>
     </div>
   </div>
-  <div class="screen-caption">El input está siempre con foco — la cajera puede escanear sin tocar el mouse. Si el producto no existe, aparece un botón "Solicitar alta" para que la supervisora lo dé de alta.</div>
+  <div class="screen-caption">Un solo input para todo. El foco está siempre puesto, la cajera no necesita tocar el mouse. Cuando aprieta <em>"Enviar pedido"</em>, el pedido se guarda en Supabase y aparece al instante en la pantalla del supervisor.</div>
 </div>
 
-<h3>4.6 Buscar por descripción (cuando no hay código)</h3>
+<h3>4.6 Búsqueda unificada — cómo se ve cuando escribe</h3>
 
-<p>Si la etiqueta del producto no escanea o está borrada, la cajera puede buscar por descripción:</p>
+<p>Apenas tipea (o escanea) algo, abajo aparecen los resultados. La búsqueda mira <strong>código, descripción y categoría</strong> al mismo tiempo:</p>
 
 <div class="screen-wrap">
   <div class="screen-label">cajera/op-nueva — buscador</div>
@@ -602,6 +603,25 @@
   <div class="screen-caption">
     <strong>Navegación con teclado</strong>: ↓/↑ entre resultados, <strong>Enter</strong> o <strong>Espacio</strong> para agregar el resaltado, Esc para cerrar. El primero queda resaltado por default.
   </div>
+</div>
+
+<h3>4.7 "Pedido enviado" — confirmación y voz</h3>
+
+<p>Cuando la cajera aprieta <em>Enviar pedido</em>, sale un cartel verde grande confirmándolo, y al mismo tiempo se va guardando en Supabase. El supervisor lo recibe al instante (ver sección 6):</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">modal "pedido enviado"</div>
+  <div class="screen">
+    <div class="screen-body" style="background:rgba(15,23,42,0.55);padding:30px;">
+      <div style="max-width:340px;margin:0 auto;background:white;border-radius:10px;padding:18px;text-align:center;">
+        <div style="width:48px;height:48px;background:#22c55e;border-radius:50%;margin:4px auto 10px;color:white;display:flex;align-items:center;justify-content:center;font-size:20pt;">✓</div>
+        <div style="font-weight:800;font-size:13pt;color:#15803d;">¡Pedido enviado!</div>
+        <div style="color:#64748b;font-size:9.5pt;margin:6px 0 12px;">OP-1052 · 3 productos · 5 unidades<br>El depósito ya lo está viendo.</div>
+        <span class="w-btn">Listo</span>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Mismo estilo aparece después: <strong>"Aprobada"</strong> (verde) o <strong>"Devuelta"</strong> (naranja con la observación de la supervisora) — y se escucha la voz que avisa.</div>
 </div>
 
 </section>
@@ -641,23 +661,23 @@
 
         <div class="w-card">
           <div class="w-row">
-            <span class="w-mono">OP-LOC-XXX</span>
-            <span style="background:#0f766e;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">MUL</span>
-            <span>MULTIPLAZA</span>
+            <span class="w-mono">OP-1052</span>
+            <span style="background:#0f766e;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">KIW</span>
+            <span>KIWI SHOP</span>
             <span class="w-meta">· Ricardo · recién</span>
             <span style="margin-left:auto;" class="w-meta">3 prod · 5 unid</span>
           </div>
           <div class="w-row">
-            <span class="w-mono">OP-1047</span>
-            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">FDM</span>
-            <span>Fernando de la Mora</span>
-            <span class="w-meta">· Andrea · hoy</span>
+            <span class="w-mono">OP-1051</span>
+            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">MUL</span>
+            <span>MULTIPLAZA</span>
+            <span class="w-meta">· Carolina · hoy</span>
             <span style="margin-left:auto;" class="w-meta">8 prod · 14 unid</span>
           </div>
           <div class="w-row">
-            <span class="w-mono">OP-1043</span>
-            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">SHM</span>
-            <span>Shopping Mcal.</span>
+            <span class="w-mono">OP-1047</span>
+            <span style="background:#475569;color:white;padding:1px 6px;border-radius:4px;font-size:8pt;">GON</span>
+            <span>GONDOLA</span>
             <span class="w-chip warn">Vieja</span>
             <span class="w-chip danger">Excepción</span>
             <span style="margin-left:auto;" class="w-meta">12 prod · 25 unid</span>
@@ -670,7 +690,7 @@
       </div>
     </div>
   </div>
-  <div class="screen-caption">Las OPs nuevas (las que recién mandó una cajera) aparecen arriba con el icono del local. Filtros para buscar por local, cajera, producto.</div>
+  <div class="screen-caption">Las OPs nuevas aparecen arriba con el icono del local <strong>en tiempo real</strong>: cuando una cajera aprieta "Enviar pedido", la fila aparece sola en esta lista (no hay que apretar refrescar). Además suena una voz que dice "Pedido nuevo de [local]".</div>
 </div>
 
 <h3>5.2 Detalle de un pedido</h3>
@@ -702,7 +722,7 @@
       </table>
     </div>
   </div>
-  <div class="screen-caption">Toda la info técnica viene en vivo de tu sistema actual: costo, precio, stock por depósito.</div>
+  <div class="screen-caption">Toda la info técnica viene en vivo de tu sistema actual: costo, precio, stock por depósito. Al apretar "Aprobar" o "Devolver" sale un cartel de confirmación en la pantalla de la supervisora, y la cajera lo ve y lo escucha al instante.</div>
 </div>
 
 <h3>5.3 Catálogo</h3>
@@ -949,15 +969,120 @@
 </section>
 
 <!-- ============================================================ -->
-<!-- 6. PANTALLAS — ADMIN                                          -->
+<!-- 6. TIEMPO REAL Y NOTIFICACIONES                               -->
 <!-- ============================================================ -->
 <section style="page-break-before: always;">
 
-<h2>6) Pantallas — el admin</h2>
+<h2>6) Tiempo real y notificaciones por voz</h2>
+
+<p>Esta es una de las cosas que más se siente al usar la app. <strong>No hace falta apretar refrescar nunca.</strong> Cuando algo pasa, la otra punta lo ve y lo escucha al instante.</p>
+
+<h3>6.1 Cómo funciona, contado simple</h3>
+
+<div class="box">
+  <div class="box-title">El día a día con tiempo real</div>
+  <ul>
+    <li>Una cajera (Ricardo en KIWI SHOP) arma su pedido y aprieta <strong>Enviar</strong>.</li>
+    <li>Shirley está en el depósito mirando su pantalla. <strong>Sin tocar nada</strong>, ve aparecer la fila nueva arriba de su lista de pedidos. Suena una voz que dice: <em>"Pedido nuevo de KIWI SHOP"</em>.</li>
+    <li>Shirley abre el pedido, lo aprueba. La cajera Ricardo, en su local, ve aparecer un cartel verde <strong>"Aprobada"</strong> y escucha: <em>"Depósito aprobó tu pedido"</em>.</li>
+    <li>Si Shirley devuelve el pedido (porque pidió algo raro, o porque hay stock en el central), la cajera ve un cartel naranja <strong>"Devuelta"</strong> con la observación, y escucha: <em>"Depósito devolvió tu pedido. Por favor revisá la observación..."</em>.</li>
+  </ul>
+  <strong>Resultado:</strong> nadie tiene que estar refrescando, mandando WhatsApp para preguntar "¿llegó mi pedido?", ni avisando por teléfono.
+</div>
+
+<h3>6.2 Toast del supervisor (cuando entra una OP nueva)</h3>
+
+<p>Aparece arriba a la derecha como un cartel chico. Se queda unos segundos y se va solo:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">supervisor — toast realtime</div>
+  <div class="screen">
+    <div class="screen-body" style="background:#fafafa;min-height:140px;position:relative;padding:18px;">
+      <div class="w-meta" style="color:#94a3b8;">(la pantalla del supervisor sigue funcionando normal)</div>
+      <div style="position:absolute;top:14px;right:14px;background:white;border:1px solid #14b8a6;border-left:4px solid #0f766e;border-radius:6px;padding:10px 14px;box-shadow:0 6px 18px -6px rgba(15,23,42,0.25);min-width:240px;">
+        <div style="font-weight:700;color:#0f766e;font-size:10pt;">📦 OP nueva</div>
+        <div style="font-size:9pt;color:#475569;margin-top:2px;">La lista se actualizó.</div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Al mismo tiempo, la voz dice: <em>"Pedido nuevo de KIWI SHOP"</em>. La fila aparece sola arriba de la lista (con un brillo verde unos segundos para llamar la atención).</div>
+</div>
+
+<h3>6.3 Toast de la cajera (cuando responden su pedido)</h3>
+
+<p>La cajera, mientras atiende clientes en el local, ve estos carteles cada vez que la supervisora le responde uno de sus pedidos:</p>
+
+<div class="grid-2">
+  <div class="screen-wrap">
+    <div class="screen-label">aprobada (verde)</div>
+    <div class="screen">
+      <div class="screen-body" style="background:#fafafa;min-height:120px;position:relative;padding:18px;">
+        <div class="w-meta" style="color:#94a3b8;font-size:8pt;">(pantalla de la cajera)</div>
+        <div style="position:absolute;top:14px;right:14px;background:white;border:1px solid #22c55e;border-left:4px solid #15803d;border-radius:6px;padding:10px 14px;box-shadow:0 6px 18px -6px rgba(15,23,42,0.25);min-width:220px;">
+          <div style="font-weight:700;color:#15803d;font-size:10pt;">✓ Pedido aprobado</div>
+          <div style="font-size:9pt;color:#475569;margin-top:2px;">OP-1052 quedó OK.</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-caption">Voz: <em>"Depósito aprobó tu pedido"</em>.</div>
+  </div>
+
+  <div class="screen-wrap">
+    <div class="screen-label">devuelta (naranja)</div>
+    <div class="screen">
+      <div class="screen-body" style="background:#fafafa;min-height:120px;position:relative;padding:18px;">
+        <div class="w-meta" style="color:#94a3b8;font-size:8pt;">(pantalla de la cajera)</div>
+        <div style="position:absolute;top:14px;right:14px;background:white;border:1px solid #f59e0b;border-left:4px solid #b45309;border-radius:6px;padding:10px 14px;box-shadow:0 6px 18px -6px rgba(15,23,42,0.25);min-width:220px;">
+          <div style="font-weight:700;color:#b45309;font-size:10pt;">↩ Pedido devuelto</div>
+          <div style="font-size:9pt;color:#475569;margin-top:2px;">Mirá la observación.</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-caption">Voz: <em>"Depósito devolvió tu pedido. Por favor revisá la observación..."</em>.</div>
+  </div>
+</div>
+
+<h3>6.4 Sonido activado / silenciado</h3>
+
+<p>Cada usuario decide si quiere o no escuchar la voz. En el menú del avatar (arriba a la derecha) hay un toggle:</p>
+
+<div class="screen-wrap">
+  <div class="screen-label">menú avatar</div>
+  <div class="screen">
+    <div class="screen-body" style="background:#fafafa;padding:18px;">
+      <div style="max-width:240px;margin-left:auto;background:white;border:1px solid #e2e8f0;border-radius:6px;box-shadow:0 6px 18px -6px rgba(15,23,42,0.2);overflow:hidden;">
+        <div style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">
+          <div class="w-strong">Ricardo</div>
+          <div class="w-meta">KIWI SHOP · Cajera</div>
+        </div>
+        <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:9.5pt;">🔊 Sonido</span>
+          <span style="background:#0f766e;color:white;font-size:8pt;padding:2px 8px;border-radius:999px;">activado</span>
+        </div>
+        <div style="padding:8px 12px;border-top:1px solid #e2e8f0;font-size:9.5pt;color:#dc2626;">Cerrar sesión</div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-caption">Si el local es muy ruidoso o ya escucha la radio, la cajera puede silenciar la voz. Los toasts visuales siguen apareciendo igual.</div>
+</div>
+
+<div class="box info">
+  <div class="box-title">Detalle técnico chico, pero importante</div>
+  La primera vez que entra a la app, el navegador <strong>pide un click</strong> antes de habilitar la voz (es una regla de Chrome para evitar que las páginas hablen solas). Después de ese primer click, la voz funciona automática toda la sesión.
+</div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. PANTALLAS — ADMIN                                          -->
+<!-- ============================================================ -->
+<section style="page-break-before: always;">
+
+<h2>7) Pantallas — el admin</h2>
 
 <p>Pensado para vos. No es operativo del día, es de seguimiento y configuración:</p>
 
-<h3>6.1 Dashboard admin</h3>
+<h3>7.1 Dashboard admin</h3>
 
 <div class="screen-wrap">
   <div class="screen-label">admin/dashboard.html</div>
@@ -1000,7 +1125,7 @@
 <!-- ============================================================ -->
 <section>
 
-<h2>7) Conexión con tu sistema actual</h2>
+<h2>8) Conexión con tu sistema actual</h2>
 
 <p>MultiCompra <strong>NO</strong> tiene su propia base de datos de productos, ni de stock, ni de proveedores. Toda esa información viene de tu sistema (la base ADCON2).</p>
 
@@ -1037,28 +1162,33 @@
 <!-- ============================================================ -->
 <section>
 
-<h2>8) Estado actual y qué falta</h2>
+<h2>9) Estado actual y qué falta</h2>
 
 <h3>✅ Listo y andando</h3>
 <ul>
-  <li>Login real con tus usuarios</li>
-  <li>Pantalla de carga con datos en vivo de tu sistema</li>
-  <li>Dashboard cajera personalizado por usuario y local</li>
-  <li>Pedido nuevo con escaneo y búsqueda por descripción (con teclado)</li>
-  <li>Envío del pedido y persistencia</li>
-  <li>Dashboard supervisor mostrando los pedidos en tiempo real</li>
-  <li>Detalle del pedido con productos reales y costos reales</li>
-  <li>Catálogo del supervisor con stock por depósito</li>
-  <li>Modal "solicitar alta de producto" cuando un código no existe</li>
+  <li><strong>Login real</strong> con usuarios de tu sistema (vía <code>MULTICOMPRA_AUTH</code>).</li>
+  <li><strong>Splash de carga</strong> con prefetch: trae locales, proveedores, productos y stock en una sola corrida.</li>
+  <li><strong>Dashboard cajera</strong> con datos reales (pedido del día + historial).</li>
+  <li><strong>Dashboard supervisor</strong> con la lista de OPs reales (no más datos de demo).</li>
+  <li><strong>Op-nueva con búsqueda unificada</strong>: un solo input que busca por código, descripción o categoría a la vez.</li>
+  <li><strong>Enviar OP</strong> guardado en Supabase (ya no se queda solo en el navegador).</li>
+  <li><strong>Aprobar / Devolver OP</strong> desde el supervisor, persistido en Supabase.</li>
+  <li><strong>Consolidar OPs en OC</strong> — la pantalla del supervisor arma la orden de compra y la guarda.</li>
+  <li><strong>OC-lista</strong> mostrando OCs reales con su estado.</li>
+  <li><strong>Supervisor / op-detalle</strong> con stock real por depósito.</li>
+  <li><strong>Modales bonitos</strong>: "Pedido enviado", "Aprobada", "Devuelta", "OC creada" — todos con el mismo estilo verde / naranja.</li>
+  <li><strong>Realtime</strong>: el supervisor ve OPs nuevas sin recargar; la cajera ve respuestas (aprobada / devuelta) sin recargar.</li>
+  <li><strong>Notificaciones por voz</strong> en español (Web Speech API): <em>"Pedido nuevo de KIWI SHOP"</em>, <em>"Depósito aprobó tu pedido"</em>, <em>"Depósito devolvió tu pedido. Por favor revisá la observación..."</em>.</li>
+  <li><strong>Toggle de sonido</strong> por usuario en el menú del avatar.</li>
+  <li><strong>Modal "solicitar alta de producto"</strong> cuando un código no existe.</li>
 </ul>
 
 <h3>⏳ En progreso / queda</h3>
 <ul>
-  <li><strong>Consolidar OPs en OC</strong> — la pantalla del supervisor para juntar varios pedidos en una orden de compra al proveedor (hoy con datos de demo).</li>
-  <li><strong>Registro de Compra</strong> — cuando llega la mercadería, marcar la OC como cerrada (todavía no implementado).</li>
-  <li><strong>Reportes admin reales</strong> — los 5 reportes hoy muestran datos de demo, hay que cablearlos a la base real.</li>
-  <li><strong>Persistencia en base externa</strong> — hoy las OPs viven en el navegador. Migración a Supabase para que se vean entre dispositivos.</li>
-  <li><strong>Notificaciones</strong> — avisar a la supervisora cuando llega un pedido nuevo (push o WhatsApp).</li>
+  <li><strong>Registro de Compra</strong> — cuando llega la mercadería del proveedor, marcar la OC como cerrada y dejar registrada la compra real (con factura, cantidades recibidas, faltantes). Carlos ya tiene la spec del SP <code>MULTICOMPRA_COMPRA_REGISTRAR</code> en la fase 2 (<code>docs/api-spadconapp-multicompra-fase2.pdf</code>); falta implementarlo.</li>
+  <li><strong>Notificaciones push del navegador</strong> — además del toast y la voz (que solo funcionan si la app está abierta), poder avisar a la supervisora aunque tenga otra pestaña adelante. <em>(En progreso por otro agente.)</em></li>
+  <li><strong>Permisos por rol</strong> — afinar qué puede ver y hacer cada perfil (cajera no ve pantallas de admin, supervisor no edita configuración, etc.). Hoy el sistema diferencia los 3 roles, pero falta cerrar los bordes.</li>
+  <li><strong>Reportes admin reales</strong> — los 5 reportes hoy muestran datos de demo. Falta cablearlos a la base real.</li>
 </ul>
 
 </section>
@@ -1068,18 +1198,23 @@
 <!-- ============================================================ -->
 <section>
 
-<h2>9) Cómo entrar a la app</h2>
+<h2>10) Cómo entrar a la app</h2>
 
 <div class="box">
   <div class="box-title">Acceso</div>
   <p style="margin:4px 0;"><strong>URL:</strong> <code>https://multicompra.pages.dev/login</code></p>
-  <p style="margin:4px 0;"><strong>Usuario de prueba:</strong> RICARDO</p>
-  <p style="margin:4px 0;"><strong>Clave:</strong> 12345</p>
-  <p style="margin:4px 0;font-size:9pt;color:#64748b;">(Cualquier usuario activo de tu sistema actual sirve, este es uno que Carlos habilitó para pruebas.)</p>
+  <p style="margin:4px 0;font-size:9pt;color:#64748b;">(Sin <code>/index</code> ni <code>.html</code> al final — Cloudflare lo limpia automático.)</p>
+  <p style="margin:6px 0 4px 0;"><strong>Usuario de prueba real:</strong> <code>RICARDO</code> / <code>12345</code> (rol cajera)</p>
+  <p style="margin:4px 0;font-size:9pt;color:#64748b;">Cualquier usuario activo de tu sistema actual también sirve — este es el que Carlos habilitó para pruebas.</p>
 </div>
 
-<h3>Si querés probar con datos demo</h3>
-<p>En la pantalla de login, abajo del form, hay un botón <strong>"¿Querés probar la app?"</strong>. Te muestra 3 cards con usuarios de demostración (Carolina cajera, Shirley supervisor, Diego admin) que entran sin pegarle a tu sistema. Son datos ficticios para presentaciones.</p>
+<h3>Usuarios demo (botones de la pantalla de login)</h3>
+<p>Abajo del form hay tres cards de demostración: <strong>Carolina</strong> (cajera), <strong>Shirley</strong> (supervisor) y <strong>Diego</strong> (admin). Click en cualquiera y entrás sin tipear clave. Ahora también <strong>prefetchean datos reales</strong> de tu sistema, así que es la forma rápida de probar la app con info de verdad sin tener que recordar el usuario.</p>
+
+<div class="box warn">
+  <div class="box-title">Notificaciones por voz — un detalle del navegador</div>
+  La voz que avisa "Pedido nuevo de KIWI SHOP" o "Depósito aprobó tu pedido" <strong>requiere que el usuario haya hecho al menos un click</strong> en la pantalla antes (es una regla de Chrome para evitar que las páginas hablen solas). Después de ese primer click, ya queda habilitada y suena automáticamente cada vez que pasa algo. Si nunca tocaste la pantalla, los toasts visuales aparecen igual, pero la voz queda muda hasta el primer click.
+</div>
 
 <p class="footer-note">
   Manual generado el 28 de abril de 2026 · MultiCompra v1.0 ·
