@@ -747,9 +747,11 @@ img, svg { display: block; max-width: 100%; }
   grid-area: sidebar;
   background: var(--bg-elev);
   border-right: 1px solid var(--border);
-  overflow: hidden;
+  overflow-y: auto;       /* permite scroll si los nav-items se cortan */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;          /* permite que flex se ajuste al grid row */
 }
 .nav {
   padding: var(--sp-2);
