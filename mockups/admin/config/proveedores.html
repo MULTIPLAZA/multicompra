@@ -142,6 +142,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
+    import { requireRol } from '../../shared/auth-guard.js';
+    requireRol('admin');
+
     import { proveedoresConfig } from '../../shared/mock-data.js';
     import { isCargado, getProveedores as _getProvReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';
