@@ -134,7 +134,7 @@ export async function guardarOP(op) {
     producto_nombre: l.productoNombre,
     producto_costo: l.productoCosto || 0,
     producto_precio: l.productoPrecio || 0,
-    proveedor_id_erp: l.idProveedor ? toInt(l.idProveedor) : null,
+    proveedor_id_erp: l.idProveedor ? (toInt(l.idProveedor) || null) : null,
     cantidad: l.cantidad,
     orden: i
   }));

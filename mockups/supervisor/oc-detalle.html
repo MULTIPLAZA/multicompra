@@ -680,25 +680,32 @@
   let ocsReales = [];
   try {
     const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
-    ocsReales = arr.map(oc => ({
-      id: oc.id,
-      numero: oc.id,
-      proveedorId: oc.proveedorId,
-      proveedorNombre: oc.proveedorNombre,
-      proveedor: { nombre: oc.proveedorNombre, ruc: '', contacto: '' },
-      fecha: oc.fecha,
-      fechaCreacion: oc.fecha,
-      estado: oc.estado || 'abierta',
-      lineas: oc.lineas || [],
-      total: oc.totalGs || 0,
-      totalGs: oc.totalGs || 0,
-      productosCount: (oc.lineas || []).length,
-      unidadesCount: (oc.lineas || []).reduce((s, l) => s + l.cantidad, 0),
-      opsIncluidas: oc.opIds || [],
-      creadaPor: oc.creadaPor || 'Supervisor',
-      _real: true,
-      _ocOriginal: oc
-    }));
+    ocsReales = arr.map(oc => {
+      const lineas = oc.lineas || [];
+      const unidadesTotal = lineas.reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
+      const opIds = oc.opIds || [];
+      return {
+        id: oc.id,
+        numero: oc.id,
+        proveedorId: oc.proveedorId,
+        proveedorNombre: oc.proveedorNombre || '(sin proveedor)',
+        proveedor: { nombre: oc.proveedorNombre || '(sin proveedor)', ruc: '', contacto: '' },
+        fecha: oc.fecha,
+        fechaCreacion: oc.fecha,
+        estado: oc.estado || 'abierta',
+        lineas,
+        total: oc.totalGs || 0,
+        totalGs: oc.totalGs || 0,
+        productosCount: lineas.length,
+        unidadesCount: unidadesTotal,
+        opsCount: opIds.length,
+        unidadesTotal,
+        opsIncluidas: opIds,
+        creadaPor: oc.creadaPor || 'Supervisor',
+        _real: true,
+        _ocOriginal: oc
+      };
+    });
   } catch (_) {}
 
   const todasLasOCs = [...ocsReales, ...ocsHistorico];
@@ -714,29 +721,35 @@
     const res = await obtenerOC(ocIdRaw);
     if (res.ok && res.data && !res.fallback) {
       const oc = res.data;
+      const opsArr = oc.ops || [];
+      const lineasMapeadas = (oc.lineas || []).map(l => ({
+        productoId: l.producto_id_erp,
+        productoNombre: l.producto_nombre,
+        productoCodigo: l.producto_codigo,
+        cantidad: l.cantidad_pedida,
+        costo: Number(l.costo_unitario) || 0,
+        subtotal: Number(l.subtotal) || 0
+      }));
+      const unidadesTotal = lineasMapeadas.reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
       ocMeta = {
         id: oc.numero || oc.id,
         numero: oc.numero || oc.id,
         proveedorId: oc.proveedor_id_erp,
-        proveedorNombre: oc.proveedor_nombre,
-        proveedor: { nombre: oc.proveedor_nombre, ruc: oc.proveedor_ruc || '' },
+        proveedorNombre: oc.proveedor_nombre || '(sin proveedor)',
+        proveedor: { nombre: oc.proveedor_nombre || '(sin proveedor)', ruc: oc.proveedor_ruc || '' },
         fecha: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
         fechaCreacion: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
         estado: oc.estado || 'abierta',
-        productosCount: oc.productos_count || (oc.lineas || []).length,
-        unidadesCount: oc.unidades_count || 0,
+        productosCount: oc.productos_count || lineasMapeadas.length,
+        unidadesCount: oc.unidades_count || unidadesTotal,
+        // Campos que el render espera con OTRO nombre (compat con la rama del mock)
+        opsCount: opsArr.length,
+        unidadesTotal,
         total: Number(oc.total_gs) || 0,
         totalGs: Number(oc.total_gs) || 0,
         creadaPor: oc.creada_por_nombre,
-        lineas: (oc.lineas || []).map(l => ({
-          productoId: l.producto_id_erp,
-          productoNombre: l.producto_nombre,
-          productoCodigo: l.producto_codigo,
-          cantidad: l.cantidad_pedida,
-          costo: Number(l.costo_unitario) || 0,
-          subtotal: Number(l.subtotal) || 0
-        })),
-        opsIncluidas: (oc.ops || []).map(o => o.numero),
+        lineas: lineasMapeadas,
+        opsIncluidas: opsArr.map(o => o.numero),
         _real: true
       };
     }
