@@ -722,20 +722,10 @@
         }
       };
 
-      document.querySelectorAll('.btn-demo').forEach(function (b) {
-        b.addEventListener('click', function () {
-          var role = b.getAttribute('data-role');
-          var u = USERS[role];
-          if (!u) return;
-          try {
-            localStorage.setItem('multicompra:user', JSON.stringify({
-              id: u.id, nombre: u.nombre, rol: u.rol, iniciales: u.iniciales,
-              localId: u.localId, localNombre: u.localNombre
-            }));
-          } catch (e) {}
-          window.location.href = u.redirect;
-        });
-      });
+      // Los handlers de botones demo se enganchan en el script type="module"
+      // de más abajo (porque necesitan acceso a mostrarSplashYPrefetchar)
+      // Acá expongo solamente el USERS para que el módulo lo lea.
+      window.__DEMO_USERS__ = USERS;
     })();
   </script>
 
@@ -1034,6 +1024,31 @@
       const user = userRaw ? JSON.parse(userRaw) : null;
       if (user) redirigirSegunRol(user.rol);
       else window.location.reload();
+    });
+
+    /* =============================================================================
+       Botones demo (Carolina / Shirley / Diego) — guardan el user mock pero
+       PREFETCHEAN datos reales del ERP para que las pantallas tengan locales,
+       proveedores, productos y stock cargados en cache.
+       Sin esto, el dashboard del supervisor se ve "cortado" porque no hay data.
+       ============================================================================= */
+    const DEMO_USERS = window.__DEMO_USERS__ || {};
+    document.querySelectorAll('.btn-demo').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const role = btn.getAttribute('data-role');
+        const u = DEMO_USERS[role];
+        if (!u) return;
+        // Guardar user demo en localStorage
+        try {
+          localStorage.setItem('multicompra:user', JSON.stringify({
+            id: u.id, nombre: u.nombre, rol: u.rol, iniciales: u.iniciales,
+            localId: u.localId, localNombre: u.localNombre
+          }));
+        } catch (_) {}
+        // Splash + prefetch (mismo que el login real). Cuando termina,
+        // redirige al dashboard correspondiente.
+        await mostrarSplashYPrefetchar({ rol: u.rol, nombre: u.nombre });
+      });
     });
   </script>
 </body>
