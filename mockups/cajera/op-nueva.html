@@ -1213,8 +1213,18 @@
     let scanItems = [];
     let scanActiveIdx = -1;
 
+    // Quita ceros a la izquierda. "0000012345" → "12345". Útil porque algunos
+    // códigos del ERP vienen padded con ceros y los usuarios escriben solo los
+    // dígitos significativos.
+    function stripLeadingZeros(s) {
+      if (!s) return '';
+      const stripped = String(s).replace(/^0+/, '');
+      return stripped || '0';
+    }
+
     function buscarUnificado(qRaw) {
       const q = (qRaw || '').trim().toLowerCase();
+      const qNorm = stripLeadingZeros(q);
       if (q.length < 2) return [];
 
       // Primero códigos que matchean (startsWith).
@@ -1225,9 +1235,10 @@
 
       for (const p of productos) {
         const cod = String(p.barras || '').toLowerCase();
+        const codNorm = stripLeadingZeros(cod);
         const nom = String(p.nombre || '').toLowerCase();
         const cat = String(p.categoria || '').toLowerCase();
-        if (cod && cod.startsWith(q)) {
+        if (cod && (cod.startsWith(q) || (codNorm && codNorm.startsWith(qNorm)))) {
           porCodigo.push(p);
           yaInclui.add(p.id);
         }
@@ -1376,7 +1387,11 @@
         // (compatibilidad con quienes usan lector láser ocasionalmente).
         const codigo = scanInput.value.trim();
         if (!codigo) return;
-        const exactoCod = productos.find(p => String(p.barras || '') === codigo);
+        const codigoNorm = stripLeadingZeros(codigo);
+        const exactoCod = productos.find(p => {
+          const b = String(p.barras || '');
+          return b === codigo || stripLeadingZeros(b) === codigoNorm;
+        });
         if (exactoCod) {
           const res = agregarProducto(exactoCod.id, { focusQty: true });
           mostrarFeedback('ok', res.nuevo ? `Agregado: ${exactoCod.nombre}.` : `Ya estaba: ${exactoCod.nombre}.`, false);
@@ -1593,11 +1608,16 @@
     function filtrar(q) {
       const term = q.trim().toLowerCase();
       if (!term) return [];
+      const termNorm = stripLeadingZeros(term);
       // Decisión 28: startsWith para código de barra, includes para descripción
-      return productos.filter(p =>
-        p.nombre.toLowerCase().includes(term) ||
-        p.barras.startsWith(term)
-      ).slice(0, 8);
+      // + matching contra el código sin ceros a la izquierda.
+      return productos.filter(p => {
+        const cod = String(p.barras || '').toLowerCase();
+        const codNorm = stripLeadingZeros(cod);
+        return p.nombre.toLowerCase().includes(term) ||
+               cod.startsWith(term) ||
+               (codNorm && codNorm.startsWith(termNorm));
+      }).slice(0, 8);
     }
 
     // Estado del buscador con navegación por teclado.

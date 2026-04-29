@@ -137,10 +137,24 @@ export function getProductoPorId(id) {
   return getProductos().find(p => p.id === id) || null;
 }
 
+// Quita ceros a la izquierda. "0000012345" → "12345". Si todo es 0, devuelve "0".
+// Útil porque algunos códigos del ERP vienen padded con ceros y los usuarios
+// escriben solo los dígitos significativos.
+function stripLeadingZeros(s) {
+  if (!s) return '';
+  const stripped = String(s).replace(/^0+/, '');
+  return stripped || '0';
+}
+export { stripLeadingZeros };
+
 export function getProductoPorCodigo(codigo) {
   if (!codigo) return null;
   const c = String(codigo).trim();
-  return getProductos().find(p => String(p.codigo || '').trim() === c) || null;
+  const cNorm = stripLeadingZeros(c);
+  return getProductos().find(p => {
+    const pcod = String(p.codigo || '').trim();
+    return pcod === c || stripLeadingZeros(pcod) === cNorm;
+  }) || null;
 }
 
 export function getLocalPorId(id) {
@@ -183,16 +197,20 @@ export function getStockPorLocal(idProducto) {
   return filas;
 }
 
-/* Buscar productos por texto (en descripción o código) */
+/* Buscar productos por texto (en descripción o código).
+   El código se compara también con ceros a la izquierda removidos para
+   que "12345" matchee productos cuyo código real es "0000012345". */
 export function buscarProductos(texto, limit = 50) {
   if (!texto) return [];
   const q = texto.toLowerCase().trim();
   if (q.length < 2) return [];
+  const qNorm = stripLeadingZeros(q);
   const out = [];
   for (const p of getProductos()) {
     const desc = (p.descripcion || '').toLowerCase();
     const cod  = (p.codigo || '').toLowerCase();
-    if (desc.includes(q) || cod.includes(q)) {
+    const codNorm = stripLeadingZeros(cod);
+    if (desc.includes(q) || cod.includes(q) || (codNorm && codNorm.includes(qNorm))) {
       out.push(p);
       if (out.length >= limit) break;
     }
