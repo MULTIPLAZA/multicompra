@@ -1706,7 +1706,7 @@
       lineas.push({
         productoId: g.productoId,
         productoNombre: g.nombre,
-        productoCodigo: '',
+        productoCodigo: g.barras || '',
         costo: g.costoEstimado || 0,
         cantidad: cantTotal
       });
