@@ -19,6 +19,27 @@
       }
     })();
   </script>
+  <!-- Auto-redirect si ya hay sesión activa (evita re-pedir contraseña).
+       Para forzar el form de login, agregar ?logout=1 o ?cambiar=1 a la URL. -->
+  <script>
+    (function () {
+      try {
+        var qs = window.location.search;
+        if (qs.indexOf('logout') !== -1 || qs.indexOf('cambiar') !== -1) return;
+        var raw = localStorage.getItem('multicompra:user');
+        if (!raw) return;
+        var u = JSON.parse(raw);
+        if (!u || !u.rol) return;
+        var DEST = {
+          cajera:     'cajera/dashboard.html',
+          supervisor: 'supervisor/dashboard.html',
+          admin:      'admin/dashboard.html'
+        };
+        var next = DEST[u.rol] || 'cajera/dashboard.html';
+        window.location.replace(next);
+      } catch (e) { /* si falla, mostrar form normal */ }
+    })();
+  </script>
   <link rel="stylesheet" href="shared/styles.css" />
   <style>
     body {
@@ -754,9 +775,11 @@
         }
       });
 
-      // ── Último usuario recordado ──────────────────────────────────────────
+      // ── Último usuario + contraseña recordada (modo dev) ─────────────────
       var LAST_USER_KEY = 'multicompra:last-user';
+      var REMEMBER_KEY  = 'multicompra:remember-pass'; // base64 (sólo dev)
       var inpUsuario   = document.getElementById('inp-usuario');
+      var inpRemember  = document.getElementById('inp-remember');
       var lastUserHint = document.getElementById('last-user-hint');
       var btnCambiar   = document.getElementById('btn-cambiar-usuario');
 
@@ -766,11 +789,23 @@
           inpUsuario.value = lastUser;
           lastUserHint.style.display = 'block';
         }
+        var rememberedB64 = localStorage.getItem(REMEMBER_KEY);
+        if (rememberedB64) {
+          try {
+            inpPass.value = atob(rememberedB64);
+            inpRemember.checked = true;
+          } catch (_) {}
+        }
       } catch (_) {}
 
       btnCambiar.addEventListener('click', function () {
-        try { localStorage.removeItem(LAST_USER_KEY); } catch (_) {}
+        try {
+          localStorage.removeItem(LAST_USER_KEY);
+          localStorage.removeItem(REMEMBER_KEY);
+        } catch (_) {}
         inpUsuario.value = '';
+        inpPass.value = '';
+        inpRemember.checked = false;
         lastUserHint.style.display = 'none';
         inpUsuario.focus();
       });
@@ -779,6 +814,15 @@
       // (se llama desde el handler del form más abajo, expuesto en window)
       window.__guardarLastUser__ = function (nombre) {
         try { localStorage.setItem(LAST_USER_KEY, nombre); } catch (_) {}
+      };
+      window.__guardarRememberPass__ = function (clave) {
+        try {
+          if (inpRemember.checked && clave) {
+            localStorage.setItem(REMEMBER_KEY, btoa(clave));
+          } else {
+            localStorage.removeItem(REMEMBER_KEY);
+          }
+        } catch (_) {}
       };
     })();
   </script>
@@ -860,6 +904,9 @@
         // Login OK — recordar el usuario para la próxima vez
         if (typeof window.__guardarLastUser__ === 'function') {
           window.__guardarLastUser__(usuario);
+        }
+        if (typeof window.__guardarRememberPass__ === 'function') {
+          window.__guardarRememberPass__(clave);
         }
         // Guardar usuario en memoria temporal y abrir modal de local
         usuarioLogueado = res;

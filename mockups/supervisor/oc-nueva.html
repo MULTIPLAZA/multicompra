@@ -1350,7 +1350,7 @@
   // Click "Armar OC y abrir planilla" — persiste la OC en localStorage
   // y redirige al listado para que el supervisor vea su nueva OC arriba.
   // =====================================================================
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', async (e) => {
     const btn = e.target.closest('#btn-armar');
     if (!btn) return;
     if (btn.getAttribute('aria-disabled') === 'true') {
