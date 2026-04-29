@@ -100,6 +100,10 @@ export function initAvatarMenu(opts = {}) {
   const iconLogout = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
   const iconBellOn  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
   const iconBellOff = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  // Campana con punto rojo (notif push on)
+  const iconPushOn  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><circle cx="18" cy="5" r="3" fill="var(--danger,#ef4444)" stroke="none"/></svg>`;
+  // Campana tachada (notif push off)
+  const iconPushOff = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
   menu.innerHTML = `
     <div class="avatar-menu-header" role="presentation">
@@ -125,6 +129,10 @@ export function initAvatarMenu(opts = {}) {
     <button type="button" class="avatar-menu-item" id="avatar-menu-sonido" role="menuitem">
       <span class="avatar-menu-sonido-icon">${iconBellOn}${iconBellOff}</span>
       <span id="avatar-menu-sonido-label">Sonido: cargando…</span>
+    </button>
+    <button type="button" class="avatar-menu-item" id="avatar-menu-push" role="menuitem">
+      <span class="avatar-menu-push-icon">${iconPushOn}${iconPushOff}</span>
+      <span id="avatar-menu-push-label">Notificaciones: cargando…</span>
     </button>
     <div class="avatar-menu-divider" role="separator"></div>
     <a class="avatar-menu-item avatar-menu-item--danger" href="${logoutHref}" role="menuitem">
@@ -248,6 +256,99 @@ export function initAvatarMenu(opts = {}) {
       const rol = sonidoMod.rolUsuarioActual();
       sonidoMod.toggleSonido(rol);
       refrescarLbl();
+    });
+  }
+
+  // Toggle de notificaciones push (lazy import de push.js)
+  const btnPushMenu = document.getElementById('avatar-menu-push');
+  if (btnPushMenu) {
+    let pushMod = null;
+    const lblPush = document.getElementById('avatar-menu-push-label');
+
+    const refrescarLblPush = () => {
+      if (!lblPush) return;
+      if (!pushMod) {
+        lblPush.textContent = 'Notificaciones: cargando…';
+        return;
+      }
+      const permiso = pushMod.getPermisoNotificaciones();
+      if (permiso === 'unsupported') {
+        lblPush.textContent = 'Notificaciones: no disponible';
+        btnPushMenu.disabled = true;
+        btnPushMenu.setAttribute('aria-disabled', 'true');
+        btnPushMenu.title = 'No disponible en este dispositivo';
+        btnPushMenu.classList.add('avatar-menu-item--disabled');
+        return;
+      }
+      if (permiso === 'denied') {
+        lblPush.textContent = 'Notificaciones: bloqueadas';
+        btnPushMenu.disabled = true;
+        btnPushMenu.setAttribute('aria-disabled', 'true');
+        btnPushMenu.title = 'Activalas desde la configuración del browser';
+        btnPushMenu.classList.add('avatar-menu-item--disabled');
+        return;
+      }
+      // Permiso 'default' o 'granted' — mostrar preferencia del user
+      // Determinamos el rol desde sonido.js si está cargado, sino usamos cajera
+      let rolActual = 'cajera';
+      try {
+        const u = JSON.parse(localStorage.getItem('multicompra:user') || '{}');
+        const r = u.rol || 'cajera';
+        rolActual = (r === 'supervisor' || r === 'admin') ? 'supervisor' : 'cajera';
+      } catch (_) {}
+
+      const on = pushMod.getPushHabilitado(rolActual);
+      lblPush.textContent = on ? 'Notificaciones: activadas' : 'Notificaciones: silenciadas';
+      btnPushMenu.disabled = false;
+      btnPushMenu.removeAttribute('aria-disabled');
+      btnPushMenu.title = '';
+      btnPushMenu.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btnPushMenu.classList.remove('avatar-menu-item--disabled');
+      btnPushMenu.classList.toggle('avatar-menu-push-off', !on);
+    };
+
+    import('./push.js').then(mod => {
+      pushMod = mod;
+      refrescarLblPush();
+    }).catch(() => {
+      if (lblPush) lblPush.textContent = 'Notificaciones: no disponible';
+    });
+
+    btnPushMenu.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!pushMod || btnPushMenu.disabled) return;
+
+      const permiso = pushMod.getPermisoNotificaciones();
+
+      // Si nunca pidió permiso, pedirlo ahora y luego refrescar
+      if (permiso === 'default') {
+        const resultado = await pushMod.pedirPermisoNotificaciones();
+        // Si concedió, habilitar (ya queda en 'granted')
+        if (resultado === 'granted') {
+          let rolActual = 'cajera';
+          try {
+            const u = JSON.parse(localStorage.getItem('multicompra:user') || '{}');
+            const r = u.rol || 'cajera';
+            rolActual = (r === 'supervisor' || r === 'admin') ? 'supervisor' : 'cajera';
+          } catch (_) {}
+          pushMod.setPushHabilitado(rolActual, true);
+        }
+        refrescarLblPush();
+        return;
+      }
+
+      if (permiso !== 'granted') return;
+
+      // Permisos concedidos: alternar preferencia
+      let rolActual = 'cajera';
+      try {
+        const u = JSON.parse(localStorage.getItem('multicompra:user') || '{}');
+        const r = u.rol || 'cajera';
+        rolActual = (r === 'supervisor' || r === 'admin') ? 'supervisor' : 'cajera';
+      } catch (_) {}
+
+      pushMod.togglePush(rolActual);
+      refrescarLblPush();
     });
   }
 

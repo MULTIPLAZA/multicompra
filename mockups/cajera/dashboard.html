@@ -485,6 +485,7 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
   import { listarOPs, suscribirseRealtime, obtenerOP } from '../shared/supabase.js';
   import { playNotifAprobada, playNotifDevuelta } from '../shared/sonido.js';
   import { initAvatarMenu } from '../shared/ui.js';
+  import { mostrarBannerPermisoSiCorresponde, notificar, getPushHabilitado } from '../shared/push.js';
 
   // Leer usuario real desde localStorage (login real). Si no hay, fallback al mock.
   let cajeraActual = cajeraMock;
@@ -625,6 +626,19 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     userLocal: cajeraActual.localNombre,
   });
 
+  // Banner discreto de solicitud de permiso push (solo si nunca lo pidió)
+  mostrarBannerPermisoSiCorresponde({
+    rol: 'cajera',
+    onActivar: (permiso) => {
+      if (permiso === 'granted') {
+        showToastCajeraTop(
+          '<strong>Notificaciones activadas</strong><br><span style="font-size:13px;opacity:0.9;">Te avisamos cuando Shirley procese tu pedido.</span>',
+          'info'
+        );
+      }
+    }
+  });
+
   /* =====================================================================
      Realtime — la cajera escucha resoluciones del supervisor sobre SUS OPs
      ===================================================================== */
@@ -668,19 +682,43 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
       if (Number(data.cajera_id_erp) !== Number(cajeraActual.id)) return;
 
       const num = (data.numero || data.id || '').toString().toUpperCase();
+      const opUrlId = encodeURIComponent(data.numero || data.id || '');
+
       if (resol.estado === 'aprobada') {
         showToastCajeraTop(
           `<strong>✅ ¡${num} aprobada!</strong><br><span style="font-size:13px;opacity:0.9;">${resol.supervisor_nombre || 'El supervisor'} aprobó tu pedido.</span>`,
           'success'
         );
         try { playNotifAprobada({ numero: num }); } catch (_) {}
+
+        // Push nativa cuando la pestaña está oculta
+        if (getPushHabilitado('cajera')) {
+          notificar(`¡Tu pedido fue aprobado!`, {
+            body: `${resol.supervisor_nombre || 'El supervisor'} aprobó ${num}`,
+            tag: `aprobada-${data.id || num}`,
+            onClick: () => { window.location.href = 'dashboard.html'; }
+          });
+        }
       } else if (resol.estado === 'devuelta') {
         const notaPreview = (resol.nota || '').slice(0, 80);
         showToastCajeraTop(
-          `<strong>↶ ${num} devuelta</strong><br><span style="font-size:13px;opacity:0.9;">${notaPreview}${notaPreview.length === 80 ? '…' : ''}</span><br><a href="op-devuelta.html?id=${data.numero || data.id}" style="font-size:13px;text-decoration:underline;color:inherit;">Ver detalles →</a>`,
+          `<strong>↶ ${num} devuelta</strong><br><span style="font-size:13px;opacity:0.9;">${notaPreview}${notaPreview.length === 80 ? '…' : ''}</span><br><a href="op-devuelta.html?id=${opUrlId}" style="font-size:13px;text-decoration:underline;color:inherit;">Ver detalles →</a>`,
           'warning'
         );
         try { playNotifDevuelta({ numero: num, nota: resol.nota }); } catch (_) {}
+
+        // Push nativa — requireInteraction:true para que la cajera no se la pierda
+        if (getPushHabilitado('cajera')) {
+          const notaCorta = (resol.nota || '').slice(0, 60);
+          notificar(`Tu pedido fue devuelto`, {
+            body: `${resol.supervisor_nombre || 'El supervisor'}: ${notaCorta}${notaCorta.length === 60 ? '…' : ''}`,
+            tag: `devuelta-${data.id || num}`,
+            requireInteraction: true,
+            onClick: () => {
+              window.location.href = `op-devuelta.html?id=${opUrlId}`;
+            }
+          });
+        }
       } else if (resol.estado === 'en_oc') {
         showToastCajeraTop(
           `<strong>📋 ${num} incluida en una OC</strong><br><span style="font-size:13px;opacity:0.9;">Tu pedido se va a comprar al proveedor.</span>`,

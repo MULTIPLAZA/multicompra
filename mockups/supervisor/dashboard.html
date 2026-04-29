@@ -542,6 +542,7 @@
   import { listarOPs, obtenerLineasOP, suscribirseRealtime } from '../shared/supabase.js';
   import { playNotifSupervisor } from '../shared/sonido.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+  import { mostrarBannerPermisoSiCorresponde, notificar, getPushHabilitado } from '../shared/push.js';
 
   // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
   // queda con valores por default que muestran Shirley como en el mock.
@@ -1012,6 +1013,16 @@
     userLocal: null,
   });
 
+  // Banner discreto de solicitud de permiso push (solo si nunca lo pidió)
+  mostrarBannerPermisoSiCorresponde({
+    rol: 'supervisor',
+    onActivar: (permiso) => {
+      if (permiso === 'granted') {
+        showToast('Notificaciones activadas. Te avisamos cuando llegue un pedido.');
+      }
+    }
+  });
+
   // =====================================================================
   // Inicial
   // =====================================================================
@@ -1091,6 +1102,27 @@
             playNotifSupervisor({ cantidad: delta });
           }
         } catch (_) {}
+
+        // Push nativa: solo cuando la pestaña está oculta (si visible, el toast ya avisa)
+        if (getPushHabilitado('supervisor')) {
+          const localStr = (delta === 1 && localesPorAnunciar.length === 1)
+            ? localesPorAnunciar[0]
+            : `${delta} pedidos nuevos`;
+          const opRow = (delta === 1 && opsPendientes.length > 0)
+            ? opsPendientes[0]
+            : null;
+          const bodyStr = opRow
+            ? `${opRow.cajera} · ${opRow.lineas.length} productos · ${opRow.lineas.reduce((s, l) => s + l.cantidad, 0)} unidades`
+            : `${delta} pedido${delta > 1 ? 's' : ''} esperando procesamiento`;
+          notificar(
+            delta === 1 ? `Pedido nuevo de ${localStr}` : `${delta} pedidos nuevos`,
+            {
+              body: bodyStr,
+              tag: opRow ? `op-${opRow.id}` : `ops-nuevas-${Date.now()}`,
+              onClick: () => { window.location.href = 'dashboard.html'; }
+            }
+          );
+        }
       }
       localesPorAnunciar.length = 0;
     }, 600);
