@@ -953,6 +953,18 @@
     throw new Error('sin líneas');
   }
 
+  // ─── Debug hook (temporal) — expone oc y helpers a window para inspeccionar
+  // desde DevTools. Sacar cuando se cierre el debug.
+  window.__debug = {
+    oc,
+    getStockMap,
+    getProductos,
+    getLocales,
+    getProductoPorId,
+    getStockProducto
+  };
+  console.log('[oc-editar] debug hook listo. Usá window.__debug.oc, window.__debug.getStockMap(), etc.');
+
   // ─── Poblar header con datos reales de la OC ─────────────────────────────
   (function _poblarHeader() {
     const numero = oc.numero || '—';
