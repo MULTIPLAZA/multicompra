@@ -670,14 +670,14 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
           `<strong>✅ ¡${num} aprobada!</strong><br><span style="font-size:13px;opacity:0.9;">${resol.supervisor_nombre || 'El supervisor'} aprobó tu pedido.</span>`,
           'success'
         );
-        try { playNotifAprobada(); } catch (_) {}
+        try { playNotifAprobada({ numero: num }); } catch (_) {}
       } else if (resol.estado === 'devuelta') {
         const notaPreview = (resol.nota || '').slice(0, 80);
         showToastCajeraTop(
           `<strong>↶ ${num} devuelta</strong><br><span style="font-size:13px;opacity:0.9;">${notaPreview}${notaPreview.length === 80 ? '…' : ''}</span><br><a href="op-devuelta.html?id=${data.numero || data.id}" style="font-size:13px;text-decoration:underline;color:inherit;">Ver detalles →</a>`,
           'warning'
         );
-        try { playNotifDevuelta(); } catch (_) {}
+        try { playNotifDevuelta({ numero: num, nota: resol.nota }); } catch (_) {}
       } else if (resol.estado === 'en_oc') {
         showToastCajeraTop(
           `<strong>📋 ${num} incluida en una OC</strong><br><span style="font-size:13px;opacity:0.9;">Tu pedido se va a comprar al proveedor.</span>`,

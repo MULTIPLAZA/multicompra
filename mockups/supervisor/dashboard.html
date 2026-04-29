@@ -1059,7 +1059,12 @@
   }
 
   let recargandoTimer = null;
-  async function refrescarYMostrar() {
+  // Cuando llega un INSERT en op, guardamos el local para anunciarlo por voz
+  const localesPorAnunciar = [];
+  async function refrescarYMostrar(opNueva) {
+    if (opNueva && opNueva.local_nombre) {
+      localesPorAnunciar.push(opNueva.local_nombre);
+    }
     // Debounce: si llegan varios eventos seguidos, esperar 600ms y recargar una vez.
     clearTimeout(recargandoTimer);
     recargandoTimer = setTimeout(async () => {
@@ -1075,8 +1080,16 @@
       const delta = opsPendientes.length - cantAntes;
       if (delta > 0) {
         showToastTop(`<strong>📦 ${delta} OP${delta > 1 ? 's' : ''} nueva${delta > 1 ? 's' : ''}</strong> · La lista se actualizó.`, 'info');
-        try { playNotifSupervisor(); } catch (_) {}
+        try {
+          // Si hay 1 sola OP nueva: anunciar el local. Si hay varias: contar.
+          if (delta === 1 && localesPorAnunciar.length === 1) {
+            playNotifSupervisor({ local: localesPorAnunciar[0] });
+          } else {
+            playNotifSupervisor({ cantidad: delta });
+          }
+        } catch (_) {}
       }
+      localesPorAnunciar.length = 0;
     }, 600);
   }
 
@@ -1084,7 +1097,7 @@
     const sub = await suscribirseRealtime({
       onOpNueva: (opRow) => {
         console.log('[realtime] OP nueva:', opRow.numero, opRow.cajera_nombre);
-        refrescarYMostrar();
+        refrescarYMostrar(opRow);
       },
       onOpResolucion: (resol) => {
         console.log('[realtime] resolución de OP:', resol.estado);
