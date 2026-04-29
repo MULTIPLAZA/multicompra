@@ -1359,8 +1359,10 @@
   function setDecision(tr, value) {
     const pid = tr.dataset.productId;
     const opId = tr.dataset.opId;
-    const grupo = oc.grupos.find(g => g.productoId === pid);
-    const p = grupo.pedidos.find(x => x.opId === opId && x.localId === tr.dataset.localId);
+    const grupo = oc.grupos.find(g => String(g.productoId) === pid);
+    if (!grupo) return;
+    const p = grupo.pedidos.find(x => String(x.opId) === opId && String(x.localId) === tr.dataset.localId);
+    if (!p) return;
 
     if (value === 'repone_central' && grupo.stockCentral <= 0) return;
 
@@ -1408,8 +1410,8 @@
       // Aplica el sugerido como cantidad a comprar y marca la fila como editada
       // (salvo que ya coincidiera, en cuyo caso el botón está disabled y no entra).
       e.stopPropagation();
-      const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
-      const p = grupo && grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+      const grupo = oc.grupos.find(g => String(g.productoId) === tr.dataset.productId);
+      const p = grupo && grupo.pedidos.find(x => String(x.opId) === tr.dataset.opId && String(x.localId) === tr.dataset.localId);
       if (!p || p.sugerido == null) return;
       p.decision = 'comprar';
       p.cantidadComprar = p.sugerido;
@@ -1434,8 +1436,10 @@
     if (!e.target.matches('.input-comprar')) return;
     const tr = e.target.closest('tr.pedido-row');
     if (!tr) return;
-    const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
-    const p = grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+    const grupo = oc.grupos.find(g => String(g.productoId) === tr.dataset.productId);
+    if (!grupo) return;
+    const p = grupo.pedidos.find(x => String(x.opId) === tr.dataset.opId && String(x.localId) === tr.dataset.localId);
+    if (!p) return;
     const val = Math.max(0, parseInt(e.target.value || 0, 10));
     p.cantidadComprar = val;
     if (p.decision !== 'comprar') p.decision = 'comprar';
@@ -1510,8 +1514,8 @@
     e.stopPropagation();
     const tr = btn.closest('tr.pedido-row');
     if (!tr) return;
-    const grupo = oc.grupos.find(g => g.productoId === tr.dataset.productId);
-    const p = grupo && grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+    const grupo = oc.grupos.find(g => String(g.productoId) === tr.dataset.productId);
+    const p = grupo && grupo.pedidos.find(x => String(x.opId) === tr.dataset.opId && String(x.localId) === tr.dataset.localId);
     if (!grupo || !p) return;
     openAuditPopover(btn, p, grupo);
   });
@@ -1634,8 +1638,10 @@
       seleccionadas.forEach(chk => {
         const tr = chk.closest('tr.pedido-row');
         const pid = tr.dataset.productId;
-        const grupo = oc.grupos.find(g => g.productoId === pid);
-        const p = grupo.pedidos.find(x => x.opId === tr.dataset.opId && x.localId === tr.dataset.localId);
+        const grupo = oc.grupos.find(g => String(g.productoId) === pid);
+        if (!grupo) return;
+        const p = grupo.pedidos.find(x => String(x.opId) === tr.dataset.opId && String(x.localId) === tr.dataset.localId);
+        if (!p) return;
 
         if (action === 'no_necesita') {
           p.decision = 'no_necesita';
