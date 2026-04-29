@@ -938,8 +938,20 @@
           if (parsed && Array.isArray(parsed.lineas)) {
             // Filtrar líneas cuyo productoId no exista en el catálogo cargado
             // (ej: el draft tenía IDs del mock 'p01' que no están en la API real).
-            const validIds = new Set(productos.map(p => p.id));
-            parsed.lineas = parsed.lineas.filter(l => validIds.has(l.productoId));
+            // Comparamos como string para evitar problemas de tipos (number vs string).
+            const validIds = new Set(productos.map(p => String(p.id)));
+            const lineasOriginales = parsed.lineas.length;
+            parsed.lineas = parsed.lineas
+              .filter(l => validIds.has(String(l.productoId)))
+              .map(l => {
+                // Normalizar el productoId al tipo del catálogo (number si los reales son números)
+                const prodReal = productos.find(p => String(p.id) === String(l.productoId));
+                return prodReal ? { ...l, productoId: prodReal.id } : l;
+              });
+            if (parsed.lineas.length !== lineasOriginales) {
+              // Persistir el draft limpio para que próximas cargas no tengan que filtrar
+              try { localStorage.setItem(DRAFT_KEY, JSON.stringify(parsed)); } catch (_) {}
+            }
             return parsed;
           }
         }
@@ -1069,19 +1081,26 @@
       renderLista();
     }
 
+    // Helper: comparar productoId tolerando number vs string
+    function findLineaPorPid(pidRaw) {
+      const pidStr = String(pidRaw);
+      return state.lineas.find(x => String(x.productoId) === pidStr);
+    }
+
     // Delegación de eventos en la lista
     listaWrap.addEventListener('click', (e) => {
       const tr = e.target.closest('tr[data-pid]');
       if (!tr) return;
       const pid = tr.dataset.pid;
+      // Resolver al productoId tipo correcto del state (number o string)
+      const ln = findLineaPorPid(pid);
+      const realId = ln ? ln.productoId : pid;
       if (e.target.closest('.qty-plus')) {
-        const ln = state.lineas.find(x => x.productoId === pid);
-        if (ln) cambiarCantidad(pid, ln.cantidad + 1);
+        if (ln) cambiarCantidad(realId, ln.cantidad + 1);
       } else if (e.target.closest('.qty-minus')) {
-        const ln = state.lineas.find(x => x.productoId === pid);
-        if (ln && ln.cantidad > 1) cambiarCantidad(pid, ln.cantidad - 1);
+        if (ln && ln.cantidad > 1) cambiarCantidad(realId, ln.cantidad - 1);
       } else if (e.target.closest('.btn-delete')) {
-        if (confirm('¿Quitar este producto del pedido?')) quitarProducto(pid);
+        if (confirm('¿Quitar este producto del pedido?')) quitarProducto(realId);
       }
     });
 
@@ -1089,7 +1108,9 @@
       if (!e.target.matches('.qty-input')) return;
       const tr = e.target.closest('tr[data-pid]');
       if (!tr) return;
-      cambiarCantidad(tr.dataset.pid, parseInt(e.target.value, 10));
+      const ln = findLineaPorPid(tr.dataset.pid);
+      const realId = ln ? ln.productoId : tr.dataset.pid;
+      cambiarCantidad(realId, parseInt(e.target.value, 10));
     });
 
     // Enter en input de cantidad → guarda y vuelve al escaneo
@@ -1099,13 +1120,14 @@
         e.preventDefault();
         const tr = e.target.closest('tr[data-pid]');
         if (!tr) return;
-        const pid = tr.dataset.pid;
+        const ln = findLineaPorPid(tr.dataset.pid);
+        const realId = ln ? ln.productoId : tr.dataset.pid;
         const val = parseInt(e.target.value, 10);
         // Enter con vacío o 0 → mantiene cantidad=1
         if (!val || val <= 0) {
-          cambiarCantidad(pid, 1);
+          cambiarCantidad(realId, 1);
         } else {
-          cambiarCantidad(pid, val);
+          cambiarCantidad(realId, val);
         }
         // Volver al input de escaneo
         setTimeout(() => {
