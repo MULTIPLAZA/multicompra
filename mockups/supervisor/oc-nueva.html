@@ -1107,8 +1107,10 @@
   // =====================================================================
   // Helpers
   // =====================================================================
-  const productoById = new Map(productos.map(p => [p.id, p]));
-  const proveedorById = new Map(proveedores.map(p => [p.id, p]));
+  // Normalizamos las keys a String para que el lookup funcione tanto si los IDs
+  // vienen como integer (Supabase) como string (mock o select.value HTML).
+  const productoById = new Map(productos.map(p => [String(p.id), p]));
+  const proveedorById = new Map(proveedores.map(p => [String(p.id), p]));
 
   function countUniqueProductos(opIds) {
     const set = new Set();
@@ -1147,7 +1149,7 @@
     return [...map.entries()]
       .map(([pid, qty]) => ({
         productoId: pid,
-        nombre: productoById.get(pid)?.nombre || pid,
+        nombre: productoById.get(String(pid))?.nombre || pid,
         unidades: qty
       }))
       .sort((a, b) => b.unidades - a.unidades);
@@ -1286,7 +1288,7 @@
         const hayEnLocal = op.localNombre.toLowerCase().includes(q);
         const hayEnCajera = op.cajera.toLowerCase().includes(q);
         const hayEnProd = op.lineas.some(l => {
-          const prod = productoById.get(l.productoId);
+          const prod = productoById.get(String(l.productoId));
           return prod && prod.nombre.toLowerCase().includes(q);
         });
         const hayEnCodigo = op.id.toLowerCase().includes(q);
@@ -1405,7 +1407,7 @@
         const op = opsPendientes.find(o => o.id === opId);
         if (!op) continue;
         for (const ln of op.lineas) {
-          const prod = productoById.get(ln.productoId);
+          const prod = productoById.get(String(ln.productoId));
           if (prod && prod.idProveedor) {
             provCount.set(prod.idProveedor, (provCount.get(prod.idProveedor) || 0) + 1);
           }
@@ -1416,8 +1418,8 @@
         const topProvIdStr = String(topProvId);
         const selProvIdStr = String(state.selectedProveedor);
         if (topProvIdStr !== selProvIdStr) {
-          const topProv = proveedorById.get(topProvId) || proveedorById.get(Number(topProvId));
-          const selProv = proveedorById.get(state.selectedProveedor);
+          const topProv = proveedorById.get(String(topProvId));
+          const selProv = proveedorById.get(String(state.selectedProveedor));
           const topNombre = topProv ? topProv.nombre : `Proveedor #${topProvId}`;
           const selNombre = selProv ? selProv.nombre : `Proveedor #${state.selectedProveedor}`;
           alertMismatchText.textContent =
@@ -1462,8 +1464,16 @@
 
     const opIds = [...state.selectedOps];
     const provId = state.selectedProveedor;
-    const prov = proveedorById.get(provId);
-    if (!opIds.length || !prov) return;
+    const prov = proveedorById.get(String(provId));
+    if (!opIds.length) {
+      showToast('Seleccioná al menos 1 OP', 'warning');
+      return;
+    }
+    if (!prov) {
+      console.warn('[oc-nueva] proveedor no encontrado en el map para id:', provId, 'Keys disponibles:', [...proveedorById.keys()]);
+      showToast('No encontré el proveedor seleccionado. Refrescá la página y volvé a elegir.', 'error');
+      return;
+    }
 
     // Acumular líneas: { productoId, cantidad, costo, productoNombre, productoCodigo }
     const lineasMap = new Map();
@@ -1472,7 +1482,7 @@
       const op = opsPendientes.find(o => o.id === opId);
       if (!op) continue;
       for (const ln of op.lineas) {
-        const prod = productoById.get(ln.productoId);
+        const prod = productoById.get(String(ln.productoId));
         if (!prod) continue;
         const subtotal = (prod.costo || 0) * ln.cantidad;
         totalGs += subtotal;
@@ -1573,7 +1583,7 @@
       info.innerHTML = '';
       return;
     }
-    const prov = proveedorById.get(state.selectedProveedor);
+    const prov = proveedorById.get(String(state.selectedProveedor));
     if (!prov) return;
     info.classList.add('visible');
     info.innerHTML = `
@@ -1702,7 +1712,7 @@
       : '';
 
     const rows = op.lineas.map(l => {
-      const p = productoById.get(l.productoId);
+      const p = productoById.get(String(l.productoId));
       return `
         <tr>
           <td>
