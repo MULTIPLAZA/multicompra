@@ -700,8 +700,21 @@
     obtenerOP, obtenerOC, crearOC, actualizarLineasOC,
     cambiarEstadoOC, resolverOP
   } from '../shared/supabase.js';
-  import { getProductoPorId, getLocales, getStockProducto } from '../shared/data.js';
+  import { getProductoPorId, getLocales, getStockProducto, isCargado, prefetchAll } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Asegurar que la cache de productos/locales/stock esté cargada ───────
+  // Sin esto, getStockProducto/getProductoPorId devuelven 0/null y la
+  // planilla muestra valores en cero aunque las OPs sí lleguen de Supabase.
+  if (!isCargado()) {
+    try {
+      console.log('[oc-editar] cache vacia, ejecutando prefetchAll...');
+      const r = await prefetchAll();
+      console.log('[oc-editar] prefetch resultado:', r.ok ? 'OK' : 'CON ERRORES', r.errores || '');
+    } catch (e) {
+      console.warn('[oc-editar] prefetch fallo:', e);
+    }
+  }
 
   // ─── Config de la planilla ───────────────────────────────────────────────
   const parametros = {
