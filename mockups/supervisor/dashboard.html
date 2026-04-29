@@ -656,7 +656,7 @@
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
   // =====================================================================
-  const HOY = new Date('2026-04-22T10:00:00');
+  const HOY = new Date();
   function diasDesde(fechaStr) {
     const d = new Date(fechaStr.replace(' ', 'T'));
     return Math.floor((HOY - d) / (1000 * 60 * 60 * 24));
@@ -686,8 +686,17 @@
   // =====================================================================
   document.getElementById('txt-total-ops').textContent = opsPendientes.length;
   document.getElementById('nav-count-ops').textContent = opsPendientes.length;
-  // Fecha legible (estática para la demo, podría venir de Date)
-  // El mock asume Hoy = 22/04/2026
+  // Fecha real en español paraguayo
+  (function () {
+    try {
+      const fechaRaw = new Intl.DateTimeFormat('es-PY', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      }).format(new Date());
+      const fechaCap = fechaRaw.charAt(0).toUpperCase() + fechaRaw.slice(1);
+      const el = document.getElementById('hello-date');
+      if (el) el.textContent = fechaCap;
+    } catch (_) {}
+  })();
 
   // =====================================================================
   // Render filtros (locales)
@@ -760,10 +769,19 @@
 
   function emptyStateHTML() {
     return `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        <h3>No hay OPs pendientes</h3>
-        <p>Las cajeras todavía no enviaron pedido.</p>
+      <div class="empty-state" style="padding: var(--sp-10) var(--sp-6); text-align: center; color: var(--text-muted);">
+        <div style="display:inline-flex; align-items:center; justify-content:center; width:72px; height:72px; border-radius:50%; background:var(--success-soft,#dcfce7); margin-bottom:var(--sp-4);">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--success,#16a34a)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <h3 style="font-size:var(--fs-lg);color:var(--text-strong);margin-bottom:var(--sp-2);">Todo al dia! No hay pedidos pendientes.</h3>
+        <p style="font-size:var(--fs-sm);color:var(--text-muted);margin-bottom:var(--sp-5);">Las cajeras no tienen solicitudes sin procesar por ahora.</p>
+        <a href="oc-lista.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:var(--sp-2);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
+          Ver historial de OCs
+        </a>
       </div>
     `;
   }
@@ -1001,7 +1019,7 @@
   // =====================================================================
   // Menú avatar unificado (tema + logout)
   // =====================================================================
-  // Saludo dinámico
+  // Saludo dinámico (el hello-date ya se setea arriba en el bloque de fecha)
   document.getElementById('hello-name').textContent = 'Hola ' + supervisorActual.nombre;
 
   initAvatarMenu({

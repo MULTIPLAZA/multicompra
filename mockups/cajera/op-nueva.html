@@ -1055,11 +1055,20 @@
     function agregarProducto(productoId, opts = {}) {
       const existe = state.lineas.find(ln => ln.productoId === productoId);
       if (existe) {
-        // No duplica: foca la cantidad existente (pre-seleccionada) para sobrescribir rápido
+        // No duplica: resalta la fila y foca la cantidad para que la cajera
+        // pueda sobrescribir la cantidad rápidamente.
         pidHighlight = productoId;
         guardarDraft();
         renderLista();
         if (opts.focusQty) focarCantidad(productoId);
+        // Outline parpadeante adicional para guiar la vista
+        setTimeout(() => {
+          const tr = listaWrap.querySelector(`tr[data-pid="${productoId}"]`);
+          if (tr) {
+            tr.style.outline = '2px solid var(--primary)';
+            setTimeout(() => { tr.style.outline = ''; }, 900);
+          }
+        }, 80);
         return { nuevo: false };
       } else {
         state.lineas.push({ productoId, cantidad: 1 });
@@ -1104,7 +1113,7 @@
       } else if (e.target.closest('.qty-minus')) {
         if (ln && ln.cantidad > 1) cambiarCantidad(realId, ln.cantidad - 1);
       } else if (e.target.closest('.btn-delete')) {
-        if (confirm('¿Quitar este producto del pedido?')) quitarProducto(realId);
+        quitarProducto(realId);
       }
     });
 
@@ -1417,18 +1426,20 @@
     // =====================================================================
     // Modal "Solicitar alta de producto" (D - flujo real)
     // =====================================================================
-    const modalAltaBackdrop = document.getElementById('modal-alta-backdrop');
-    const modalAltaForm     = document.getElementById('form-alta');
-    const modalAltaCodigo   = document.getElementById('alta-codigo');
-    const modalAltaDesc     = document.getElementById('alta-descripcion');
-    const modalAltaCateg    = document.getElementById('alta-categoria');
-    const modalAltaProv     = document.getElementById('alta-proveedor');
-    const modalAltaMotivo   = document.getElementById('alta-motivo');
-    const modalAltaDescErr  = document.getElementById('alta-desc-error');
-    const modalAltaClose    = document.getElementById('modal-alta-close');
-    const modalAltaCancel   = document.getElementById('modal-alta-cancelar');
-    const modalAltaEnviar   = document.getElementById('modal-alta-enviar');
-    const SOLICITUDES_KEY   = 'multicompra:solicitudes_alta_producto';
+    const modalAltaBackdrop  = document.getElementById('modal-alta-backdrop');
+    const modalAltaForm      = document.getElementById('form-alta');
+    const modalAltaCodigo    = document.getElementById('alta-codigo');
+    const modalAltaDesc      = document.getElementById('alta-descripcion');
+    const modalAltaCateg     = document.getElementById('alta-categoria');
+    const modalAltaProv      = document.getElementById('alta-proveedor');
+    const modalAltaMotivo    = document.getElementById('alta-motivo');
+    const modalAltaDescErr   = document.getElementById('alta-desc-error');
+    const modalAltaCodErr    = document.getElementById('alta-cod-error');
+    const modalAltaMotivoErr = document.getElementById('alta-motivo-error');
+    const modalAltaClose     = document.getElementById('modal-alta-close');
+    const modalAltaCancel    = document.getElementById('modal-alta-cancelar');
+    const modalAltaEnviar    = document.getElementById('modal-alta-enviar');
+    const SOLICITUDES_KEY    = 'multicompra:solicitudes_alta_producto';
 
     function abrirModalAlta(codigoPrellenado) {
       modalAltaCodigo.value = codigoPrellenado;
@@ -1437,7 +1448,11 @@
       modalAltaProv.value = '';
       modalAltaMotivo.value = '';
       modalAltaDescErr.hidden = true;
+      modalAltaCodErr.hidden = true;
+      modalAltaMotivoErr.hidden = true;
       modalAltaDesc.removeAttribute('aria-invalid');
+      modalAltaCodigo.removeAttribute('aria-invalid');
+      modalAltaMotivo.removeAttribute('aria-invalid');
       modalAltaBackdrop.hidden = false;
       // Foco en descripción (el código ya viene)
       setTimeout(() => modalAltaDesc.focus(), 50);
@@ -1458,31 +1473,64 @@
       if (e.key === 'Escape' && !modalAltaBackdrop.hidden) cerrarModalAlta();
     });
 
-    // Limpia error al tipear
+    // Limpiar errores al tipear
+    modalAltaCodigo.addEventListener('input', () => {
+      if (modalAltaCodigo.value.trim().length > 0) {
+        modalAltaCodErr.hidden = true;
+        modalAltaCodigo.removeAttribute('aria-invalid');
+      }
+    });
     modalAltaDesc.addEventListener('input', () => {
       if (modalAltaDesc.value.trim().length >= 10) {
         modalAltaDescErr.hidden = true;
         modalAltaDesc.removeAttribute('aria-invalid');
       }
     });
+    modalAltaMotivo.addEventListener('input', () => {
+      const mv = modalAltaMotivo.value.trim();
+      if (mv.length === 0 || mv.length >= 5) {
+        modalAltaMotivoErr.hidden = true;
+        modalAltaMotivo.removeAttribute('aria-invalid');
+      }
+    });
 
     modalAltaEnviar.addEventListener('click', async () => {
-      const desc = modalAltaDesc.value.trim();
+      const cod   = modalAltaCodigo.value.trim();
+      const desc  = modalAltaDesc.value.trim();
+      const motiv = modalAltaMotivo.value.trim();
+      let hayError = false;
+
+      // Código obligatorio
+      if (!cod) {
+        modalAltaCodErr.hidden = false;
+        modalAltaCodigo.setAttribute('aria-invalid', 'true');
+        if (!hayError) { modalAltaCodigo.focus(); }
+        hayError = true;
+      }
+      // Descripción >= 10
       if (desc.length < 10) {
         modalAltaDescErr.hidden = false;
         modalAltaDesc.setAttribute('aria-invalid', 'true');
-        modalAltaDesc.focus();
-        return;
+        if (!hayError) { modalAltaDesc.focus(); }
+        hayError = true;
       }
+      // Motivo opcional pero si se completa >= 5
+      if (motiv.length > 0 && motiv.length < 5) {
+        modalAltaMotivoErr.hidden = false;
+        modalAltaMotivo.setAttribute('aria-invalid', 'true');
+        if (!hayError) { modalAltaMotivo.focus(); }
+        hayError = true;
+      }
+      if (hayError) return;
 
       modalAltaEnviar.disabled = true;
       const txtOriginal = modalAltaEnviar.textContent;
       modalAltaEnviar.textContent = 'Enviando…';
 
       const payload = {
-        codigo: modalAltaCodigo.value.trim(),
+        codigo: cod,
         descripcion: desc,
-        motivo: modalAltaMotivo.value.trim() || null,
+        motivo: motiv || null,
         categoria: modalAltaCateg.value || null,
         proveedorSugerido: modalAltaProv.value ? Number(modalAltaProv.value) || null : null,
         cajeraId: cajeraActual.id,
@@ -1762,15 +1810,59 @@
       }
     }
 
+    // Valida que todas las líneas tengan cantidad >= 1 (entero positivo).
+    // Marca con borde rojo las inválidas y devuelve false si hay alguna.
+    function validarCantidades() {
+      let ok = true;
+      // Limpiar marcas de error previas
+      listaWrap.querySelectorAll('.qty-spinner').forEach(s => {
+        s.style.borderColor = '';
+        s.style.boxShadow  = '';
+      });
+      listaWrap.querySelectorAll('.qty-err-hint').forEach(el => el.remove());
+
+      for (const ln of state.lineas) {
+        const qty = Math.floor(Number(ln.cantidad));
+        if (!qty || qty < 1) {
+          ok = false;
+          const tr = listaWrap.querySelector(`tr[data-pid="${ln.productoId}"]`);
+          if (tr) {
+            const spinner = tr.querySelector('.qty-spinner');
+            if (spinner) {
+              spinner.style.borderColor = 'var(--danger)';
+              spinner.style.boxShadow   = '0 0 0 2px color-mix(in srgb, var(--danger) 20%, transparent)';
+            }
+            const td = tr.querySelector('.lista-col-qty');
+            if (td && !td.querySelector('.qty-err-hint')) {
+              const hint = document.createElement('div');
+              hint.className = 'qty-err-hint';
+              hint.style.cssText = 'color:var(--danger);font-size:var(--fs-xs);margin-top:4px;';
+              hint.textContent = 'Cantidad inválida';
+              td.appendChild(hint);
+            }
+          }
+        }
+      }
+      return ok;
+    }
+
     btnBorrador.addEventListener('click', () => {
       guardarDraft();
-      alert('Borrador guardado. Podés volver después a terminarla.');
+      showToast('Borrador guardado. Podés volver después a terminarla.', 'success');
     });
 
     // ---- Enviar OP: persiste en Supabase (con fallback a localStorage) ------
 
     btnEnviar.addEventListener('click', async () => {
       if (state.lineas.length === 0) return;
+
+      // Validar cantidades antes de enviar
+      if (!validarCantidades()) {
+        showToast('Revisá las cantidades — hay un producto con cantidad inválida', 'error');
+        const primerError = listaWrap.querySelector('.qty-spinner[style*="danger"]');
+        if (primerError) primerError.closest('tr')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
       btnEnviar.disabled = true;
       const txtOriginal = btnEnviar.textContent;
       btnEnviar.textContent = 'Enviando…';
@@ -1842,7 +1934,7 @@
       } catch (err) {
         btnEnviar.disabled = false;
         btnEnviar.textContent = txtOriginal;
-        alert('No pude enviar el pedido:\n\n' + err.message + '\n\nProbá de nuevo.');
+        showToast('No pude enviar el pedido: ' + err.message + ' — Probá de nuevo.', 'error');
       }
     });
 
@@ -1875,9 +1967,13 @@
     <div class="modal-body">
       <form id="form-alta" novalidate>
         <div class="form-field">
-          <label class="form-label" for="alta-codigo">Codigo de barras</label>
+          <label class="form-label" for="alta-codigo">
+            Codigo de barras
+            <span class="form-hint" style="font-weight:400; margin-left:4px;">(obligatorio)</span>
+          </label>
           <input type="text" id="alta-codigo" name="codigo" class="input" placeholder="Ej: 7840001234567" inputmode="numeric" autocomplete="off" />
           <span class="form-hint">Ya viene pre-llenado con el codigo que no encontraste.</span>
+          <span class="form-error" id="alta-cod-error" hidden>El código es obligatorio — es la razón por la que pedís el alta.</span>
         </div>
         <div class="form-field">
           <label class="form-label" for="alta-descripcion">
@@ -1910,8 +2006,9 @@
           </select>
         </div>
         <div class="form-field">
-          <label class="form-label" for="alta-motivo">Motivo (opcional)</label>
+          <label class="form-label" for="alta-motivo">Motivo (opcional — si completás, mínimo 5 caracteres)</label>
           <textarea id="alta-motivo" name="motivo" class="input" rows="2" placeholder="¿Por que crees que deberia agregarse?" maxlength="200"></textarea>
+          <span class="form-error" id="alta-motivo-error" hidden>Si completás el motivo, escribí al menos 5 caracteres.</span>
         </div>
       </form>
     </div>

@@ -328,6 +328,14 @@
           <label for="inp-usuario">Usuario</label>
           <input class="input" id="inp-usuario" name="usuario" type="text" autocomplete="username" placeholder="ej: RICARDO" required autocapitalize="characters" />
           <div class="field-error-msg">Ingresá tu nombre de usuario.</div>
+          <!-- Link "Cambiar usuario" — visible solo cuando hay un último usuario recordado -->
+          <div id="last-user-hint" style="display:none; margin-top:4px; font-size:var(--fs-xs); color:var(--text-muted);">
+            Autocompletado con el último usuario.
+            <button type="button" id="btn-cambiar-usuario"
+                    style="background:none;border:0;color:var(--primary);cursor:pointer;font-size:var(--fs-xs);padding:0;text-decoration:underline;">
+              Cambiar usuario
+            </button>
+          </div>
         </div>
 
         <div class="field" id="field-pass">
@@ -348,6 +356,10 @@
             </button>
           </div>
           <div class="field-error-msg">Ingresá tu contraseña.</div>
+          <!-- Aviso Caps Lock -->
+          <div id="caps-lock-warn" style="display:none; margin-top:4px; font-size:var(--fs-xs); color:var(--warning-text,#92400e); background:var(--warning-soft); border:1px solid var(--warning); border-radius:var(--radius-sm); padding:3px 8px;" role="status" aria-live="polite">
+            Caps Lock activado
+          </div>
         </div>
 
         <div class="field-checkbox">
@@ -728,6 +740,46 @@
       // de más abajo (porque necesitan acceso a mostrarSplashYPrefetchar)
       // Acá expongo solamente el USERS para que el módulo lo lea.
       window.__DEMO_USERS__ = USERS;
+
+      // ── Caps Lock detection ──────────────────────────────────────────────
+      var capsWarn = document.getElementById('caps-lock-warn');
+      inpPass.addEventListener('keydown', function (e) {
+        if (typeof e.getModifierState === 'function') {
+          capsWarn.style.display = e.getModifierState('CapsLock') ? 'block' : 'none';
+        }
+      });
+      inpPass.addEventListener('keyup', function (e) {
+        if (typeof e.getModifierState === 'function') {
+          capsWarn.style.display = e.getModifierState('CapsLock') ? 'block' : 'none';
+        }
+      });
+
+      // ── Último usuario recordado ──────────────────────────────────────────
+      var LAST_USER_KEY = 'multicompra:last-user';
+      var inpUsuario   = document.getElementById('inp-usuario');
+      var lastUserHint = document.getElementById('last-user-hint');
+      var btnCambiar   = document.getElementById('btn-cambiar-usuario');
+
+      try {
+        var lastUser = localStorage.getItem(LAST_USER_KEY);
+        if (lastUser) {
+          inpUsuario.value = lastUser;
+          lastUserHint.style.display = 'block';
+        }
+      } catch (_) {}
+
+      btnCambiar.addEventListener('click', function () {
+        try { localStorage.removeItem(LAST_USER_KEY); } catch (_) {}
+        inpUsuario.value = '';
+        lastUserHint.style.display = 'none';
+        inpUsuario.focus();
+      });
+
+      // Guardar el usuario al momento del submit del form
+      // (se llama desde el handler del form más abajo, expuesto en window)
+      window.__guardarLastUser__ = function (nombre) {
+        try { localStorage.setItem(LAST_USER_KEY, nombre); } catch (_) {}
+      };
     })();
   </script>
 
@@ -805,7 +857,11 @@
           return;
         }
 
-        // Login OK — guardar usuario en memoria temporal y abrir modal de local
+        // Login OK — recordar el usuario para la próxima vez
+        if (typeof window.__guardarLastUser__ === 'function') {
+          window.__guardarLastUser__(usuario);
+        }
+        // Guardar usuario en memoria temporal y abrir modal de local
         usuarioLogueado = res;
         localNombre.textContent = res.nombre;
         await abrirModalLocal();
@@ -1046,6 +1102,8 @@
             id: u.id, nombre: u.nombre, rol: u.rol, iniciales: u.iniciales,
             localId: u.localId, localNombre: u.localNombre
           }));
+          // Recordar el nombre del demo como último usuario
+          localStorage.setItem('multicompra:last-user', u.nombre);
         } catch (_) {}
         // Splash + prefetch (mismo que el login real). Cuando termina,
         // redirige al dashboard correspondiente.

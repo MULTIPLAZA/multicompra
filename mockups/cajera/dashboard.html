@@ -334,6 +334,8 @@
       Hola <span id="hello-name">Carolina</span>
       <span class="sep">&middot;</span>
       <span class="local" id="hello-local">Shopping del Sol</span>
+      <span class="sep">&middot;</span>
+      <span class="local" id="hello-date" style="font-size:var(--fs-base);font-weight:400;color:var(--text-muted);"></span>
     </div>
 
     <div class="right">
@@ -508,6 +510,19 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
   document.getElementById('hello-name').textContent = cajeraActual.nombre;
   document.getElementById('hello-local').textContent = cajeraActual.localNombre;
   document.getElementById('avatar-iniciales').textContent = cajeraActual.iniciales;
+
+  // Fecha actual en español paraguayo
+  (function () {
+    try {
+      const fechaRaw = new Intl.DateTimeFormat('es-PY', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      }).format(new Date());
+      // Capitalizar primera letra ("lunes" → "Lunes")
+      const fechaCap = fechaRaw.charAt(0).toUpperCase() + fechaRaw.slice(1);
+      const el = document.getElementById('hello-date');
+      if (el) el.textContent = fechaCap;
+    } catch (_) {}
+  })();
 
   // Draft summary: leemos localStorage o usamos seed del op-nueva.html
   const DRAFT_KEY = 'multicompra:draft:op';
