@@ -718,12 +718,24 @@
     return stockCentral >= pidio ? 'repone_central' : 'comprar';
   }
   function _detectarLocalCentral() {
+    // En la base de datos del ERP de Diego, el depósito central se llama
+    // "DEPOSITO" (al palo, sin acento). Lo buscamos primero por nombre/sucursal
+    // exacto, después por contiene 'deposito', y como último fallback heurísticas
+    // viejas por si el nombre cambia.
     const locales = getLocales();
-    const c = locales.find(l =>
-      String(l.codigo || '').toLowerCase() === 'central' ||
-      String(l.id) === '0' ||
-      String(l.id) === '1'
-    ) || locales[0] || { id: 0 };
+    const norm = s => String(s || '').toLowerCase().trim();
+    const esDepo = l => {
+      const n = norm(l.nombre);
+      const s = norm(l.Sucursal);
+      return n === 'deposito' || s === 'deposito' ||
+             n === 'depósito' || s === 'depósito' ||
+             n.includes('deposito') || s.includes('deposito') ||
+             n.includes('depósito') || s.includes('depósito');
+    };
+    const c = locales.find(esDepo) ||
+              locales.find(l => norm(l.codigo) === 'central') ||
+              locales.find(l => String(l.id) === '0' || String(l.id) === '1') ||
+              locales[0] || { id: 0 };
     return c.id;
   }
   function _fmtFechaCorta(s) {
