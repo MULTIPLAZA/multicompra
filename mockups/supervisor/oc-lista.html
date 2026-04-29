@@ -247,23 +247,25 @@
     ? [..._getProvReales().map(p => ({ id: p.id, nombre: p.nombre, ruc: p.ruc, contacto: p.contacto })), ...proveedoresMock]
     : proveedoresMock;
 
-  // Cargar OCs desde Supabase (la verdad) + fallback localStorage + mock.
+  // Cargar OCs desde Supabase (la verdad) + fallback localStorage.
+  // El mock SOLO se usa si Supabase falla y no hay OCs locales (modo demo total).
   let ocsSupabase = [];
+  let supabaseOk = false;
   try {
     const res = await listarOCs({ limit: 200 });
     if (res.ok && !res.fallback && Array.isArray(res.data)) {
+      supabaseOk = true;
       ocsSupabase = res.data.map(oc => ({
-        id: oc.numero || oc.id,
+        numero: oc.numero || oc.id,
         _uuid: oc.id,
         proveedorId: oc.proveedor_id_erp,
-        proveedor: oc.proveedor_nombre,
-        fecha: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
+        proveedorNombre: oc.proveedor_nombre,
         fechaCreacion: (oc.fecha_creacion || '').replace('T', ' ').slice(0, 16),
         estado: oc.estado || 'abierta',
-        productosCount: oc.productos_count || 0,
-        unidadesCount: oc.unidades_count || 0,
-        total: Number(oc.total_gs) || 0,
-        opsIncluidas: [],
+        unidadesTotal: oc.unidades_count || 0,
+        totalGs: Number(oc.total_gs) || 0,
+        opsCount: oc.ops_count || 0,
+        comprasCount: oc.compras_count || 0,
         _real: true
       }));
     }
@@ -271,29 +273,39 @@
     console.warn('[oc-lista] error Supabase, fallback local:', e);
   }
 
-  // Fallback: las que estén SOLO en localStorage (modo offline o demo)
+  // OCs guardadas en localStorage (las que crea oc-nueva.html localmente)
   let ocsLocal = [];
   try {
     const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
     ocsLocal = arr.map(oc => ({
-      id: oc.id, proveedorId: oc.proveedorId, proveedor: oc.proveedorNombre,
-      fecha: oc.fecha, fechaCreacion: oc.fecha,
+      numero: oc.numero || oc.id,
+      proveedorId: oc.proveedorId,
+      proveedorNombre: oc.proveedorNombre,
+      fechaCreacion: oc.fecha,
       estado: oc.estado || 'abierta',
-      productosCount: (oc.lineas || []).length,
-      unidadesCount: (oc.lineas || []).reduce((s, l) => s + l.cantidad, 0),
-      total: oc.totalGs || 0,
-      opsIncluidas: oc.opIds || [],
+      unidadesTotal: (oc.lineas || []).reduce((s, l) => s + (l.cantidad || 0), 0),
+      totalGs: oc.totalGs || 0,
+      opsCount: (oc.opIds || []).length,
+      comprasCount: 0,
       _real: true
     }));
   } catch (_) {}
 
-  // Combinar deduplicando por id
+  // Combinar Supabase + local, deduplicando por numero. Solo agregamos el mock
+  // si NO hay nada real (ni Supabase ni local) — modo offline/demo total.
   const seen = new Set();
   const ocsCombinadas = [];
-  for (const arr of [ocsSupabase, ocsLocal, ocsHistMock]) {
-    for (const oc of arr) {
-      if (!oc || seen.has(oc.id)) continue;
-      seen.add(oc.id);
+  for (const oc of [...ocsSupabase, ...ocsLocal]) {
+    if (!oc || seen.has(oc.numero)) continue;
+    seen.add(oc.numero);
+    ocsCombinadas.push(oc);
+  }
+  if (ocsCombinadas.length === 0 && !supabaseOk) {
+    // Fallback total: mock para que la pantalla no aparezca vacía cuando aún
+    // no hay datos cargados (primera vez en demo offline).
+    for (const oc of ocsHistMock) {
+      if (!oc || seen.has(oc.numero)) continue;
+      seen.add(oc.numero);
       ocsCombinadas.push(oc);
     }
   }
@@ -347,8 +359,8 @@
   }
 
   function linkDestino(oc) {
-    if (oc.estado === 'abierta' || oc.estado === 'en_edicion') return 'oc-editar.html';
-    return `oc-detalle.html?id=${encodeURIComponent(oc.id)}`;
+    if (oc.estado === 'abierta' || oc.estado === 'en_edicion') return `oc-editar.html?id=${encodeURIComponent(oc.numero)}`;
+    return `oc-detalle.html?id=${encodeURIComponent(oc.numero)}`;
   }
 
   function rowHTML(oc) {
