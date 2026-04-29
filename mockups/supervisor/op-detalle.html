@@ -854,8 +854,13 @@
           estado: 'aprobada', supervisor: supervisorNombre(),
           fechaResolucion: fechaAhora(), nota: null
         });
-        showToast(`${IDU} aprobada${res.fallback ? ' (offline)' : ''}. Volviendo al panel…`);
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1100);
+        // Modal verde con check + auto-redirect
+        if (window.__mostrarModalResolucion) {
+          window.__mostrarModalResolucion({ estado: 'aprobada', opId: IDU, cajera: op.cajera });
+        } else {
+          showToast(`${IDU} aprobada. Volviendo al panel…`);
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 1100);
+        }
       } catch (err) {
         btnApr.disabled = false;
         btnApr.innerHTML = txtOriginal;
@@ -890,8 +895,13 @@
         fechaResolucion: fechaAhora(), nota: returnNota.value.trim()
       });
       cerrarModal();
-      showToast(`${IDU} devuelta a la cajera con tu nota${res.fallback ? ' (offline)' : ''}.`);
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+      // Modal naranja con back + auto-redirect
+      if (window.__mostrarModalResolucion) {
+        window.__mostrarModalResolucion({ estado: 'devuelta', opId: IDU, cajera: op.cajera });
+      } else {
+        showToast(`${IDU} devuelta a la cajera con tu nota.`);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+      }
     } catch (err) {
       btnReturnConfirm.disabled = false;
       btnReturnConfirm.textContent = txtOriginal;
@@ -928,6 +938,65 @@
   });
 
   updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
+
+  /* =====================================================================
+     Modal de resolución (reemplaza alert/toast feos)
+     ===================================================================== */
+  function mostrarModalResolucion({ estado, opId, cajera, segundosRedirect = 2.5 }) {
+    const isAprobada = estado === 'aprobada';
+    const color = isAprobada ? 'success' : 'warning';
+    const icon = isAprobada
+      ? '<svg viewBox="0 0 52 52" width="56" height="56"><circle cx="26" cy="26" r="24" fill="var(--success, #22c55e)"/><path d="M14 27 l8 8 l16-18" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg viewBox="0 0 52 52" width="56" height="56"><circle cx="26" cy="26" r="24" fill="var(--warning, #f59e0b)"/><polyline points="32,16 22,26 32,36" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="22" y1="26" x2="42" y2="26" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/></svg>';
+    const title = isAprobada ? '¡Aprobada!' : 'OP devuelta';
+    const subtitle = isAprobada
+      ? `${opId} entra al pool para consolidar en una OC.`
+      : `${cajera ? cajera : 'La cajera'} va a recibir la nota y puede corregir el pedido.`;
+    const bgColor = isAprobada ? 'var(--success-soft, #dcfce7)' : 'var(--warning-soft, #fef3c7)';
+    const ringColor = isAprobada ? 'var(--success, #22c55e)' : 'var(--warning, #f59e0b)';
+
+    // Crear backdrop
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px;animation:resFade .25s ease-out;';
+    backdrop.innerHTML = `
+      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:16px;padding:32px 32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 60px -12px rgba(15,23,42,0.4);animation:resPop .4s cubic-bezier(0.34,1.56,0.64,1);">
+        <div style="width:80px;height:80px;margin:0 auto 16px;border-radius:50%;background:${bgColor};display:flex;align-items:center;justify-content:center;position:relative;">
+          <div style="position:absolute;inset:-8px;border-radius:50%;background:${ringColor};opacity:0.18;animation:resPulse 1.4s ease-out infinite;"></div>
+          <div style="position:relative;z-index:1;">${icon}</div>
+        </div>
+        <h2 style="font-size:24px;font-weight:700;color:var(--text-strong);margin:0 0 8px;letter-spacing:-0.3px;">${title}</h2>
+        <p style="font-size:15px;color:var(--text-muted);margin:0 0 24px;line-height:1.5;">${subtitle}</p>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-muted);background:var(--bg-elev-2);padding:4px 12px;border-radius:999px;display:inline-block;margin-bottom:20px;">${opId}</div>
+        <button type="button" id="res-modal-btn" style="display:block;width:100%;height:48px;font-size:15px;font-weight:600;border-radius:12px;background:${ringColor};color:#fff;border:0;cursor:pointer;position:relative;overflow:hidden;">
+          Volver al panel
+          <span id="res-modal-progress" style="position:absolute;bottom:0;left:0;height:3px;background:rgba(255,255,255,0.5);width:0%;transition:width linear ${segundosRedirect}s;"></span>
+        </button>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    // Animaciones (solo una vez)
+    if (!document.getElementById('res-modal-style')) {
+      const s = document.createElement('style');
+      s.id = 'res-modal-style';
+      s.textContent = `
+        @keyframes resFade { from { opacity:0; } to { opacity:1; } }
+        @keyframes resPop  { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+        @keyframes resPulse { 0% { transform:scale(0.85); opacity:0.4; } 100% { transform:scale(1.4); opacity:0; } }
+      `;
+      document.head.appendChild(s);
+    }
+
+    const irAlPanel = () => { window.location.href = 'dashboard.html'; };
+    document.getElementById('res-modal-btn').addEventListener('click', irAlPanel, { once: true });
+    requestAnimationFrame(() => {
+      document.getElementById('res-modal-progress').style.width = '100%';
+    });
+    setTimeout(irAlPanel, segundosRedirect * 1000);
+  }
+
+  // Exponer para usar desde los handlers de aprobar/devolver
+  window.__mostrarModalResolucion = mostrarModalResolucion;
 </script>
 
 </body>
