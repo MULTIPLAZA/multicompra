@@ -443,6 +443,59 @@ export async function guardarBorrador({ cajeraIdErp, localId, contenido }) {
 }
 
 /* =============================================================================
+   REALTIME — suscribirse a cambios en op / op_resoluciones / oc
+   ----------------------------------------------------------------------------
+   Devuelve { ok, unsubscribe } — llamar unsubscribe() al desmontar la pantalla.
+   Si Supabase no está conectado, devuelve un noop transparente.
+
+   Eventos:
+     onOpNueva(opRow)         — INSERT en tabla op (cajera mandó OP nueva)
+     onOpResolucion(resolRow) — INSERT/UPDATE en op_resoluciones (supervisor aprobó/devolvió)
+     onOcNueva(ocRow)         — INSERT en tabla oc
+     onSolicitudAlta(solRow)  — INSERT en solicitudes_alta
+   ============================================================================= */
+export async function suscribirseRealtime({
+  onOpNueva, onOpResolucion, onOcNueva, onSolicitudAlta
+} = {}) {
+  const supa = await getClient();
+  if (!supa) return { ok: false, fallback: true, unsubscribe: () => {} };
+
+  const ch = supa.channel('mc-realtime-' + Date.now());
+
+  if (onOpNueva) {
+    ch.on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'op' },
+      (payload) => { try { onOpNueva(payload.new); } catch (e) { console.warn(e); } }
+    );
+  }
+  if (onOpResolucion) {
+    ch.on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'op_resoluciones' },
+      (payload) => { try { onOpResolucion(payload.new); } catch (e) { console.warn(e); } }
+    );
+    ch.on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'op_resoluciones' },
+      (payload) => { try { onOpResolucion(payload.new); } catch (e) { console.warn(e); } }
+    );
+  }
+  if (onOcNueva) {
+    ch.on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'oc' },
+      (payload) => { try { onOcNueva(payload.new); } catch (e) { console.warn(e); } }
+    );
+  }
+  if (onSolicitudAlta) {
+    ch.on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'solicitudes_alta' },
+      (payload) => { try { onSolicitudAlta(payload.new); } catch (e) { console.warn(e); } }
+    );
+  }
+
+  ch.subscribe();
+  return { ok: true, unsubscribe: () => supa.removeChannel(ch) };
+}
+
+/* =============================================================================
    Utilidades
    ============================================================================= */
 function formatearFecha(d) {

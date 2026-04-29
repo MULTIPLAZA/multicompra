@@ -536,7 +536,7 @@
      ================================================================= -->
 <script type="module">
   import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
-  import { listarOPs, obtenerLineasOP } from '../shared/supabase.js';
+  import { listarOPs, obtenerLineasOP, suscribirseRealtime } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // Leer usuario real desde localStorage. Si no hay (primer acceso o demo),
@@ -605,24 +605,48 @@
   }
 
   let opsSupabase = [];
-  try {
-    opsSupabase = await cargarOPsSupabase();
-  } catch (e) {
-    console.warn('[dashboard supervisor] error cargando OPs de Supabase, sigo con local:', e);
-  }
+  let opsPendientes = []; // mutable — la rellena recargarOPs()
 
-  // Combinar — Supabase primero (la verdad), después localStorage (compat),
-  // después mock. Deduplicar por id.
-  const seenIds = new Set();
-  const opsTodas = [];
-  for (const arr of [opsSupabase, opsLocal, opsPendientesMock]) {
-    for (const op of arr) {
-      if (!op || seenIds.has(op.id)) continue;
-      seenIds.add(op.id);
-      opsTodas.push(op);
+  // Map de productos del mock + productos inline de las OPs reales.
+  // Se enriquece dentro de recargarOPs() cuando llegan OPs nuevas.
+  const productoById = new Map(productos.map(p => [p.id, p]));
+
+  async function recargarOPs() {
+    try { opsSupabase = await cargarOPsSupabase(); }
+    catch (e) { console.warn('[dashboard] error Supabase:', e); opsSupabase = []; }
+
+    // Recargar resoluciones del localStorage (por si cambiaron en otra pestaña)
+    try { resoluciones = JSON.parse(localStorage.getItem(OPS_RESOL_KEY) || '{}'); } catch (_) {}
+
+    // Combinar — Supabase primero, después localStorage (compat), después mock
+    const seenIds = new Set();
+    const opsTodas = [];
+    for (const arr of [opsSupabase, opsLocal, opsPendientesMock]) {
+      for (const op of arr) {
+        if (!op || seenIds.has(op.id)) continue;
+        seenIds.add(op.id);
+        opsTodas.push(op);
+      }
+    }
+    opsPendientes = opsTodas.filter(op => !tieneResolucionFinal(op.id));
+
+    // Enriquecer productoById con productos inline de las OPs nuevas
+    for (const op of [...opsSupabase, ...opsLocal]) {
+      for (const l of (op.lineas || [])) {
+        if (!productoById.has(l.productoId) && l.productoNombre) {
+          productoById.set(l.productoId, {
+            id: l.productoId,
+            nombre: l.productoNombre,
+            barras: l.productoCodigo || '',
+            costo:  l.productoCosto  || 0,
+            precio: l.productoPrecio || 0
+          });
+        }
+      }
     }
   }
-  const opsPendientes = opsTodas.filter(op => !tieneResolucionFinal(op.id));
+
+  await recargarOPs();
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
@@ -650,24 +674,7 @@
     }
   };
 
-  // Map de productos del mock + productos inline de las OPs (Supabase y localStorage).
-  // Las OPs traen { productoId, productoCodigo, productoNombre, ... } en cada
-  // línea, así que armamos un map combinado para que el render encuentre
-  // siempre nombre y código por id, sin importar de dónde vino la OP.
-  const productoById = new Map(productos.map(p => [p.id, p]));
-  for (const op of [...opsSupabase, ...opsLocal]) {
-    for (const l of (op.lineas || [])) {
-      if (!productoById.has(l.productoId) && l.productoNombre) {
-        productoById.set(l.productoId, {
-          id: l.productoId,
-          nombre: l.productoNombre,
-          barras: l.productoCodigo || '',
-          costo:  l.productoCosto  || 0,
-          precio: l.productoPrecio || 0
-        });
-      }
-    }
-  }
+  // (productoById ya se rellena desde recargarOPs())
 
   // =====================================================================
   // Render header count + fecha
@@ -1018,6 +1025,72 @@
       if (kpiAltasLink) kpiAltasLink.style.display = 'none';
     }
   }
+
+  /* =====================================================================
+     Realtime — escuchar OPs nuevas y resoluciones de otros dispositivos
+     ===================================================================== */
+  function showToastTop(html, tipo = 'info') {
+    let host = document.getElementById('rt-toast-host');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'rt-toast-host';
+      host.style.cssText = 'position:fixed;top:72px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:1000;max-width:340px;';
+      document.body.appendChild(host);
+    }
+    const t = document.createElement('div');
+    const colors = {
+      info:    { bg: 'var(--info-soft, #eff6ff)',    border: 'var(--info, #3b82f6)',    text: 'var(--info-text, #1d4ed8)' },
+      success: { bg: 'var(--success-soft, #dcfce7)', border: 'var(--success, #22c55e)', text: 'var(--success-text, #15803d)' }
+    };
+    const c = colors[tipo] || colors.info;
+    t.style.cssText = `background:${c.bg};border:1px solid ${c.border};color:${c.text};padding:10px 14px;border-radius:8px;font-size:14px;line-height:1.4;box-shadow:0 8px 24px -8px rgba(15,23,42,0.2);animation:rtSlideIn .25s ease-out;cursor:pointer;`;
+    t.innerHTML = html;
+    t.addEventListener('click', () => t.remove());
+    host.appendChild(t);
+    setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 320); }, 6000);
+  }
+  // Inyectar el keyframe una vez
+  if (!document.getElementById('rt-toast-style')) {
+    const s = document.createElement('style');
+    s.id = 'rt-toast-style';
+    s.textContent = '@keyframes rtSlideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+    document.head.appendChild(s);
+  }
+
+  let recargandoTimer = null;
+  async function refrescarYMostrar() {
+    // Debounce: si llegan varios eventos seguidos, esperar 600ms y recargar una vez.
+    clearTimeout(recargandoTimer);
+    recargandoTimer = setTimeout(async () => {
+      const cantAntes = opsPendientes.length;
+      await recargarOPs();
+      renderList();
+      updateBulkBar();
+      // Refrescar contadores del subheader
+      const txtTotalOps = document.getElementById('txt-total-ops');
+      const navCountOps = document.getElementById('nav-count-ops');
+      if (txtTotalOps) txtTotalOps.textContent = opsPendientes.length;
+      if (navCountOps) navCountOps.textContent = opsPendientes.length;
+      const delta = opsPendientes.length - cantAntes;
+      if (delta > 0) {
+        showToastTop(`<strong>📦 ${delta} OP${delta > 1 ? 's' : ''} nueva${delta > 1 ? 's' : ''}</strong> · La lista se actualizó.`, 'info');
+      }
+    }, 600);
+  }
+
+  try {
+    const sub = await suscribirseRealtime({
+      onOpNueva: (opRow) => {
+        console.log('[realtime] OP nueva:', opRow.numero, opRow.cajera_nombre);
+        refrescarYMostrar();
+      },
+      onOpResolucion: (resol) => {
+        console.log('[realtime] resolución de OP:', resol.estado);
+        refrescarYMostrar();
+      }
+    });
+    if (sub.ok) console.log('[realtime] supervisor dashboard suscripto');
+  } catch (e) { console.warn('[realtime] no pude suscribir:', e); }
 </script>
 
 </body>
