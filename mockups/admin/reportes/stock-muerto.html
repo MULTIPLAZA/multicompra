@@ -321,6 +321,9 @@
   </div>
 
   <script type="module">
+    import { requireRol } from '../../shared/auth-guard.js';
+    requireRol('admin');
+
     import { productos as productosMock, reporteStockMuerto, fmtGs } from '../../shared/mock-data.js';
     import { isCargado, getProductos as _getProdReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';

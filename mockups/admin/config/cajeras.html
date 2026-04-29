@@ -159,6 +159,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module">
+    import { requireRol } from '../../shared/auth-guard.js';
+    requireRol('admin');
+
     import { cajerasConfig, locales as localesMock } from '../../shared/mock-data.js';
     import { isCargado, getLocales as _getLocalesReales } from '../../shared/data.js';
     import { initAvatarMenu } from '../../shared/ui.js';

@@ -398,6 +398,9 @@
 </div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('cajera', 'admin');
+
   import { cajeraActual as cajeraMock, productos, historialCajera } from '../shared/mock-data.js';
   import { listarOPs } from '../shared/supabase.js';
   import { initAvatarMenu } from '../shared/ui.js';

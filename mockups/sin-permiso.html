@@ -45,7 +45,7 @@
       padding: var(--sp-4) var(--sp-4) var(--sp-10);
     }
     .card-center {
-      max-width: 440px;
+      max-width: 480px;
       width: 100%;
       text-align: center;
       display: flex;
@@ -72,14 +72,67 @@
       font-size: var(--fs-md);
       color: var(--text-muted);
       line-height: 1.6;
-      max-width: 360px;
+      max-width: 420px;
     }
+    /* Caja de contexto con los roles */
+    .context-box {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-4) var(--sp-5);
+      text-align: left;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-3);
+    }
+    .context-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-3);
+      font-size: var(--fs-md);
+    }
+    .context-label {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .rol-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      padding: var(--sp-1) var(--sp-3);
+      border-radius: 999px;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      border: 1px solid;
+    }
+    .rol-pill.cajera    { background: var(--info-soft);    color: var(--info-text);    border-color: var(--info); }
+    .rol-pill.supervisor{ background: var(--warning-soft); color: var(--warning-text); border-color: var(--warning); }
+    .rol-pill.admin     { background: var(--danger-soft);  color: var(--danger-text);  border-color: var(--danger); }
+    .rol-pill.desconocido { background: var(--bg-elev-2); color: var(--text-muted); border-color: var(--border); }
+
+    .hint {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      background: var(--bg-elev-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      padding: var(--sp-3) var(--sp-4);
+      line-height: 1.5;
+      text-align: left;
+      width: 100%;
+    }
+    .hint strong { color: var(--text-strong); }
+
     .actions {
       display: flex;
       flex-direction: column;
       gap: var(--sp-2);
       width: 100%;
-      max-width: 260px;
+      max-width: 280px;
     }
     .btn-home {
       height: 44px;
@@ -117,41 +170,103 @@
         </svg>
       </div>
 
-      <h1 class="title">No tenés permiso para ver esta página</h1>
-      <p class="sub">El perfil con el que entraste no tiene acceso a esta sección. Si creés que es un error, hablá con el administrador.</p>
+      <h1 class="title" id="titulo">No tenés permiso para ver esta página</h1>
+      <p class="sub" id="mensaje">El perfil con el que entraste no tiene acceso a esta sección. Si creés que es un error, hablá con el administrador.</p>
+
+      <!-- Caja de contexto (se rellena con JS cuando hay params) -->
+      <div class="context-box" id="context-box" hidden>
+        <div class="context-row">
+          <span class="context-label">Sección pedida</span>
+          <span class="rol-pill" id="pill-intentado">—</span>
+        </div>
+        <div class="context-row">
+          <span class="context-label">Tu perfil actual</span>
+          <span class="rol-pill" id="pill-actual">—</span>
+        </div>
+      </div>
+
+      <!-- Consejo según combinación de roles -->
+      <div class="hint" id="hint" hidden></div>
 
       <div class="actions">
-        <button type="button" class="btn btn-home" id="btn-home">Volver al inicio</button>
+        <button type="button" class="btn btn-home" id="btn-home">Volver a mi panel</button>
         <a href="logout.html" class="link-logout">Cerrar sesión</a>
       </div>
     </div>
   </div>
 
-  <script>
-    (function () {
-      // Toggle tema
-      document.getElementById('btn-theme').addEventListener('click', function () {
-        var curr = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-        var next = curr === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        try { localStorage.setItem('multicompra:theme', next); } catch (e) {}
-      });
+  <script type="module">
+    import { getUserActual, dashboardPorRol } from './shared/auth-guard.js';
 
-      // Redirigir según rol en localStorage
-      document.getElementById('btn-home').addEventListener('click', function () {
-        var target = 'login.html';
-        try {
-          var raw = localStorage.getItem('multicompra:user');
-          if (raw) {
-            var u = JSON.parse(raw);
-            if (u && u.rol === 'cajera')     target = 'cajera/dashboard.html';
-            if (u && u.rol === 'supervisor') target = 'supervisor/dashboard.html';
-            if (u && u.rol === 'admin')      target = 'admin/dashboard.html';
-          }
-        } catch (e) {}
-        window.location.href = target;
-      });
-    })();
+    // Toggle tema
+    document.getElementById('btn-theme').addEventListener('click', function () {
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('multicompra:theme', next); } catch (_) {}
+    });
+
+    // Leer parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const intentado = params.get('intentado') || '';   // ej: 'supervisor'
+    const actual    = params.get('actual')    || '';   // ej: 'cajera'
+
+    // Etiquetas legibles por rol
+    const etiquetas = {
+      cajera:     'Cajera',
+      supervisor: 'Supervisor',
+      admin:      'Administrador',
+    };
+
+    if (intentado || actual) {
+      // Mostrar caja de contexto
+      const box = document.getElementById('context-box');
+      box.hidden = false;
+
+      const pillIntentado = document.getElementById('pill-intentado');
+      pillIntentado.textContent = etiquetas[intentado] || intentado || '—';
+      pillIntentado.className   = `rol-pill ${intentado || 'desconocido'}`;
+
+      const pillActual = document.getElementById('pill-actual');
+      const user       = getUserActual();
+      const nombreActual = user ? user.nombre : null;
+      const rolActual  = actual || (user ? user.rol : '');
+      pillActual.textContent = etiquetas[rolActual] || rolActual || '—';
+      pillActual.className   = `rol-pill ${rolActual || 'desconocido'}`;
+
+      // Mensaje contextual
+      const intenLabel  = etiquetas[intentado]  || intentado  || 'esa sección';
+      const actualLabel = etiquetas[rolActual]  || rolActual  || 'tu perfil';
+      const quien = nombreActual ? `${nombreActual}, tu` : 'Tu';
+
+      document.getElementById('titulo').textContent =
+        `Acceso denegado a la sección de ${intenLabel}`;
+      document.getElementById('mensaje').textContent =
+        `${quien} perfil es ${actualLabel} y no tiene acceso a esta sección.`;
+
+      // Consejo específico según la combinación
+      const hintEl = document.getElementById('hint');
+      let hintHTML = '';
+      if (rolActual === 'cajera' && (intentado === 'supervisor' || intentado === 'admin')) {
+        hintHTML = `Si necesitás acceso a funciones de <strong>${intenLabel}</strong>, hablá con <strong>Diego</strong> para que te cambie el perfil.`;
+      } else if (rolActual === 'supervisor' && intentado === 'admin') {
+        hintHTML = `La sección de <strong>Administrador</strong> es exclusiva de Diego. Si necesitás hacer algo ahí, pedíselo directamente a él.`;
+      } else {
+        hintHTML = `Si creés que deberías tener acceso, hablá con el <strong>administrador del sistema</strong>.`;
+      }
+      hintEl.innerHTML = hintHTML;
+      hintEl.hidden = false;
+    }
+
+    // Botón "Volver a mi panel" → dashboard según rol real del usuario logueado
+    document.getElementById('btn-home').addEventListener('click', function () {
+      const user = getUserActual();
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      window.location.href = dashboardPorRol(user.rol);
+    });
   </script>
 </body>
 </html>

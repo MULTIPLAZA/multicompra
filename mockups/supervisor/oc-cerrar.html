@@ -850,6 +850,9 @@
      Scripts
      ================================================================= -->
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { oc, proveedor, proveedores as proveedoresMock, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';

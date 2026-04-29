@@ -861,6 +861,9 @@
 
   <!-- ===================== Script ===================== -->
   <script type="module">
+    import { requireRol } from '../shared/auth-guard.js';
+    requireRol('cajera', 'admin');
+
     import {
       isCargado,
       getProductos as _getProductos,

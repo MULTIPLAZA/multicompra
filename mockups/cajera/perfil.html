@@ -474,6 +474,9 @@
 </div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('cajera', 'admin');
+
   import { cajeraActual as cajeraMock } from '../shared/mock-data.js';
   import { initAvatarMenu } from '../shared/ui.js';
 

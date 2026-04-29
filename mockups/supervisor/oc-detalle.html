@@ -339,6 +339,9 @@
 </div>
 
 <script type="module">
+  import { requireRol } from '../shared/auth-guard.js';
+  requireRol('supervisor', 'admin');
+
   import { ocsHistorico, oc as ocActual, ops, auditoria, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
   import { obtenerOC } from '../shared/supabase.js';
