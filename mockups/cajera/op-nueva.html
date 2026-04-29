@@ -1522,19 +1522,24 @@
       }, 2400);
     }
 
-    // --------- Fallback: búsqueda por descripción (secundario) ---------
+    // --------- Fallback legacy: búsqueda por descripción (DEPRECADO) ---------
+    // Hoy el buscador unificado del scanInput cubre código + descripción +
+    // categoría. El fallback queda oculto por compat con refs viejas, pero
+    // el botón btn-toggle-fallback ya no existe en el DOM.
     const searchInput = document.getElementById('search-input');
     const searchResults = document.getElementById('search-results');
 
-    btnToggleFallback.addEventListener('click', () => {
-      const visible = fallbackWrap.classList.toggle('visible');
-      if (visible) {
-        setTimeout(() => searchInput.focus(), 40);
-      } else {
-        searchResults.classList.remove('visible');
-        searchInput.value = '';
-      }
-    });
+    if (btnToggleFallback && fallbackWrap) {
+      btnToggleFallback.addEventListener('click', () => {
+        const visible = fallbackWrap.classList.toggle('visible');
+        if (visible) {
+          setTimeout(() => searchInput && searchInput.focus(), 40);
+        } else {
+          searchResults && searchResults.classList.remove('visible');
+          if (searchInput) searchInput.value = '';
+        }
+      });
+    }
 
     function filtrar(q) {
       const term = q.trim().toLowerCase();
