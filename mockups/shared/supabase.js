@@ -144,18 +144,32 @@ export async function guardarOP(op) {
   return { ok: true, opId: opRow.id };
 }
 
-export async function listarOPs({ cajeraIdErp, estado, limit = 100 } = {}) {
+export async function listarOPs({ cajeraIdErp, estado, estadoResolucion, limit = 100 } = {}) {
+  // estado            → filtra por op.estado (en la práctica siempre 'enviada')
+  // estadoResolucion  → filtra por op_resoluciones.estado: 'aprobada' | 'devuelta' | 'en_oc' | 'anulada'
+  //                     o el literal 'sin_resolucion' para OPs sin resolución (pendientes).
   const supa = await getClient();
   if (!supa) {
     let arr = lsGet(KEYS.OPS, []);
+    const resol = lsGet(KEYS.OPS_RESOL, {});
     if (cajeraIdErp != null) arr = arr.filter(o => o.cajeraId === cajeraIdErp);
     if (estado) arr = arr.filter(o => o.estado === estado);
+    if (estadoResolucion === 'sin_resolucion') {
+      arr = arr.filter(o => !resol[o.id]);
+    } else if (estadoResolucion) {
+      arr = arr.filter(o => resol[o.id] && resol[o.id].estado === estadoResolucion);
+    }
     return { ok: true, fallback: true, data: arr.slice(0, limit) };
   }
 
   let q = supa.from('v_op_con_resolucion').select('*').order('fecha_envio', { ascending: false }).limit(limit);
   if (cajeraIdErp != null) q = q.eq('cajera_id_erp', cajeraIdErp);
   if (estado) q = q.eq('estado', estado);
+  if (estadoResolucion === 'sin_resolucion') {
+    q = q.is('estado_resolucion', null);
+  } else if (estadoResolucion) {
+    q = q.eq('estado_resolucion', estadoResolucion);
+  }
   const { data, error } = await q;
   if (error) return { ok: false, error: error.message };
   return { ok: true, data };

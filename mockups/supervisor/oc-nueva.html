@@ -968,7 +968,7 @@
 
   // 1) Supabase (la verdad)
   try {
-    const res = await listarOPs({ estado: 'aprobada', limit: 500 });
+    const res = await listarOPs({ estadoResolucion: 'aprobada', limit: 500 });
     if (res.ok && !res.fallback && Array.isArray(res.data)) {
       const detalladas = await Promise.all(res.data.map(async (o) => {
         const linRes = await obtenerLineasOP(o.id);
