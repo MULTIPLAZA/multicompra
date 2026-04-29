@@ -811,6 +811,7 @@
         const prod       = getProductoPorId(productoId) || getProductoPorId(Number(productoId)) || {};
         const nombreProd = ln.producto_nombre ?? prod.descripcion ?? prod.nombre ?? `Producto #${productoId}`;
         const costoUnit  = Number(ln.producto_costo ?? prod.costo) || 0;
+        const barrasProd = String(ln.producto_codigo ?? prod.codigo ?? prod.barras ?? '');
         const stockLocal = _stockDe(localId, productoId);
         const sugerido   = _calcSugerido(pidio, stockLocal);
 
@@ -818,6 +819,7 @@
           gruposMap.set(productoId, {
             productoId,
             nombre: nombreProd,
+            barras: barrasProd,
             stockCentral: _stockDe(idCentral, productoId),
             costoEstimado: costoUnit,
             pedidos: []
@@ -832,7 +834,8 @@
         g.pedidos.push({
           opId: opNumero, localId, localNombre, localCodigo, cajera, fecha,
           pidio, stockLocal, excedente: stockLocal - pidio, sugerido,
-          decision, cantidadComprar, cantidadComprarDefault: cantidadComprar
+          decision, decisionDefault: decision,
+          cantidadComprar, cantidadComprarDefault: cantidadComprar
         });
       }
     }
@@ -887,7 +890,8 @@
         pedidosPorProducto.get(productoId).push({
           opId: opNumero, localId, localNombre, localCodigo, cajera, fecha,
           pidio, stockLocal, excedente: stockLocal - pidio, sugerido,
-          decision: 'comprar', cantidadComprar: pidio, cantidadComprarDefault: pidio
+          decision: 'comprar', decisionDefault: 'comprar',
+          cantidadComprar: pidio, cantidadComprarDefault: pidio
         });
       }
     }
@@ -895,7 +899,9 @@
     const gruposMap = new Map();
     for (const linea of (ocRaw.lineas || [])) {
       const productoId = String(linea.producto_id_erp ?? linea.productoId);
-      const nombre     = linea.producto_nombre ?? `Producto #${productoId}`;
+      const prod       = getProductoPorId(productoId) || getProductoPorId(Number(productoId)) || {};
+      const nombre     = linea.producto_nombre ?? prod.descripcion ?? prod.nombre ?? `Producto #${productoId}`;
+      const barras     = String(linea.producto_codigo ?? prod.codigo ?? prod.barras ?? '');
       const costoUnit  = Number(linea.costo_unitario ?? linea.costo) || 0;
       const cantOC     = Number(linea.cantidad_pedida ?? linea.cantidad) || 0;
       const stockCentral = _stockDe(idCentral, productoId);
@@ -904,19 +910,21 @@
         pedidos = [{
           opId: '—', localId: 0, localNombre: '(sin desglose)', localCodigo: '???',
           cajera: '—', fecha: '—', pidio: cantOC, stockLocal: 0, excedente: -cantOC,
-          sugerido: cantOC, decision: 'comprar', cantidadComprar: cantOC, cantidadComprarDefault: cantOC
+          sugerido: cantOC, decision: 'comprar', decisionDefault: 'comprar',
+          cantidadComprar: cantOC, cantidadComprarDefault: cantOC
         }];
       } else {
         for (const p of pedidos) {
           const dec = _calcDecisionDefault(p.pidio, stockCentral);
           const cDef = dec === 'comprar' ? (p.sugerido ?? p.pidio) : 0;
           p.decision = dec;
+          p.decisionDefault = dec;
           p.cantidadComprar = cDef;
           p.cantidadComprarDefault = cDef;
         }
       }
       gruposMap.set(productoId, {
-        productoId, nombre, stockCentral, costoEstimado: costoUnit, pedidos
+        productoId, nombre, barras, stockCentral, costoEstimado: costoUnit, pedidos
       });
     }
 
@@ -1564,10 +1572,10 @@
         const tr = tbody.querySelector(`tr.pedido-row[data-product-id="${g.productoId}"][data-op-id="${p.opId}"][data-local-id="${p.localId}"]`);
         if (!tr) return;
         const txtMatch = !q ||
-          g.nombre.toLowerCase().includes(q) ||
-          g.barras.includes(q) ||
-          p.localNombre.toLowerCase().includes(q) ||
-          p.localCodigo.toLowerCase().includes(q);
+          String(g.nombre || '').toLowerCase().includes(q) ||
+          String(g.barras || '').toLowerCase().includes(q) ||
+          String(p.localNombre || '').toLowerCase().includes(q) ||
+          String(p.localCodigo || '').toLowerCase().includes(q);
         const editedMatch = !onlyEdited || esEditado(p);
         const excMatch = !onlyExc || p.excedente >= 0;
         const buyMatch = !onlyBuy || (p.decision === 'comprar' && p.cantidadComprar > 0);
