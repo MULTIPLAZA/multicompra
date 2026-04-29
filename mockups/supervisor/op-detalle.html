@@ -477,6 +477,7 @@
 <script type="module">
   import { opsPendientes as opsPendientesMock, historialCajera, ops, productos as productosMock, locales as localesMock, auditoria, fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProductos as _getProdReales, getLocales as _getLocReales, getStockProducto } from '../shared/data.js';
+  import { resolverOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Datos reales con shape mock-compatible ─────────────────────────────
@@ -783,18 +784,39 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  // Botón APROBAR — persiste la resolución y vuelve al dashboard
+  // Helper: id del supervisor logueado
+  function supervisorIdErp() {
+    try { return (JSON.parse(localStorage.getItem('multicompra:user') || '{}').id) || 0; }
+    catch (_) { return 0; }
+  }
+
+  // Botón APROBAR — persiste la resolución en Supabase y vuelve al dashboard
   const btnApr = document.getElementById('btn-aprobar');
   if (btnApr) {
-    btnApr.addEventListener('click', () => {
-      guardarResolucion(op.id, {
-        estado: 'aprobada',
-        supervisor: supervisorNombre(),
-        fechaResolucion: fechaAhora(),
-        nota: null
-      });
-      showToast(`${IDU} aprobada. Volviendo al panel…`);
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1100);
+    btnApr.addEventListener('click', async () => {
+      btnApr.disabled = true;
+      const txtOriginal = btnApr.innerHTML;
+      btnApr.textContent = 'Aprobando…';
+      try {
+        const res = await resolverOP({
+          opId: op.id,
+          estado: 'aprobada',
+          supervisorIdErp: supervisorIdErp(),
+          supervisorNombre: supervisorNombre()
+        });
+        if (!res.ok) throw new Error(res.error || 'Error al aprobar');
+        // Mantener también en localStorage para compatibilidad con vistas que aún no migraron
+        guardarResolucion(op.id, {
+          estado: 'aprobada', supervisor: supervisorNombre(),
+          fechaResolucion: fechaAhora(), nota: null
+        });
+        showToast(`${IDU} aprobada${res.fallback ? ' (offline)' : ''}. Volviendo al panel…`);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1100);
+      } catch (err) {
+        btnApr.disabled = false;
+        btnApr.innerHTML = txtOriginal;
+        alert('No pude aprobar la OP:\n\n' + err.message);
+      }
     });
   }
 
@@ -805,17 +827,32 @@
   modalReturn.addEventListener('click', (e) => { if (e.target === modalReturn) cerrarModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalReturn.classList.contains('show')) cerrarModal(); });
 
-  btnReturnConfirm.addEventListener('click', () => {
-    // Persistir la devolución con la nota
-    guardarResolucion(op.id, {
-      estado: 'devuelta',
-      supervisor: supervisorNombre(),
-      fechaResolucion: fechaAhora(),
-      nota: returnNota.value.trim()
-    });
-    cerrarModal();
-    showToast(`${IDU} devuelta a la cajera con tu nota.`);
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+  btnReturnConfirm.addEventListener('click', async () => {
+    btnReturnConfirm.disabled = true;
+    const txtOriginal = btnReturnConfirm.textContent;
+    btnReturnConfirm.textContent = 'Devolviendo…';
+    try {
+      const res = await resolverOP({
+        opId: op.id,
+        estado: 'devuelta',
+        supervisorIdErp: supervisorIdErp(),
+        supervisorNombre: supervisorNombre(),
+        nota: returnNota.value.trim()
+      });
+      if (!res.ok) throw new Error(res.error || 'Error al devolver');
+      // Mantener también en localStorage por compatibilidad
+      guardarResolucion(op.id, {
+        estado: 'devuelta', supervisor: supervisorNombre(),
+        fechaResolucion: fechaAhora(), nota: returnNota.value.trim()
+      });
+      cerrarModal();
+      showToast(`${IDU} devuelta a la cajera con tu nota${res.fallback ? ' (offline)' : ''}.`);
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+    } catch (err) {
+      btnReturnConfirm.disabled = false;
+      btnReturnConfirm.textContent = txtOriginal;
+      alert('No pude devolver la OP:\n\n' + err.message);
+    }
   });
 
   // Toast

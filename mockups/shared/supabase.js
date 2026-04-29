@@ -165,7 +165,20 @@ export async function obtenerLineasOP(opId) {
 
 /* =============================================================================
    OP_RESOLUCIONES — supervisor aprueba / devuelve / marca como en_oc
+   ----------------------------------------------------------------------------
+   opId puede ser un UUID de Supabase o un número legible (ej: 'op-loc-xyz').
+   Si no es UUID, se busca el UUID por la columna 'numero' antes de upsert.
    ============================================================================= */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolverUuidOP(supa, opIdRaw) {
+  if (UUID_RE.test(opIdRaw)) return opIdRaw;
+  // Buscar por numero
+  const { data, error } = await supa.from('op').select('id').eq('numero', opIdRaw).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data.id;
+}
+
 export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNombre, nota = null, ocId = null }) {
   const supa = await getClient();
   if (!supa) {
@@ -177,8 +190,19 @@ export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNomb
     lsSet(KEYS.OPS_RESOL, all);
     return { ok: true, fallback: true };
   }
+  const uuid = await resolverUuidOP(supa, opId);
+  if (!uuid) {
+    // OP no encontrada en Supabase — guardar en localStorage como fallback
+    const all = lsGet(KEYS.OPS_RESOL, {});
+    all[opId] = {
+      estado, supervisor: supervisorNombre, supervisorId: supervisorIdErp,
+      nota, ocId, fechaResolucion: formatearFecha(new Date())
+    };
+    lsSet(KEYS.OPS_RESOL, all);
+    return { ok: true, fallback: true, reason: 'op_no_encontrada_en_supabase' };
+  }
   const { error } = await supa.from('op_resoluciones').upsert({
-    op_id: opId, estado, supervisor_id_erp: supervisorIdErp,
+    op_id: uuid, estado, supervisor_id_erp: supervisorIdErp,
     supervisor_nombre: supervisorNombre, nota, oc_id: ocId,
     fecha_resolucion: new Date().toISOString()
   }, { onConflict: 'op_id' });
@@ -223,11 +247,17 @@ export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveed
   const { error: errL } = await supa.from('oc_lineas').insert(lineasInsert);
   if (errL) return { ok: false, error: errL.message, ocId: ocRow.id };
 
-  // Vincular las OPs incluidas
-  const links = opIds.map(opId => ({ oc_id: ocRow.id, op_id: opId }));
-  await supa.from('oc_ops').insert(links);
+  // Vincular las OPs incluidas — resolver UUIDs si vienen como número legible
+  const linkUUIDs = [];
+  for (const opIdRaw of (opIds || [])) {
+    const uuid = await resolverUuidOP(supa, opIdRaw);
+    if (uuid) linkUUIDs.push({ oc_id: ocRow.id, op_id: uuid });
+  }
+  if (linkUUIDs.length) {
+    await supa.from('oc_ops').insert(linkUUIDs);
+  }
 
-  return { ok: true, ocId: ocRow.id };
+  return { ok: true, ocId: ocRow.id, ocNumero: ocRow.numero };
 }
 
 export async function listarOCs({ estado, proveedorIdErp, limit = 100 } = {}) {

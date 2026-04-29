@@ -894,6 +894,7 @@
     getStockTotal,
     getStockProducto
   } from '../shared/data.js';
+  import { crearOC, resolverOP } from '../shared/supabase.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
 
   // ─── Mergear datos reales (si la cache está cargada) con los mocks ───────
@@ -1338,47 +1339,75 @@
     // Construir OC
     const ahora = new Date(), pad = (n) => String(n).padStart(2, '0');
     const fechaStr = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())} ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`;
-    const ocId = 'OC-loc-' + Date.now().toString(36).toUpperCase();
-    const supervisorNombre = (() => {
-      try { return (JSON.parse(localStorage.getItem('multicompra:user') || '{}').nombre) || 'Supervisor'; }
-      catch (_) { return 'Supervisor'; }
+    const ocNumero = 'OC-loc-' + Date.now().toString(36).toUpperCase();
+    const supervisorObj = (() => {
+      try { return JSON.parse(localStorage.getItem('multicompra:user') || '{}'); }
+      catch (_) { return {}; }
     })();
-    const ocNueva = {
-      id: ocId,
-      proveedorId: provId,
-      proveedorNombre: prov.nombre,
-      opIds,
-      lineas: [...lineasMap.values()],
-      totalGs,
-      fecha: fechaStr,
-      estado: 'abierta',
-      creadaPor: supervisorNombre
-    };
+    const supervisorNombre = supervisorObj.nombre || 'Supervisor';
+    const supervisorIdErp  = supervisorObj.id || 0;
+
+    btn.style.opacity = '0.6';
+    btn.style.pointerEvents = 'none';
+    btn.textContent = 'Creando OC…';
 
     try {
-      const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
-      arr.unshift(ocNueva);
-      localStorage.setItem('multicompra:ocs_creadas', JSON.stringify(arr));
-    } catch (_) {}
+      // Guardar la OC en Supabase
+      const lineasArr = [...lineasMap.values()];
+      const resOC = await crearOC({
+        numero: ocNumero,
+        proveedorIdErp: provId,
+        proveedorNombre: prov.nombre,
+        proveedorRuc: prov.ruc || '',
+        opIds, // serán resueltos por el wrapper si vienen como "numero" en lugar de UUID
+        lineas: lineasArr,
+        totalGs,
+        creadoPorIdErp: supervisorIdErp,
+        creadoPorNombre: supervisorNombre
+      });
+      if (!resOC.ok) throw new Error(resOC.error || 'Error al crear OC');
 
-    // Marcar las OPs incluidas como 'en_oc' (para que no aparezcan más
-    // como pendientes en el dashboard del supervisor).
-    try {
-      const resol = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
-      for (const opId of opIds) {
-        resol[opId] = {
+      // Marcar todas las OPs incluidas como 'en_oc' en Supabase
+      for (const opIdLegible of opIds) {
+        await resolverOP({
+          opId: opIdLegible,
           estado: 'en_oc',
-          ocId,
-          supervisor: supervisorNombre,
-          fechaResolucion: fechaStr,
-          nota: null
-        };
+          supervisorIdErp,
+          supervisorNombre,
+          ocId: resOC.ocId
+        });
       }
-      localStorage.setItem('multicompra:ops_resoluciones', JSON.stringify(resol));
-    } catch (_) {}
 
-    alert(`OC ${ocId} creada con ${opIds.length} OPs (${[...lineasMap.values()].length} productos · Gs. ${totalGs.toLocaleString('es-PY')}).`);
-    window.location.href = 'oc-lista.html';
+      // También guardar en localStorage para que la pantalla de oc-lista
+      // (que aún lee local) pueda mostrarla — esto se elimina cuando oc-lista
+      // se migre a leer de Supabase.
+      try {
+        const arr = JSON.parse(localStorage.getItem('multicompra:ocs_creadas') || '[]');
+        arr.unshift({
+          id: ocNumero, numero: ocNumero,
+          proveedorId: provId, proveedorNombre: prov.nombre,
+          opIds, lineas: lineasArr, totalGs,
+          fecha: fechaStr, estado: 'abierta', creadaPor: supervisorNombre
+        });
+        localStorage.setItem('multicompra:ocs_creadas', JSON.stringify(arr));
+      } catch (_) {}
+      try {
+        const resol = JSON.parse(localStorage.getItem('multicompra:ops_resoluciones') || '{}');
+        for (const opId of opIds) {
+          resol[opId] = { estado: 'en_oc', ocId: ocNumero, supervisor: supervisorNombre, fechaResolucion: fechaStr, nota: null };
+        }
+        localStorage.setItem('multicompra:ops_resoluciones', JSON.stringify(resol));
+      } catch (_) {}
+
+      const sufijo = resOC.fallback ? ' (offline)' : '';
+      alert(`OC ${ocNumero} creada${sufijo} con ${opIds.length} OPs (${lineasArr.length} productos · Gs. ${totalGs.toLocaleString('es-PY')}).`);
+      window.location.href = 'oc-lista.html';
+    } catch (err) {
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+      btn.textContent = 'Armar OC y abrir planilla';
+      alert('No pude crear la OC:\n\n' + err.message);
+    }
   });
 
   function renderProveedorInfo() {

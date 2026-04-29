@@ -867,6 +867,7 @@
       getStockTotal,
       buscarProductos
     } from '../shared/data.js';
+    import { guardarOP } from '../shared/supabase.js';
     import { initAvatarMenu } from '../shared/ui.js';
 
     // ─── Guard: si no hay cache cargada, mandar al login ────────────────
@@ -1738,11 +1739,13 @@
       alert('Borrador guardado. Podés volver después a terminarla.');
     });
 
-    // ---- Enviar OP: persiste en localStorage para que el supervisor la vea ----
-    const OPS_KEY = 'multicompra:ops_enviadas';
+    // ---- Enviar OP: persiste en Supabase (con fallback a localStorage) ------
 
-    btnEnviar.addEventListener('click', () => {
+    btnEnviar.addEventListener('click', async () => {
       if (state.lineas.length === 0) return;
+      btnEnviar.disabled = true;
+      const txtOriginal = btnEnviar.textContent;
+      btnEnviar.textContent = 'Enviando…';
 
       const ahora = new Date();
       const pad = (n) => String(n).padStart(2, '0');
@@ -1763,35 +1766,36 @@
         };
       });
 
-      const op = {
-        id:               'op-loc-' + Date.now().toString(36),
+      const numero = 'op-loc-' + Date.now().toString(36);
+      const opPayload = {
+        numero,
+        cajeraId:         cajeraActual.id,
+        cajera:           cajeraActual.nombre,
         localId:          cajeraActual.localId,
         localNombre:      cajeraActual.localNombre,
         sucursal:         cajeraActual.localSucursal || cajeraActual.localNombre,
-        cajeraId:         cajeraActual.id,
-        cajera:           cajeraActual.nombre,
         fecha:            fechaStr,
-        enviadaHace:      'recién',
-        estado:           'enviada',
         esExcepcion:      !!state.excepcion,
         motivoExcepcion:  state.excepcion ? (state.motivo || '').trim() : null,
-        esVieja:          false,
         lineas
       };
 
       try {
-        const arr = JSON.parse(localStorage.getItem(OPS_KEY) || '[]');
-        arr.unshift(op);  // las más nuevas primero
-        localStorage.setItem(OPS_KEY, JSON.stringify(arr));
-      } catch (e) {
-        alert('No pude guardar la OP. Probá de nuevo.\n\n' + e.message);
-        return;
-      }
+        const res = await guardarOP(opPayload);
+        if (!res.ok) {
+          throw new Error(res.error || 'Error desconocido al guardar');
+        }
 
-      // Limpiar el draft y volver al dashboard
-      localStorage.removeItem(DRAFT_KEY);
-      alert(`OP ${op.id.toUpperCase()} enviada a Shirley.\n\n${lineas.length} productos · ${lineas.reduce((s, l) => s + l.cantidad, 0)} unidades totales.`);
-      window.location.href = 'dashboard.html';
+        // Limpiar el draft y volver al dashboard
+        localStorage.removeItem(DRAFT_KEY);
+        const dest = res.fallback ? '(modo offline)' : '(guardado en la nube)';
+        alert(`OP ${numero.toUpperCase()} enviada a Shirley ${dest}.\n\n${lineas.length} productos · ${lineas.reduce((s, l) => s + l.cantidad, 0)} unidades totales.`);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = txtOriginal;
+        alert('No pude enviar el pedido:\n\n' + err.message + '\n\nProbá de nuevo.');
+      }
     });
 
     // Render inicial
