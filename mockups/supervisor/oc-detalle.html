@@ -179,8 +179,38 @@
     .cta-primary { background: var(--primary); color: var(--primary-on); border-color: var(--primary); }
     .cta-primary:hover { background: var(--primary-hover); }
 
-    /* ── Botón descargar PDF ─────────────────────────────────────────────── */
-    /* Visible por default — el JS solo se asegura del listener */
+    /* ── Botón descargar PDF (prominente) ─────────────────────────────── */
+    .btn-pdf-big {
+      background: var(--success, #16a34a);
+      color: #fff;
+      border-color: var(--success, #16a34a);
+      height: 38px;
+      padding: 0 var(--sp-4);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      box-shadow: 0 4px 12px -4px rgba(22, 163, 74, 0.5);
+      transition: all var(--t-fast);
+    }
+    .btn-pdf-big:hover {
+      background: #15803d;
+      border-color: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px -4px rgba(22, 163, 74, 0.6);
+    }
+    .btn-pdf-big:active { transform: translateY(0); }
+    .btn-pdf-big:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+      box-shadow: none;
+    }
+    /* Estado de descarga: spinner */
+    .btn-pdf-big.loading svg {
+      animation: pdfSpin 0.8s linear infinite;
+    }
+    @keyframes pdfSpin {
+      to { transform: rotate(360deg); }
+    }
 
     /* ═══════════════════════════════════════════════════════════════════════
        @media print — documento formal de OC para proveedor
@@ -483,6 +513,145 @@
 
     /* ── En pantalla, ocultar el documento print ── */
     #print-doc { display: none; }
+
+    /* ════════════════════════════════════════════════════════════════════
+       Estilos del PDF visibles cuando JS lo muestra (html2canvas).
+       Duplican lo de @media print para que tambien apliquen al capturar
+       desde JavaScript (no solo al imprimir desde el browser).
+       ════════════════════════════════════════════════════════════════════ */
+    #print-doc {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #1f2937;
+      background: #fff;
+    }
+    #print-doc .pd-brand-band {
+      background: #0e9488; color: #fff;
+      padding: 7pt 12pt;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #print-doc .pd-brand-left { display: flex; align-items: center; gap: 8pt; }
+    #print-doc .pd-logo-box {
+      width: 26pt; height: 26pt; background: #fff; color: #0e9488;
+      border-radius: 4pt; display: flex; align-items: center; justify-content: center;
+      font-size: 14pt; font-weight: 800; letter-spacing: -1px;
+    }
+    #print-doc .pd-brand-info .pd-empresa { font-size: 11pt; font-weight: 700; margin: 0; line-height: 1.05; }
+    #print-doc .pd-brand-info .pd-empresa-sub {
+      font-size: 7pt; opacity: 0.88; margin: 1pt 0 0;
+      letter-spacing: 0.4px; text-transform: uppercase;
+    }
+    #print-doc .pd-brand-right { text-align: right; }
+    #print-doc .pd-brand-right .pd-titulo {
+      font-size: 8pt; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; margin: 0; opacity: 0.82;
+    }
+    #print-doc .pd-brand-right .pd-numero {
+      font-size: 13pt; font-weight: 800; font-family: 'Courier New', monospace;
+      margin: 1pt 0 1pt; letter-spacing: 0.5px;
+    }
+    #print-doc .pd-brand-right .pd-fecha { font-size: 7.5pt; opacity: 0.85; margin: 0; }
+
+    #print-doc .pd-parties {
+      display: flex; gap: 10pt; margin: 10pt 14pt 10pt 14pt;
+    }
+    #print-doc .pd-box {
+      flex: 1; background: #f8fafc; border-left: 2.5pt solid #0e9488;
+      padding: 6pt 10pt; border-radius: 0 3pt 3pt 0;
+    }
+    #print-doc .pd-box.pd-box-prov { border-left-color: #f59e0b; background: #fffbeb; }
+    #print-doc .pd-box-title {
+      font-size: 6.5pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #6b7280; margin: 0 0 3pt;
+    }
+    #print-doc .pd-box .pd-box-nombre {
+      font-size: 10pt; font-weight: 700; color: #111827;
+      margin: 0 0 2pt; line-height: 1.15;
+    }
+    #print-doc .pd-box p { margin: 0 0 1pt; font-size: 8.5pt; line-height: 1.3; color: #374151; }
+    #print-doc .pd-box .pd-row { display: flex; gap: 4pt; }
+    #print-doc .pd-box .pd-row span:first-child {
+      color: #6b7280; font-weight: 600; min-width: 36pt;
+    }
+
+    #print-doc .pd-table {
+      width: calc(100% - 28pt); margin: 0 14pt;
+      border-collapse: collapse; font-size: 8.8pt; margin-bottom: 6pt;
+    }
+    #print-doc .pd-table thead th {
+      background: #0e9488; color: #fff; padding: 4pt 6pt;
+      text-align: left; font-size: 7.5pt; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; border: none;
+    }
+    #print-doc .pd-table thead th.num { text-align: right; }
+    #print-doc .pd-table thead th:first-child { border-radius: 3pt 0 0 0; }
+    #print-doc .pd-table thead th:last-child { border-radius: 0 3pt 0 0; }
+    #print-doc .pd-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    #print-doc .pd-table tbody td {
+      border-bottom: 1px solid #e5e7eb; padding: 3pt 6pt;
+      vertical-align: middle; color: #1f2937;
+    }
+    #print-doc .pd-table tbody td.num {
+      text-align: right; font-family: 'Courier New', monospace; font-size: 9pt;
+    }
+    #print-doc .pd-table tbody td.num strong { font-weight: 700; }
+
+    #print-doc .pd-total-box {
+      margin: 4pt 14pt 10pt; background: #0e9488; color: #fff;
+      padding: 6pt 12pt; border-radius: 3pt;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #print-doc .pd-total-box .pd-total-lbl {
+      font-size: 8.5pt; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; opacity: 0.92;
+    }
+    #print-doc .pd-total-box .pd-total-val {
+      font-size: 14pt; font-weight: 800; font-family: 'Courier New', monospace;
+      letter-spacing: 0.4px;
+    }
+    #print-doc .pd-total-box .pd-total-extra {
+      font-size: 7pt; opacity: 0.85; margin-right: 8pt;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+
+    #print-doc .pd-condiciones {
+      margin: 0 14pt 8pt; padding: 5pt 9pt;
+      background: #fef3c7; border-left: 2pt solid #f59e0b;
+      border-radius: 0 2pt 2pt 0; font-size: 7.5pt; color: #78350f; line-height: 1.35;
+    }
+    #print-doc .pd-condiciones strong { font-weight: 700; }
+
+    #print-doc .pd-obs {
+      margin: 0 14pt 10pt; border: 1px dashed #cbd5e1;
+      padding: 6pt 10pt; min-height: 36pt; border-radius: 3pt; background: #fafbfc;
+    }
+    #print-doc .pd-obs-title {
+      font-size: 6.5pt; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: #6b7280; margin: 0 0 4pt;
+    }
+    #print-doc .pd-obs-lines p {
+      margin: 0 0 7pt; border-bottom: 1px solid #e5e7eb; min-height: 10pt;
+    }
+
+    #print-doc .pd-signatures {
+      display: flex; gap: 24pt; margin: 18pt 14pt 0;
+    }
+    #print-doc .pd-sig { flex: 1; text-align: center; padding-top: 28pt; position: relative; }
+    #print-doc .pd-sig::before {
+      content: ''; position: absolute; top: 24pt; left: 10%; right: 10%;
+      border-top: 1px solid #475569;
+    }
+    #print-doc .pd-sig .pd-sig-role {
+      font-size: 6.5pt; color: #6b7280; text-transform: uppercase;
+      letter-spacing: 1.2px; font-weight: 600; margin-bottom: 1pt;
+    }
+    #print-doc .pd-sig .pd-sig-name { font-size: 9pt; font-weight: 700; color: #1f2937; }
+
+    #print-doc .pd-footer {
+      margin: 10pt 14pt 14pt; border-top: 1px solid #e5e7eb;
+      padding-top: 4pt; text-align: center; font-size: 6.5pt;
+      color: #9ca3af; letter-spacing: 0.2px;
+    }
   </style>
 </head>
 <body>
@@ -560,8 +729,8 @@
       <span class="meta-item"><strong>Creada:</strong>&nbsp;<span id="subh-fecha" class="text-mono">&mdash;</span></span>
       <div class="grow"></div>
       <div class="actions-row" id="subh-actions"></div>
-      <button type="button" class="btn btn-secondary" id="btn-descargar-pdf" title="Descargar PDF formal de la OC" aria-label="Descargar PDF">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <button type="button" class="btn btn-pdf-big" id="btn-descargar-pdf" title="Descarga el PDF de la OC para mandar al proveedor" aria-label="Descargar PDF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Descargar PDF
       </button>
     </div>
@@ -1065,14 +1234,41 @@
   updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
 
   // ── Botón Descargar PDF ──────────────────────────────────────────────────
-  // Visible siempre (cualquier estado de OC). Si la OC esta abierta o en
-  // edicion, el PDF sirve como vista previa.
+  // Genera el PDF en memoria con jsPDF + html2canvas (carga lazy via CDN)
+  // y dispara la descarga directa — SIN diálogo de impresión del browser.
   const btnPdf = document.getElementById('btn-descargar-pdf');
+
+  let _libsPdf = null;
+  async function cargarLibsPdf() {
+    if (_libsPdf) return _libsPdf;
+    // jsPDF
+    if (!window.jspdf) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('No pude cargar jsPDF'));
+        document.head.appendChild(s);
+      });
+    }
+    // html2canvas
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('No pude cargar html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    _libsPdf = { jsPDF: window.jspdf.jsPDF, html2canvas: window.html2canvas };
+    return _libsPdf;
+  }
+
   if (btnPdf) {
     btnPdf.style.display = 'inline-flex';
-    console.log('[oc-detalle] boton PDF mostrado');
 
-    btnPdf.addEventListener('click', () => {
+    btnPdf.addEventListener('click', async () => {
       // ── Poblar documento print con datos reales de la OC ────────────────
 
       // Encabezado
@@ -1129,8 +1325,90 @@
       document.getElementById('pd-footer-fecha').textContent =
         `Generado el ${pad(hoy.getDate())}/${pad(hoy.getMonth()+1)}/${hoy.getFullYear()}`;
 
-      // ── Disparar diálogo de impresión ────────────────────────────────────
-      window.print();
+      // ── Generar PDF directo (sin diálogo de impresión) ───────────────────
+      const labelOrig = btnPdf.innerHTML;
+      btnPdf.disabled = true;
+      btnPdf.classList.add('loading');
+      btnPdf.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+          <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+        Generando PDF…`;
+
+      try {
+        const { jsPDF, html2canvas } = await cargarLibsPdf();
+
+        // Forzar el #print-doc visible para que html2canvas lo capture
+        const printDoc = document.getElementById('print-doc');
+        const oldStyle = printDoc.getAttribute('style') || '';
+        printDoc.style.cssText = `
+          display: block !important;
+          position: absolute;
+          top: -10000px;
+          left: 0;
+          width: 794px;
+          background: #fff;
+          padding: 0;
+          font-family: 'Helvetica Neue', Arial, sans-serif;
+          font-size: 10.5pt;
+          color: #1f2937;
+          z-index: -1;
+        `;
+
+        // Esperar al next tick para que el browser aplique los estilos
+        await new Promise(r => setTimeout(r, 50));
+
+        const canvas = await html2canvas(printDoc, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false
+        });
+
+        // Restaurar el estilo original
+        if (oldStyle) printDoc.setAttribute('style', oldStyle);
+        else printDoc.removeAttribute('style');
+
+        // Crear PDF A4
+        const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        const pdfW = pdf.internal.pageSize.getWidth();   // 210mm
+        const pdfH = pdf.internal.pageSize.getHeight();  // 297mm
+        const imgW = pdfW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+        if (imgH <= pdfH) {
+          // Cabe en 1 hoja
+          pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+        } else {
+          // Multi-página: paginar
+          let heightLeft = imgH;
+          let position = 0;
+          pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+          heightLeft -= pdfH;
+          while (heightLeft > 0) {
+            position = heightLeft - imgH;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+            heightLeft -= pdfH;
+          }
+        }
+
+        const fileName = `${ocMeta.numero || 'OC'}.pdf`;
+        pdf.save(fileName);
+        console.log('[oc-detalle] PDF descargado:', fileName);
+      } catch (err) {
+        console.error('[oc-detalle] error generando PDF:', err);
+        alert('No pude generar el PDF: ' + err.message);
+      } finally {
+        btnPdf.disabled = false;
+        btnPdf.classList.remove('loading');
+        btnPdf.innerHTML = labelOrig;
+      }
     });
   }
 </script>
