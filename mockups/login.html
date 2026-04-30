@@ -2,9 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MultiCompra — Ingresar</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0e9488" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MultiCompra" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <script>
+    // Registrar el service worker (si el browser lo soporta)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function (reg) {
+            console.log('[PWA] SW registrado, scope:', reg.scope);
+          })
+          .catch(function (err) {
+            console.warn('[PWA] SW no registrado:', err);
+          });
+      });
+    }
+  </script>
   <!-- Anti-flash: setear data-theme antes del CSS para evitar parpadeo -->
   <script>
     (function () {
@@ -849,9 +870,31 @@
         if (typeof window.__guardarRememberPass__ === 'function') {
           window.__guardarRememberPass__(clave);
         }
-        // Guardar usuario en memoria temporal y abrir modal de local
         usuarioLogueado = res;
         localNombre.textContent = res.nombre;
+
+        // Si el SP (o el override) ya nos dijo desde qué local trabaja
+        // este usuario, NO le pedimos elegir uno — entramos directo.
+        // Útil para admin (Diego) y supervisor (Shirley) que operan desde
+        // el DEPOSITO. Solo las cajeras pasan por el modal de elegir local.
+        const idLocalDirecto = parseInt(res.idLocal, 10);
+        if (idLocalDirecto > 0) {
+          const user = {
+            id: res.id,
+            nombre: res.nombre,
+            rol: res.rol,
+            iniciales: (res.nombre || '?').slice(0, 2).toUpperCase(),
+            localId: idLocalDirecto,
+            localNombre: res.nombreLocal || '—',
+            localSucursal: res.nombreLocal || '',
+            loginAt: new Date().toISOString()
+          };
+          try { localStorage.setItem('multicompra:user', JSON.stringify(user)); } catch (_) {}
+          await mostrarSplashYPrefetchar(user);
+          return;
+        }
+
+        // Sino, abrir modal de elegir local (caso típico de cajera)
         await abrirModalLocal();
 
       } catch (err) {
