@@ -687,6 +687,99 @@
 </div>
 
 <!-- =================================================================
+     Modal genérico — reemplaza alert() y confirm() del browser
+     ================================================================= -->
+<style>
+  .mc-modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: var(--sp-4);
+    animation: mcFadeIn 0.18s ease-out;
+  }
+  .mc-modal-backdrop.visible { display: flex; }
+  @keyframes mcFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .mc-modal-box {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 64px -16px rgba(0,0,0,0.4);
+    max-width: 480px;
+    width: 100%;
+    overflow: hidden;
+    animation: mcSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes mcSlideUp {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .mc-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    margin: var(--sp-5) auto var(--sp-3);
+  }
+  .mc-modal-icon.warning {
+    background: var(--warning-soft);
+    color: var(--warning-text);
+  }
+  .mc-modal-icon.danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+  .mc-modal-icon.info {
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+  .mc-modal-icon.success {
+    background: var(--success-soft);
+    color: var(--success-text);
+  }
+  .mc-modal-title {
+    text-align: center;
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 var(--sp-5);
+  }
+  .mc-modal-body {
+    padding: var(--sp-3) var(--sp-5) var(--sp-5);
+    text-align: center;
+    color: var(--text);
+    font-size: var(--fs-md);
+    line-height: 1.45;
+  }
+  .mc-modal-body strong {
+    color: var(--text-strong);
+  }
+  .mc-modal-actions {
+    display: flex;
+    gap: var(--sp-2);
+    padding: 0 var(--sp-5) var(--sp-5);
+    justify-content: center;
+  }
+  .mc-modal-actions .btn { min-width: 110px; }
+</style>
+<div class="mc-modal-backdrop" id="mc-modal" role="dialog" aria-modal="true" aria-labelledby="mc-modal-title">
+  <div class="mc-modal-box">
+    <div class="mc-modal-icon" id="mc-modal-icon"></div>
+    <h3 class="mc-modal-title" id="mc-modal-title">Confirmar</h3>
+    <div class="mc-modal-body" id="mc-modal-body"></div>
+    <div class="mc-modal-actions" id="mc-modal-actions"></div>
+  </div>
+</div>
+
+<!-- =================================================================
      Scripts — lógica V3
      ================================================================= -->
 <script type="module">
@@ -702,6 +795,76 @@
   } from '../shared/supabase.js';
   import { getProductoPorId, getLocales, getStockProducto, getStockMap, getProductos, isCargado, prefetchAll } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
+
+  // ─── Modal lindo (reemplaza alert / confirm del browser) ────────────────
+  const _ICON_SVG = {
+    warning:  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    danger:   '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info:     '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+    success:  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+  };
+
+  function mcShowModal({ icon = 'info', titulo, mensaje, botones }) {
+    return new Promise(resolve => {
+      const backdrop = document.getElementById('mc-modal');
+      const iconEl = document.getElementById('mc-modal-icon');
+      const titEl = document.getElementById('mc-modal-title');
+      const bodEl = document.getElementById('mc-modal-body');
+      const actEl = document.getElementById('mc-modal-actions');
+
+      iconEl.className = 'mc-modal-icon ' + icon;
+      iconEl.innerHTML = _ICON_SVG[icon] || _ICON_SVG.info;
+      titEl.textContent = titulo || '';
+      bodEl.innerHTML = mensaje || '';
+      actEl.innerHTML = '';
+
+      const cleanup = (val) => {
+        backdrop.classList.remove('visible');
+        document.removeEventListener('keydown', onKey);
+        resolve(val);
+      };
+
+      botones.forEach(b => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn ' + (b.cls || 'btn-secondary');
+        btn.textContent = b.label;
+        btn.addEventListener('click', () => cleanup(b.value));
+        actEl.appendChild(btn);
+      });
+
+      const onKey = (e) => {
+        if (e.key === 'Escape') {
+          const cancelBtn = botones.find(b => b.value === false || b.value === 'cancel');
+          if (cancelBtn) cleanup(cancelBtn.value);
+        }
+      };
+      document.addEventListener('keydown', onKey);
+
+      backdrop.classList.add('visible');
+      // foco en el botón primario (último de la lista)
+      setTimeout(() => actEl.querySelector('.btn-primary, .btn-danger')?.focus(), 60);
+    });
+  }
+
+  function mcAlert(mensaje, { titulo = 'Aviso', icon = 'info', label = 'Entendido' } = {}) {
+    return mcShowModal({
+      icon, titulo, mensaje,
+      botones: [{ label, cls: 'btn-primary', value: true }]
+    });
+  }
+
+  function mcConfirm({ titulo = '¿Confirmar?', mensaje, icon = 'warning',
+                       labelOk = 'Confirmar', labelCancel = 'Cancelar',
+                       peligroso = false } = {}) {
+    return mcShowModal({
+      icon, titulo, mensaje,
+      botones: [
+        { label: labelCancel, cls: 'btn-secondary', value: false },
+        { label: labelOk, cls: peligroso ? 'btn-danger' : 'btn-primary', value: true }
+      ]
+    });
+  }
 
   // ─── Debug hook AL TOPE — setear ANTES de cualquier await ────────────────
   // Asi window.__debug existe ni bien empieza a correr el modulo.
@@ -1721,10 +1884,20 @@
     const btn = document.getElementById('btn-close-oc');
     const { lineas, totalGs } = _construirLineasFinales();
     if (lineas.length === 0) {
-      alert('No hay productos marcados como "Comprar". Decidí al menos uno antes de cerrar la OC.');
+      await mcAlert(
+        'No tenés ningún producto marcado como <strong>"Comprar"</strong>. Decidí al menos uno antes de cerrar la OC.',
+        { titulo: 'Falta seleccionar productos', icon: 'warning', label: 'Volver a la planilla' }
+      );
       return;
     }
-    if (!confirm(`¿Cerrar la OC con ${lineas.length} producto(s) y total ${fmtGs(totalGs)}? Una vez cerrada no se podrá editar.`)) return;
+    const okCierre = await mcConfirm({
+      titulo: '¿Cerrar la OC?',
+      mensaje: `Vas a cerrar <strong>${oc.numero}</strong> con <strong>${lineas.length}</strong> producto(s) y un total de <strong>${fmtGs(totalGs)}</strong> Gs.<br><br>Una vez cerrada no se podrá editar.`,
+      icon: 'warning',
+      labelOk: 'Sí, cerrar OC',
+      labelCancel: 'Cancelar'
+    });
+    if (!okCierre) return;
 
     const labelOriginal = btn.innerHTML;
     btn.disabled = true;
@@ -1763,7 +1936,10 @@
         });
         if (!resEstado.ok) {
           console.error('[oc-editar] cambiarEstadoOC a cerrada fallo:', resEstado.error);
-          alert('La OC se creo pero no pude cambiarla a cerrada. Quedo en abierta. Igual te llevo al detalle. Error: ' + (resEstado.error || ''));
+          await mcAlert(
+            `La OC se creó correctamente pero no pude cambiarla a "cerrada". Quedó en estado <strong>abierta</strong>. Igual te llevo al detalle.<br><br><span style="color:var(--text-muted);font-size:var(--fs-sm);">Error técnico: ${resEstado.error || 'desconocido'}</span>`,
+            { titulo: 'OC creada con advertencia', icon: 'warning', label: 'Continuar' }
+          );
         }
         sessionStorage.removeItem('multicompra:oc-en-armado');
         location.href = 'oc-detalle.html?id=' + encodeURIComponent(oc.numero);
@@ -1777,19 +1953,28 @@
     } catch (err) {
       btn.disabled = false;
       btn.innerHTML = labelOriginal;
-      alert('No pude cerrar la OC: ' + err.message);
+      await mcAlert(
+        `No pude cerrar la OC.<br><br><span style="color:var(--text-muted);font-size:var(--fs-sm);">Error: ${err.message}</span>`,
+        { titulo: 'Error al cerrar', icon: 'danger', label: 'Volver' }
+      );
     }
   });
 
   document.getElementById('btn-save-draft').addEventListener('click', async () => {
     if (oc._modo === 'nueva') {
-      alert('El borrador se guarda recién cuando cerrás la planilla por primera vez. Hasta ese momento la OC vive solo en sesión.');
+      await mcAlert(
+        'El borrador se guarda recién cuando cerrás la planilla por primera vez. Hasta ese momento la OC vive solo en tu sesión actual.',
+        { titulo: 'Borrador no disponible', icon: 'info', label: 'Entendido' }
+      );
       return;
     }
     const btn = document.getElementById('btn-save-draft');
     const { lineas } = _construirLineasFinales();
     if (lineas.length === 0) {
-      alert('No hay productos marcados como "Comprar". Marcá al menos uno antes de guardar borrador.');
+      await mcAlert(
+        'No tenés productos marcados como <strong>"Comprar"</strong>. Marcá al menos uno antes de guardar el borrador.',
+        { titulo: 'Falta seleccionar productos', icon: 'warning', label: 'Volver' }
+      );
       return;
     }
     btn.disabled = true;
@@ -1805,12 +1990,23 @@
     } catch (err) {
       btn.textContent = txt;
       btn.disabled = false;
-      alert('No pude guardar: ' + err.message);
+      await mcAlert(
+        `No pude guardar el borrador.<br><br><span style="color:var(--text-muted);font-size:var(--fs-sm);">Error: ${err.message}</span>`,
+        { titulo: 'Error al guardar', icon: 'danger', label: 'Volver' }
+      );
     }
   });
 
-  document.getElementById('btn-discard').addEventListener('click', () => {
-    if (confirm('¿Descartar todos los cambios sin guardar?')) location.reload();
+  document.getElementById('btn-discard').addEventListener('click', async () => {
+    const ok = await mcConfirm({
+      titulo: '¿Descartar cambios?',
+      mensaje: 'Vas a perder todas las modificaciones que hiciste en esta planilla y volver al estado inicial.',
+      icon: 'warning',
+      labelOk: 'Sí, descartar',
+      labelCancel: 'Seguir editando',
+      peligroso: true
+    });
+    if (ok) location.reload();
   });
 
   // ==================================================================

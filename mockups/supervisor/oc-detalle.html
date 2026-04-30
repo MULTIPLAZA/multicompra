@@ -197,210 +197,285 @@
       .user-chip,
       .actions-row,
       .anulada-banner,
-      aside,                /* columna derecha: historial + OPs origen */
+      aside,
       .detail-scroll > .page-grid > aside {
         display: none !important;
       }
-
-      /* ── Reset del layout de app ── */
       html, body { height: auto; overflow: visible; }
       .app { display: block; }
       .app-main { margin: 0; padding: 0; overflow: visible; }
       .detail-scroll { overflow: visible; padding: 0; }
-      .page-grid {
-        display: block;
-        max-width: none;
-        margin: 0;
-      }
-
-      /* ── Hoja A4 ── */
-      @page {
-        size: A4 portrait;
-        margin: 1.5cm;
-      }
-
-      /* ── Ocultar cards normales de pantalla ── */
+      .page-grid { display: block; max-width: none; margin: 0; }
       .card { display: none !important; }
-
-      /* ── Mostrar el documento print ── */
       #print-doc { display: block !important; }
 
-      /* ── Tipografía base ── */
+      @page { size: A4 portrait; margin: 1.2cm 1.4cm; }
+
       body {
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 11pt;
-        color: #000;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        font-size: 10.5pt;
+        color: #1f2937;
         background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
 
-      /* ── Encabezado del documento ── */
-      .pd-header {
-        text-align: center;
-        border-bottom: 2px solid #000;
-        padding-bottom: 12pt;
-        margin-bottom: 14pt;
+      /* ── BANDA DE MARCA arriba ── */
+      .pd-brand-band {
+        background: #0e9488;
+        color: #fff;
+        padding: 14pt 18pt;
+        margin: -1.2cm -1.4cm 18pt -1.4cm;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
-      .pd-header .pd-titulo {
+      .pd-brand-left { display: flex; align-items: center; gap: 12pt; }
+      .pd-logo-box {
+        width: 42pt; height: 42pt;
+        background: #fff;
+        color: #0e9488;
+        border-radius: 6pt;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 22pt;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      .pd-brand-info .pd-empresa {
+        font-size: 14pt;
         font-weight: 700;
-        letter-spacing: 2px;
+        margin: 0;
+        line-height: 1.1;
+      }
+      .pd-brand-info .pd-empresa-sub {
+        font-size: 8pt;
+        opacity: 0.9;
+        margin: 2pt 0 0;
+        letter-spacing: 0.5px;
         text-transform: uppercase;
-        margin: 0 0 4pt;
       }
-      .pd-header .pd-numero {
-        font-size: 16pt;
-        font-weight: 700;
+      .pd-brand-right { text-align: right; }
+      .pd-brand-right .pd-titulo {
+        font-size: 11pt;
+        font-weight: 600;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        margin: 0 0 2pt;
+        opacity: 0.85;
+      }
+      .pd-brand-right .pd-numero {
+        font-size: 18pt;
+        font-weight: 800;
         font-family: 'Courier New', monospace;
-        margin: 0 0 4pt;
+        margin: 0;
+        letter-spacing: 1px;
       }
-      .pd-header .pd-fecha {
-        font-size: 10pt;
-        color: #333;
-      }
-      .pd-header .pd-empresa {
-        font-size: 13pt;
-        font-weight: 700;
-        margin-bottom: 2pt;
+      .pd-brand-right .pd-fecha {
+        font-size: 8.5pt;
+        opacity: 0.85;
+        margin: 2pt 0 0;
       }
 
       /* ── Cajas emisor / proveedor ── */
       .pd-parties {
         display: flex;
-        gap: 20pt;
-        margin-bottom: 14pt;
+        gap: 16pt;
+        margin-bottom: 16pt;
       }
       .pd-box {
         flex: 1;
-        border: 1px solid #555;
-        padding: 8pt 10pt;
-        border-radius: 3pt;
+        background: #f8fafc;
+        border-left: 3pt solid #0e9488;
+        padding: 10pt 14pt;
+        border-radius: 0 4pt 4pt 0;
+      }
+      .pd-box.pd-box-prov {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
       }
       .pd-box-title {
-        font-size: 8pt;
+        font-size: 7.5pt;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #555;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 4pt;
-        margin-bottom: 6pt;
+        letter-spacing: 1px;
+        color: #6b7280;
+        margin: 0 0 6pt;
+      }
+      .pd-box .pd-box-nombre {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 4pt;
+        line-height: 1.2;
       }
       .pd-box p {
         margin: 0 0 2pt;
-        font-size: 10pt;
-        line-height: 1.4;
+        font-size: 9.5pt;
+        line-height: 1.45;
+        color: #374151;
       }
-      .pd-box strong { font-weight: 700; }
+      .pd-box .pd-row { display: flex; gap: 6pt; }
+      .pd-box .pd-row span:first-child {
+        color: #6b7280;
+        font-weight: 600;
+        min-width: 42pt;
+      }
 
       /* ── Tabla de productos ── */
       .pd-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 10pt;
+        font-size: 9.5pt;
         margin-bottom: 10pt;
         page-break-inside: auto;
       }
       .pd-table thead th {
-        background: #e8e8e8;
-        border: 1px solid #aaa;
-        padding: 5pt 6pt;
+        background: #0e9488;
+        color: #fff;
+        padding: 7pt 8pt;
         text-align: left;
-        font-size: 9pt;
+        font-size: 8.5pt;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.6px;
+        border: none;
       }
       .pd-table thead th.num { text-align: right; }
+      .pd-table thead th:first-child { border-radius: 3pt 0 0 0; }
+      .pd-table thead th:last-child { border-radius: 0 3pt 0 0; }
       .pd-table tbody tr { page-break-inside: avoid; }
-      .pd-table tbody tr:nth-child(even) td { background: #f4f4f4; }
+      .pd-table tbody tr:nth-child(even) td { background: #f8fafc; }
       .pd-table tbody td {
-        border: 1px solid #ccc;
-        padding: 4pt 6pt;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 6pt 8pt;
         vertical-align: middle;
+        color: #1f2937;
       }
       .pd-table tbody td.num {
         text-align: right;
         font-family: 'Courier New', monospace;
+        font-size: 10pt;
       }
-      /* Fila total */
+      .pd-table tbody td.num strong { font-weight: 700; }
       .pd-table tfoot td {
-        border: 1px solid #888;
-        padding: 5pt 6pt;
-        background: #e8e8e8;
+        padding: 0;
+        border: none;
       }
-      .pd-table tfoot td.lbl-total {
-        text-align: right;
-        font-weight: 700;
-        font-size: 11pt;
+
+      /* ── Caja TOTAL destacada ── */
+      .pd-total-box {
+        margin: 8pt 0 16pt;
+        background: #0e9488;
+        color: #fff;
+        padding: 10pt 16pt;
+        border-radius: 4pt;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .pd-total-box .pd-total-lbl {
+        font-size: 10pt;
+        font-weight: 600;
+        letter-spacing: 1px;
         text-transform: uppercase;
+        opacity: 0.92;
       }
-      .pd-table tfoot td.val-total {
-        text-align: right;
-        font-weight: 700;
-        font-size: 12pt;
+      .pd-total-box .pd-total-val {
+        font-size: 18pt;
+        font-weight: 800;
         font-family: 'Courier New', monospace;
+        letter-spacing: 0.5px;
+      }
+      .pd-total-box .pd-total-extra {
+        font-size: 8pt;
+        opacity: 0.85;
+        margin-right: 12pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       /* ── Observaciones ── */
       .pd-obs {
-        border: 1px solid #888;
-        padding: 8pt 10pt;
-        min-height: 55pt;
-        margin-bottom: 20pt;
-        border-radius: 3pt;
+        border: 1px dashed #cbd5e1;
+        padding: 10pt 14pt;
+        min-height: 60pt;
+        margin-bottom: 18pt;
+        border-radius: 4pt;
+        background: #fafbfc;
       }
       .pd-obs-title {
-        font-size: 8pt;
+        font-size: 7.5pt;
         font-weight: 700;
         text-transform: uppercase;
-        color: #555;
-        margin-bottom: 5pt;
+        letter-spacing: 1px;
+        color: #6b7280;
+        margin: 0 0 6pt;
       }
-      .pd-obs-lines { border-top: 1px solid #ccc; padding-top: 8pt; }
       .pd-obs-lines p {
-        margin: 0 0 10pt;
-        border-bottom: 1px solid #e0e0e0;
+        margin: 0 0 12pt;
+        border-bottom: 1px solid #e5e7eb;
         min-height: 14pt;
       }
+
+      /* ── Condiciones ── */
+      .pd-condiciones {
+        margin-bottom: 18pt;
+        padding: 8pt 12pt;
+        background: #fef3c7;
+        border-left: 3pt solid #f59e0b;
+        border-radius: 0 3pt 3pt 0;
+        font-size: 8.5pt;
+        color: #78350f;
+        line-height: 1.5;
+      }
+      .pd-condiciones strong { font-weight: 700; }
 
       /* ── Firmas ── */
       .pd-signatures {
         display: flex;
-        gap: 40pt;
-        margin-top: 30pt;
+        gap: 30pt;
+        margin-top: 36pt;
         page-break-inside: avoid;
       }
       .pd-sig {
         flex: 1;
         text-align: center;
+        padding-top: 38pt;
+        position: relative;
+      }
+      .pd-sig::before {
+        content: '';
+        position: absolute;
+        top: 32pt;
+        left: 10%;
+        right: 10%;
+        border-top: 1px solid #475569;
+      }
+      .pd-sig .pd-sig-role {
+        font-size: 7.5pt;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+        margin-bottom: 2pt;
       }
       .pd-sig .pd-sig-name {
         font-size: 10pt;
-        margin-bottom: 2pt;
-        font-weight: 600;
-      }
-      .pd-sig .pd-sig-role {
-        font-size: 9pt;
-        color: #555;
-        margin-bottom: 30pt; /* espacio para firma manuscrita */
-        display: block;
-      }
-      .pd-sig .pd-sig-line {
-        border-top: 1px solid #333;
-        margin-top: 2pt;
-        padding-top: 4pt;
-        font-size: 9pt;
-        color: #333;
+        font-weight: 700;
+        color: #1f2937;
       }
 
       /* ── Pie de página ── */
       .pd-footer {
-        margin-top: 20pt;
-        border-top: 1px solid #ccc;
-        padding-top: 6pt;
+        margin-top: 24pt;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 8pt;
         text-align: center;
-        font-size: 8pt;
-        color: #777;
+        font-size: 7.5pt;
+        color: #9ca3af;
+        letter-spacing: 0.3px;
       }
     }
 
@@ -573,29 +648,37 @@
          ══════════════════════════════════════════════════════════════════════ -->
     <div id="print-doc">
 
-      <!-- Encabezado -->
-      <div class="pd-header">
-        <div class="pd-empresa">MULTIPLAZA S.A.</div>
-        <div class="pd-titulo">Orden de Compra</div>
-        <div class="pd-numero" id="pd-numero">&mdash;</div>
-        <div class="pd-fecha">Fecha: <span id="pd-fecha">&mdash;</span></div>
+      <!-- Banda de marca -->
+      <div class="pd-brand-band">
+        <div class="pd-brand-left">
+          <div class="pd-logo-box">M</div>
+          <div class="pd-brand-info">
+            <div class="pd-empresa">MULTIPLAZA S.A.</div>
+            <div class="pd-empresa-sub">Accesorios para celulares · Cadena de locales</div>
+          </div>
+        </div>
+        <div class="pd-brand-right">
+          <div class="pd-titulo">Orden de Compra</div>
+          <div class="pd-numero" id="pd-numero">&mdash;</div>
+          <div class="pd-fecha">Emitida: <span id="pd-fecha">&mdash;</span></div>
+        </div>
       </div>
 
       <!-- Emisor / Proveedor -->
       <div class="pd-parties">
         <div class="pd-box">
           <div class="pd-box-title">Emisor</div>
-          <p><strong>Multiplaza S.A.</strong></p>
-          <p>RUC: 80012345-6</p>
-          <p>Dirección: Av. Principal 1234, Asunción</p>
-          <p>Teléfono: (021) 000-0000</p>
-          <p>Solicitado por: <strong id="pd-creada-por">&mdash;</strong></p>
+          <p class="pd-box-nombre">Multiplaza S.A.</p>
+          <p class="pd-row"><span>RUC:</span> <span>80012345-6</span></p>
+          <p class="pd-row"><span>Dirección:</span> <span>Av. Principal 1234, Asunción</span></p>
+          <p class="pd-row"><span>Teléfono:</span> <span>(021) 000-0000</span></p>
+          <p class="pd-row" style="margin-top:6pt;border-top:1px solid #e5e7eb;padding-top:5pt;"><span>Solicita:</span> <strong id="pd-creada-por">&mdash;</strong></p>
         </div>
-        <div class="pd-box">
+        <div class="pd-box pd-box-prov">
           <div class="pd-box-title">Proveedor</div>
-          <p><strong id="pd-prov-nombre">&mdash;</strong></p>
-          <p id="pd-prov-ruc-row">RUC: <span id="pd-prov-ruc">&mdash;</span></p>
-          <p id="pd-prov-contacto-row" style="display:none;">Contacto: <span id="pd-prov-contacto">&mdash;</span></p>
+          <p class="pd-box-nombre" id="pd-prov-nombre">&mdash;</p>
+          <p class="pd-row" id="pd-prov-ruc-row"><span>RUC:</span> <span id="pd-prov-ruc">&mdash;</span></p>
+          <p class="pd-row" id="pd-prov-contacto-row" style="display:none;"><span>Contacto:</span> <span id="pd-prov-contacto">&mdash;</span></p>
         </div>
       </div>
 
@@ -603,26 +686,38 @@
       <table class="pd-table">
         <thead>
           <tr>
-            <th style="width: 24pt;">#</th>
-            <th style="width: 90pt;">Código</th>
+            <th style="width: 22pt;">#</th>
+            <th style="width: 88pt;">Código</th>
             <th>Descripción</th>
-            <th class="num" style="width: 54pt;">Cantidad</th>
-            <th class="num" style="width: 80pt;">Costo unit. (Gs)</th>
-            <th class="num" style="width: 90pt;">Subtotal (Gs)</th>
+            <th class="num" style="width: 50pt;">Cant.</th>
+            <th class="num" style="width: 78pt;">Costo unit.</th>
+            <th class="num" style="width: 90pt;">Subtotal</th>
           </tr>
         </thead>
         <tbody id="pd-tbody"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5" class="lbl-total">Total Gs:</td>
-            <td class="val-total" id="pd-total">&mdash;</td>
-          </tr>
-        </tfoot>
       </table>
+
+      <!-- Caja TOTAL destacada -->
+      <div class="pd-total-box">
+        <span class="pd-total-lbl">Total a pagar</span>
+        <span style="display:flex;align-items:center;">
+          <span class="pd-total-extra" id="pd-total-extra"></span>
+          <span class="pd-total-val" id="pd-total">&mdash;</span>
+        </span>
+      </div>
+
+      <!-- Condiciones -->
+      <div class="pd-condiciones">
+        <strong>Condiciones de la operación:</strong>
+        Los precios y cantidades indicados son los acordados al momento de emitir
+        esta orden. Cualquier diferencia debe ser comunicada al solicitante antes
+        de la entrega. La mercadería se recibirá en el depósito central previa
+        verificación de cantidades y costos.
+      </div>
 
       <!-- Observaciones -->
       <div class="pd-obs">
-        <div class="pd-obs-title">Observaciones</div>
+        <div class="pd-obs-title">Observaciones / Comentarios</div>
         <div class="pd-obs-lines">
           <p></p>
           <p></p>
@@ -633,21 +728,18 @@
       <!-- Firmas -->
       <div class="pd-signatures">
         <div class="pd-sig">
-          <span class="pd-sig-role">Solicitado por</span>
-          <div class="pd-sig-line">
-            <div class="pd-sig-name" id="pd-firma-nombre">&mdash;</div>
-            Supervisor de Compras
-          </div>
+          <div class="pd-sig-role">Solicitado por</div>
+          <div class="pd-sig-name" id="pd-firma-nombre">&mdash;</div>
         </div>
         <div class="pd-sig">
-          <span class="pd-sig-role">Recibido por</span>
-          <div class="pd-sig-line">&nbsp;</div>
+          <div class="pd-sig-role">Recibido por</div>
+          <div class="pd-sig-name">&nbsp;</div>
         </div>
       </div>
 
       <!-- Pie -->
       <div class="pd-footer">
-        Documento generado por MultiCompra &mdash; Multiplaza S.A. &mdash; <span id="pd-footer-fecha"></span>
+        Documento generado por MultiCompra · Multiplaza S.A. · <span id="pd-footer-fecha"></span>
       </div>
 
     </div><!-- /#print-doc -->
@@ -1015,7 +1107,7 @@
       tbody.innerHTML = productosDesglose.map((p, i) => `
         <tr>
           <td class="num">${i + 1}</td>
-          <td style="font-family:'Courier New',monospace; font-size:9pt;">${p.barras || p.productoId || '—'}</td>
+          <td style="font-family:'Courier New',monospace; font-size:9pt;color:#475569;">${p.barras || p.productoId || '—'}</td>
           <td>${p.nombre || p.productoNombre || '—'}</td>
           <td class="num">${Number(p.cantidad).toLocaleString('es-PY')}</td>
           <td class="num">${fmtGs(p.costoUnit ?? p.costo ?? 0)}</td>
@@ -1024,7 +1116,9 @@
       `).join('');
 
       // Total
-      document.getElementById('pd-total').textContent = `Gs. ${fmtGs(totalCalculado)}`;
+      const totalExtraEl = document.getElementById('pd-total-extra');
+      if (totalExtraEl) totalExtraEl.textContent = 'Gs.';
+      document.getElementById('pd-total').textContent = fmtGs(totalCalculado);
 
       // Pie: fecha de generación
       const hoy = new Date();
