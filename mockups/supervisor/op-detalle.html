@@ -548,17 +548,18 @@
   // Resolver OP por ?id=
   // =====================================================================
   const params = new URLSearchParams(window.location.search);
-  const opIdParam = (params.get('id') || 'op-1043').toLowerCase();
+  // OJO: NO bajar a lowercase el param porque Supabase guarda los numeros
+  // en MAYUSCULAS (OP-KIW-00001) y la query SQL es case-sensitive.
+  const opIdParam = params.get('id') || 'OP-1043';
 
   function encontrarOp(id) {
-    // Buscar en opsPendientes (reales + mock)
-    let op = opsPendientes.find(o => o.id.toLowerCase() === id);
+    const idLower = String(id || '').toLowerCase();
+    // Buscar en opsPendientes (reales + mock) — comparacion case-insensitive
+    let op = opsPendientes.find(o => String(o.id || '').toLowerCase() === idLower);
     if (op) return { op, contexto: 'pendiente' };
-    // Buscar en ops agrupadas en OC-0042
-    op = ops.find(o => o.id.toLowerCase() === id);
+    op = ops.find(o => String(o.id || '').toLowerCase() === idLower);
     if (op) return { op, contexto: 'en_oc' };
-    // Buscar en historial de cajera (cerradas, devueltas, anuladas)
-    op = historialCajera.find(o => o.id.toLowerCase() === id);
+    op = historialCajera.find(o => String(o.id || '').toLowerCase() === idLower);
     if (op) return { op, contexto: 'historial' };
     return null;
   }
@@ -624,7 +625,17 @@
     }
   } catch (e) { console.warn('[supervisor/op-detalle] Supabase falló, fallback local/mock:', e); }
 
-  if (!resuelto) resuelto = encontrarOp(opIdParam) || encontrarOp('op-1043');
+  if (!resuelto) resuelto = encontrarOp(opIdParam);
+  if (!resuelto) {
+    document.body.innerHTML = `
+      <div style="padding:64px 24px;text-align:center;font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;">
+        <h2 style="color:#b91c1c;margin:0 0 12px;">OP no encontrada</h2>
+        <p style="color:#6b7280;line-height:1.5;">No encontré la OP <strong style="font-family:monospace;">${opIdParam}</strong> ni en Supabase ni en cache local.</p>
+        <p style="margin-top:24px;"><a href="dashboard.html" style="color:#0e9488;text-decoration:underline;">← Volver al dashboard</a></p>
+      </div>
+    `;
+    throw new Error('OP no encontrada: ' + opIdParam);
+  }
   const op = resuelto.op;
   const contexto = resuelto.contexto;
   const local = locales.find(l => l.id === op.localId);
