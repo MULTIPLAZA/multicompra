@@ -967,7 +967,9 @@
   });
 
   // =====================================================================
-  // Alertas del panel (ejemplo: OPs viejas + placeholder compra error)
+  // Alertas del panel — SOLO datos reales
+  // (cuando se integre Compras vamos a sumar acá las compras con error
+  // de sincronización; mientras tanto solo mostramos OPs viejas si existen)
   // =====================================================================
   const alertsWrap = document.getElementById('alerts-wrap');
   const viejas = opsPendientes.filter(esViejaCalc);
@@ -983,16 +985,15 @@
       </div>
     `);
   }
-  alertHTMLs.push(`
-    <div class="alert-row danger">
-      <span class="alert-dot" aria-hidden="true"></span>
-      <div class="alert-main">
-        <div class="alert-msg">1 Compra en error de sincronización</div>
-        <div class="alert-sub">COMP-0017 &mdash; no impactó stock</div>
+  if (alertHTMLs.length === 0) {
+    alertsWrap.innerHTML = `
+      <div style="padding: var(--sp-3) var(--sp-4); color: var(--text-muted); font-size: var(--fs-sm); text-align: center;">
+        No hay alertas activas.
       </div>
-    </div>
-  `);
-  alertsWrap.innerHTML = alertHTMLs.join('');
+    `;
+  } else {
+    alertsWrap.innerHTML = alertHTMLs.join('');
+  }
 
   // =====================================================================
   // Modal devolver (patrón reutilizado de oc-nueva.html)

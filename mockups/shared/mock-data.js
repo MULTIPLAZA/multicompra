@@ -383,79 +383,18 @@ export const historialCajera = []; // VACIADO — ver historial git para datos d
 // Números plausibles para una cadena de 10 locales + central.
 // =========================================================================
 export const dashboardAdmin = {
-  periodo: 'Abril 2026',
-
-  // KPIs principales del mes (con delta vs mes pasado)
+  periodo: '',
   kpis: {
-    opsMes:          { valor: 28,        deltaPct:  12, direccion: 'up'   },
-    ocsCerradasMes:  { valor:  6,        deltaPct:  20, direccion: 'up'   },
-    gsGastadosMes:   { valor: 18_450_000, deltaPct:  -5, direccion: 'down' },
-    stockMuertoEvitado: { valor: 4_220_000, deltaPct: 18, direccion: 'up' }
+    opsMes:             { valor: 0, deltaPct: 0, direccion: 'up' },
+    ocsCerradasMes:     { valor: 0, deltaPct: 0, direccion: 'up' },
+    gsGastadosMes:      { valor: 0, deltaPct: 0, direccion: 'up' },
+    stockMuertoEvitado: { valor: 0, deltaPct: 0, direccion: 'up' }
   },
-
-  // Alertas accionables
-  alertas: [
-    {
-      id: 'alert-1',
-      tipo: 'op-vieja',
-      mensaje: '3 OPs pendientes hace más de 7 días',
-      detalle: 'Villa Morra, Ciudad del Este, Shopping Mcal.',
-      severidad: 'warning',
-      link: '#'
-    },
-    {
-      id: 'alert-2',
-      tipo: 'compra-error',
-      mensaje: '1 Compra en error de sincronización',
-      detalle: 'COMP-0017 — no impactó stock en API base',
-      severidad: 'danger',
-      link: '#'
-    },
-    {
-      id: 'alert-3',
-      tipo: 'stock-bajo',
-      mensaje: 'Stock central bajo en 5 productos',
-      detalle: 'Funda iPhone 13, Cable USB-C 2m y 3 más',
-      severidad: 'warning',
-      link: '#'
-    }
-  ],
-
-  // Factor de ajuste promedio del supervisor respecto de lo pedido por cada cajera.
-  // 100% = pidió lo justo; 60% = le bajaron 40% de lo que pedía.
-  ajustePorCajera: [
-    { cajera: 'Carolina', localCodigo: 'SDS', factor: 95 },
-    { cajera: 'Romina',   localCodigo: 'SHM', factor: 88 },
-    { cajera: 'Andrea',   localCodigo: 'FDM', factor: 84 },
-    { cajera: 'Nélida',   localCodigo: 'VM',  factor: 78 },
-    { cajera: 'Clara',    localCodigo: 'SL',  factor: 71 },
-    { cajera: 'Lucía',    localCodigo: 'LAM', factor: 62 }
-  ],
-
-  // OPs fuera de protocolo (excepción) por cajera este mes
-  excepcionesPorCajera: [
-    { cajera: 'Carolina', count: 2 },
-    { cajera: 'Lucía',    count: 5 },
-    { cajera: 'Romina',   count: 1 },
-    { cajera: 'Mirta',    count: 3 },
-    { cajera: 'Andrea',   count: 0 }
-  ],
-
-  // Reposición desde central
-  reposicionCentral: {
-    productos: 12,
-    evitoCompras: 3_180_000,
-    tendencia: [2, 4, 3, 5, 6, 7, 9, 12] // por semana (8 últimas)
-  },
-
-  // Timeline de actividad reciente
-  actividadReciente: [
-    { id: 'act-1', mensaje: 'Shirley cerró OC-0042 con Accesorios Amambay', hace: 'hace 2h' },
-    { id: 'act-2', mensaje: 'Carolina envió OP-1055',                       hace: 'hace 4h' },
-    { id: 'act-3', mensaje: 'Compra COMP-0017 en error de sincronización',  hace: 'hace 1 día', severidad: 'danger' },
-    { id: 'act-4', mensaje: 'Shirley devolvió OP-1053 a Nélida',            hace: 'hace 1 día' },
-    { id: 'act-5', mensaje: 'Nueva OC-0041 creada (Distribuidora Celular Plus)', hace: 'hace 2 días' }
-  ]
+  alertas: [],          // VACIADO — ver historial git para datos demo
+  ajustePorCajera: [],
+  excepcionesPorCajera: [],
+  reposicionCentral: { productos: 0, evitoCompras: 0, tendencia: [0,0,0,0,0,0,0,0] },
+  actividadReciente: []
 };
 
 // =========================================================================
