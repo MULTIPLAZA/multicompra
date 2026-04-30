@@ -673,7 +673,11 @@
       border: none;
     }
 
-    /* Mobile — degradado básico (no optimizado, decisión 27 del brief) */
+    /* =========================================================
+       Mobile cajera — op-nueva
+       ========================================================= */
+
+    /* --- Tablet (600–900px) --- */
     @media (max-width: 900px) {
       .cajera-header {
         grid-template-columns: auto auto;
@@ -697,6 +701,279 @@
       .lista-col-cod { display: none; }
       .lista-table thead tr th:first-child { display: none; }
       .lista-table tbody td:first-child { display: none; }
+    }
+
+    /* --- Smartphone (≤480px) --- */
+    @media (max-width: 480px) {
+      /* Fuente body 16px para evitar zoom iOS en inputs */
+      body { font-size: 16px; }
+
+      /* Header mínimo: logo + avatar */
+      .cajera-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto;
+        padding: var(--sp-2) var(--sp-3);
+        gap: var(--sp-2);
+      }
+      .cajera-hello { display: none; }
+
+      /* Topbar tipo bottom nav con íconos */
+      .cajera-topbar {
+        padding: 0 var(--sp-2);
+        gap: 0;
+        justify-content: space-around;
+      }
+      .tab-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--sp-2) var(--sp-2);
+        font-size: 11px;
+        min-width: 0;
+        min-height: 52px;
+        border-radius: 0;
+        border: none;
+        border-bottom: 3px solid transparent;
+        flex: 1;
+        justify-content: center;
+      }
+      .tab-btn.active {
+        background: transparent;
+        border-bottom-color: var(--primary);
+        color: var(--primary);
+      }
+      .tab-btn svg { width: 22px; height: 22px; }
+
+      /* Main: padding lateral mínimo + espacio inferior para el bottom bar */
+      .cajera-main {
+        padding: var(--sp-3) var(--sp-3) 80px;
+      }
+      .card { padding: var(--sp-3); }
+
+      /* Buscador prominente en mobile */
+      .scan-input {
+        height: 56px;
+        font-size: 18px;
+        padding-left: 52px;
+      }
+      .scan-icon { left: 16px; }
+
+      /* Ocultar hints de teclado (inútiles en móvil) */
+      .scan-hint { display: none; }
+
+      /* Tabla de productos → CARDS en mobile */
+      .lista-table { display: none; }
+
+      /* Cards verticales de producto */
+      .product-cards-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-3);
+      }
+      .product-card-mobile {
+        background: var(--bg-elev-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-3);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+        animation: rowHighlight 400ms ease-out;
+      }
+      .product-card-mobile.row-hl {
+        background: var(--success-soft);
+        border-color: var(--success);
+      }
+      .pc-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--sp-2);
+      }
+      .pc-info { flex: 1; min-width: 0; }
+      .pc-nombre {
+        font-size: var(--fs-lg);
+        font-weight: 600;
+        color: var(--text-strong);
+        line-height: 1.3;
+      }
+      .pc-codigo {
+        font-family: var(--font-mono);
+        font-size: var(--fs-sm);
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .pc-qty-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        margin-top: var(--sp-1);
+      }
+
+      /* Spinner touch-friendly en mobile: botones 48px */
+      .qty-spinner-mobile {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--sp-2);
+        background: var(--bg-elev);
+        border: 1.5px solid var(--border-strong);
+        border-radius: var(--radius-lg);
+        overflow: visible;
+      }
+      .qty-btn-mobile {
+        width: 48px;
+        height: 48px;
+        border: none;
+        background: var(--bg-elev-2);
+        color: var(--text-strong);
+        font-size: 24px;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: var(--radius);
+        transition: background var(--t-fast);
+        /* Touch target explícito */
+        min-width: 48px;
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .qty-btn-mobile:active { background: var(--border-strong); }
+      .qty-input-mobile {
+        width: 60px;
+        height: 48px;
+        border: none;
+        background: transparent;
+        color: var(--text-strong);
+        font-family: var(--font-mono);
+        font-size: 22px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .qty-input-mobile:focus {
+        outline: none;
+        background: var(--primary-soft);
+        border-radius: var(--radius-sm);
+      }
+      .qty-input-mobile::-webkit-outer-spin-button,
+      .qty-input-mobile::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+      .qty-input-mobile[type=number] { -moz-appearance: textfield; }
+
+      /* Botón eliminar en la card: 44×44px */
+      .btn-delete-mobile {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
+        border-radius: var(--radius-lg);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--danger-soft);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+        cursor: pointer;
+        transition: all var(--t-fast);
+      }
+      .btn-delete-mobile:active { background: var(--danger); color: #fff; }
+
+      /* Lista vacía en mobile */
+      .lista-empty { padding: var(--sp-8) var(--sp-3); }
+      .lista-empty-title { font-size: var(--fs-lg); }
+
+      /* Bloque excepción: texto más grande */
+      .exc-label { font-size: var(--fs-md); }
+      .exc-check { width: 28px; height: 28px; }
+
+      /* Sección de acciones: OCULTA en mobile (el botón está en el bottom bar) */
+      .card.actions-card { display: none; }
+
+      /* Bottom action bar — sticky en mobile */
+      .mobile-bottom-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-elev);
+        border-top: 1px solid var(--border);
+        padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+        gap: var(--sp-2);
+        z-index: 40;
+        box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.10);
+      }
+      .mobile-bottom-bar .btn-borrador-mobile {
+        height: 52px;
+        padding: 0 var(--sp-4);
+        font-size: var(--fs-md);
+        font-weight: 600;
+        border-radius: var(--radius-lg);
+        background: var(--bg-elev-2);
+        color: var(--text-strong);
+        border: 1px solid var(--border-strong);
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .mobile-bottom-bar .btn-enviar-mobile {
+        flex: 1;
+        height: 52px;
+        font-size: var(--fs-md);
+        font-weight: 700;
+        border-radius: var(--radius-lg);
+        background: var(--success);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--sp-2);
+        transition: opacity var(--t-fast);
+      }
+      .mobile-bottom-bar .btn-enviar-mobile:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      [data-theme="dark"] .mobile-bottom-bar .btn-enviar-mobile { color: var(--bg); }
+
+      /* Validation msg: arriba del bottom bar */
+      .mobile-bottom-bar .validation-msg-mobile {
+        font-size: var(--fs-sm);
+        color: var(--danger);
+        position: absolute;
+        top: -22px;
+        left: var(--sp-3);
+        right: var(--sp-3);
+        text-align: center;
+        background: var(--bg-elev);
+        padding: 2px var(--sp-2);
+        border-radius: var(--radius-sm);
+      }
+      .mobile-bottom-bar .validation-msg-mobile.hidden { display: none; }
+    }
+
+    /* En desktop/tablet el bottom bar no existe */
+    @media (min-width: 481px) {
+      .mobile-bottom-bar { display: none; }
+      .product-cards-mobile { display: none; }
+    }
+
+    /* Modal full-screen en smartphone */
+    @media (max-width: 600px) {
+      .modal-backdrop[id="modal-alta-backdrop"] .modal-box,
+      .modal-backdrop .modal-box {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-body { flex: 1; overflow-y: auto; }
     }
   </style>
 </head>
@@ -859,6 +1136,20 @@
     </main>
   </div>
 
+  <!-- ===== Bottom action bar (solo visible en ≤480px via CSS) ===== -->
+  <div class="mobile-bottom-bar" id="mobile-bottom-bar" aria-label="Acciones de la OP">
+    <div class="validation-msg-mobile hidden" id="validation-msg-mobile">
+      Agregá al menos un producto.
+    </div>
+    <button type="button" id="btn-borrador-mobile" class="btn-borrador-mobile">
+      Borrador
+    </button>
+    <button type="button" id="btn-enviar-mobile" class="btn-enviar-mobile" disabled aria-label="Enviar Orden de Pedido">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Enviar OP
+    </button>
+  </div>
+
   <!-- ===================== Script ===================== -->
   <script type="module">
     import { requireRol } from '../shared/auth-guard.js';
@@ -1011,6 +1302,33 @@
           `;
         }).join('');
 
+        // Cards mobile (visibles solo en ≤480px via CSS display:none/flex)
+        const cards = state.lineas.map(ln => {
+          const p = productos.find(x => x.id === ln.productoId);
+          if (!p) return '';
+          const hl = pidHighlight === p.id ? ' row-hl' : '';
+          return `
+            <div class="product-card-mobile${hl}" data-pid-card="${p.id}">
+              <div class="pc-header">
+                <div class="pc-info">
+                  <div class="pc-nombre">${p.nombre}</div>
+                  <div class="pc-codigo">${p.barras || ''}</div>
+                </div>
+                <button type="button" class="btn-delete-mobile" aria-label="Quitar ${p.nombre}" data-delete-card="${p.id}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div class="pc-qty-row">
+                <div class="qty-spinner-mobile" role="group" aria-label="Cantidad de ${p.nombre}">
+                  <button type="button" class="qty-btn-mobile qty-minus-card" aria-label="Restar 1" data-pid-qty="${p.id}" ${ln.cantidad <= 1 ? 'disabled' : ''}>&minus;</button>
+                  <input type="number" class="qty-input-mobile" min="1" value="${ln.cantidad}" aria-label="Cantidad" data-pid-qty-input="${p.id}" inputmode="numeric" />
+                  <button type="button" class="qty-btn-mobile qty-plus-card" aria-label="Sumar 1" data-pid-qty="${p.id}">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
         listaWrap.innerHTML = `
           <table class="lista-table">
             <thead>
@@ -1023,6 +1341,7 @@
             </thead>
             <tbody>${filas}</tbody>
           </table>
+          <div class="product-cards-mobile">${cards}</div>
         `;
       }
 
@@ -1100,8 +1419,33 @@
       return state.lineas.find(x => String(x.productoId) === pidStr);
     }
 
-    // Delegación de eventos en la lista
+    // Delegación de eventos — cards mobile
     listaWrap.addEventListener('click', (e) => {
+      // Botón eliminar card
+      const delBtn = e.target.closest('[data-delete-card]');
+      if (delBtn) {
+        const pid = delBtn.dataset.deleteCard;
+        const ln = findLineaPorPid(pid);
+        quitarProducto(ln ? ln.productoId : pid);
+        return;
+      }
+      // Botón + card
+      const plusCard = e.target.closest('.qty-plus-card');
+      if (plusCard) {
+        const pid = plusCard.dataset.pidQty;
+        const ln = findLineaPorPid(pid);
+        if (ln) cambiarCantidad(ln.productoId, ln.cantidad + 1);
+        return;
+      }
+      // Botón - card
+      const minusCard = e.target.closest('.qty-minus-card');
+      if (minusCard) {
+        const pid = minusCard.dataset.pidQty;
+        const ln = findLineaPorPid(pid);
+        if (ln && ln.cantidad > 1) cambiarCantidad(ln.productoId, ln.cantidad - 1);
+        return;
+      }
+      // Tabla desktop
       const tr = e.target.closest('tr[data-pid]');
       if (!tr) return;
       const pid = tr.dataset.pid;
@@ -1118,12 +1462,22 @@
     });
 
     listaWrap.addEventListener('change', (e) => {
-      if (!e.target.matches('.qty-input')) return;
-      const tr = e.target.closest('tr[data-pid]');
-      if (!tr) return;
-      const ln = findLineaPorPid(tr.dataset.pid);
-      const realId = ln ? ln.productoId : tr.dataset.pid;
-      cambiarCantidad(realId, parseInt(e.target.value, 10));
+      // Input de tabla desktop
+      if (e.target.matches('.qty-input')) {
+        const tr = e.target.closest('tr[data-pid]');
+        if (!tr) return;
+        const ln = findLineaPorPid(tr.dataset.pid);
+        const realId = ln ? ln.productoId : tr.dataset.pid;
+        cambiarCantidad(realId, parseInt(e.target.value, 10));
+        return;
+      }
+      // Input de card mobile
+      if (e.target.matches('.qty-input-mobile')) {
+        const pid = e.target.dataset.pidQtyInput;
+        const ln = findLineaPorPid(pid);
+        if (ln) cambiarCantidad(ln.productoId, parseInt(e.target.value, 10));
+        return;
+      }
     });
 
     // Enter en input de cantidad → guarda y vuelve al escaneo
@@ -1810,23 +2164,34 @@
     const btnBorrador = document.getElementById('btn-borrador');
     const validationMsg = document.getElementById('validation-msg');
 
+    // Referencias al bottom bar mobile
+    const btnEnviarMobile = document.getElementById('btn-enviar-mobile');
+    const btnBorradorMobile = document.getElementById('btn-borrador-mobile');
+    const validationMsgMobile = document.getElementById('validation-msg-mobile');
+
     function actualizarValidacion() {
       const sinProductos = state.lineas.length === 0;
       const excSinMotivo = state.excepcion && (state.motivo || '').trim().length < MOTIVO_MIN;
 
       if (sinProductos) {
         btnEnviar.disabled = true;
+        if (btnEnviarMobile) btnEnviarMobile.disabled = true;
         validationMsg.textContent = 'Agregá al menos un producto para poder enviar.';
         validationMsg.classList.remove('ok', 'hidden');
+        if (validationMsgMobile) { validationMsgMobile.textContent = 'Agregá al menos un producto.'; validationMsgMobile.classList.remove('hidden'); }
       } else if (excSinMotivo) {
         btnEnviar.disabled = true;
+        if (btnEnviarMobile) btnEnviarMobile.disabled = true;
         validationMsg.textContent = `Contá qué pasó: el motivo necesita al menos ${MOTIVO_MIN} caracteres.`;
         validationMsg.classList.remove('ok', 'hidden');
+        if (validationMsgMobile) { validationMsgMobile.textContent = 'Falta el motivo de excepción.'; validationMsgMobile.classList.remove('hidden'); }
       } else {
         btnEnviar.disabled = false;
+        if (btnEnviarMobile) btnEnviarMobile.disabled = false;
         validationMsg.textContent = 'Listo para enviar.';
         validationMsg.classList.add('ok');
         validationMsg.classList.remove('hidden');
+        if (validationMsgMobile) validationMsgMobile.classList.add('hidden');
       }
     }
 
@@ -1870,6 +2235,17 @@
       guardarDraft();
       showToast('Borrador guardado. Podés volver después a terminarla.', 'success');
     });
+
+    // Botones del bottom bar mobile redirigen a los mismos handlers
+    if (btnBorradorMobile) {
+      btnBorradorMobile.addEventListener('click', () => {
+        guardarDraft();
+        showToast('Borrador guardado.', 'success');
+      });
+    }
+    if (btnEnviarMobile) {
+      btnEnviarMobile.addEventListener('click', () => btnEnviar.click());
+    }
 
     // ---- Enviar OP: persiste en Supabase (con fallback a localStorage) ------
 

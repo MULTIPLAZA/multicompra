@@ -269,6 +269,10 @@
       border-color: var(--border-strong);
     }
 
+    /* =========================================================
+       Mobile cajera — op-detalle
+       ========================================================= */
+
     @media (max-width: 900px) {
       .cajera-header {
         grid-template-columns: auto auto;
@@ -283,6 +287,91 @@
       .prod-col-cod { display: none; }
       .prod-table thead tr th:first-child { display: none; }
       .prod-table tbody td:first-child { display: none; }
+    }
+
+    /* --- Smartphone (≤480px) --- */
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+
+      .cajera-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto;
+        padding: var(--sp-2) var(--sp-3);
+        gap: var(--sp-2);
+      }
+      .cajera-hello { display: none; }
+
+      .cajera-topbar {
+        padding: 0 var(--sp-2);
+        gap: 0;
+        justify-content: space-around;
+      }
+      .tab-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--sp-2) var(--sp-2);
+        font-size: 11px;
+        min-width: 0;
+        min-height: 52px;
+        border-radius: 0;
+        border: none;
+        border-bottom: 3px solid transparent;
+        flex: 1;
+        justify-content: center;
+      }
+      .tab-btn.active { background: transparent; border-bottom-color: var(--primary); color: var(--primary); }
+      .tab-btn svg { width: 22px; height: 22px; }
+
+      .cajera-main { padding: var(--sp-3); }
+      .card { padding: var(--sp-3); }
+
+      /* Encabezado OP */
+      .sub-header { flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
+      .sub-header h1 { font-size: var(--fs-xl); }
+
+      /* Grid de info: 2 columnas en mobile */
+      .info-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+
+      /* Tabla → lista en mobile */
+      .prod-table { display: none; }
+      .prod-list-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+      }
+      .prod-item-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        padding: var(--sp-3);
+        background: var(--bg-elev-2);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+      .prod-item-mobile .pi-nombre {
+        font-size: var(--fs-md);
+        font-weight: 600;
+        color: var(--text-strong);
+        flex: 1;
+        min-width: 0;
+      }
+      .prod-item-mobile .pi-qty {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xl);
+        font-weight: 700;
+        color: var(--primary);
+        white-space: nowrap;
+      }
+
+      /* Acción: 1 columna */
+      .action-bar { flex-direction: column; gap: var(--sp-3); }
+      .btn-big { width: 100%; min-width: 0; height: 52px; font-size: var(--fs-md); }
+    }
+
+    /* La lista mobile solo es visible en ≤480px */
+    @media (min-width: 481px) {
+      .prod-list-mobile { display: none; }
     }
   </style>
 </head>
@@ -377,6 +466,7 @@
       <!-- Productos -->
       <section class="card">
         <h2>Productos pedidos</h2>
+        <!-- Tabla para desktop/tablet -->
         <table class="prod-table">
           <thead>
             <tr>
@@ -387,6 +477,8 @@
           </thead>
           <tbody id="prod-body"></tbody>
         </table>
+        <!-- Lista para mobile (≤480px) -->
+        <div class="prod-list-mobile" id="prod-list-mobile" aria-label="Productos del pedido"></div>
       </section>
 
       <!-- Acción según estado -->
@@ -565,6 +657,21 @@
       </tr>
     `;
   }).join('');
+
+  // Lista mobile
+  const listaMobile = document.getElementById('prod-list-mobile');
+  if (listaMobile) {
+    listaMobile.innerHTML = op.lineas.map(ln => {
+      const p = _productoById.get(ln.productoId);
+      if (!p) return '';
+      return `
+        <div class="prod-item-mobile">
+          <span class="pi-nombre">${p.nombre}</span>
+          <span class="pi-qty">${ln.cantidad}</span>
+        </div>
+      `;
+    }).join('');
+  }
 
   // Acciones según estado
   const stateMsgEl = document.getElementById('state-msg');

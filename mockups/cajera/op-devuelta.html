@@ -291,6 +291,13 @@
       gap: var(--sp-3);
     }
 
+    /* Lista de productos mobile en op-devuelta */
+    .prod-list-mobile-dev { display: none; }
+
+    /* =========================================================
+       Mobile cajera — op-devuelta
+       ========================================================= */
+
     @media (max-width: 900px) {
       .cajera-header {
         grid-template-columns: auto auto;
@@ -303,6 +310,120 @@
       .card, .nota-card, .banner-devuelta { padding: var(--sp-4); }
       .banner-devuelta h1 { font-size: var(--fs-xl); }
       .btn-big { width: 100%; min-width: 0; }
+    }
+
+    /* --- Smartphone (≤480px) --- */
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+
+      .cajera-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto;
+        padding: var(--sp-2) var(--sp-3);
+        gap: var(--sp-2);
+      }
+      .cajera-hello { display: none; }
+
+      .cajera-topbar {
+        padding: 0 var(--sp-2);
+        gap: 0;
+        justify-content: space-around;
+      }
+      .tab-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--sp-2) var(--sp-2);
+        font-size: 11px;
+        min-width: 0;
+        min-height: 52px;
+        border-radius: 0;
+        border: none;
+        border-bottom: 3px solid transparent;
+        flex: 1;
+        justify-content: center;
+      }
+      .tab-btn.active { background: transparent; border-bottom-color: var(--primary); color: var(--primary); }
+      .tab-btn svg { width: 22px; height: 22px; }
+
+      .cajera-main { padding: var(--sp-3); }
+
+      /* Banner: ícono arriba, texto abajo */
+      .banner-devuelta {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--sp-3);
+        padding: var(--sp-4) var(--sp-3);
+      }
+      .banner-devuelta h1 { font-size: var(--fs-xl); }
+      .banner-devuelta p { font-size: var(--fs-md); }
+
+      /* Nota: texto más legible */
+      .nota-card { padding: var(--sp-3); }
+      .nota-card .nota-text { font-size: var(--fs-md); }
+
+      /* Info grid: 2 cols */
+      .info-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+
+      /* Tabla → lista */
+      .prod-table { display: none; }
+      .prod-list-mobile-dev {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+      }
+      .pli-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+        padding: var(--sp-3);
+        background: var(--bg-elev-2);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+      .pli-nombre {
+        font-size: var(--fs-md);
+        font-weight: 600;
+        color: var(--text-strong);
+        flex: 1;
+        min-width: 0;
+      }
+      .pli-qty {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xl);
+        font-weight: 700;
+        color: var(--text-strong);
+        white-space: nowrap;
+      }
+
+      /* Acciones: columna, botones full-width */
+      .actions {
+        flex-direction: column;
+        gap: var(--sp-3);
+      }
+      .btn-big {
+        width: 100%;
+        min-width: 0;
+        height: 52px;
+        font-size: var(--fs-md);
+      }
+
+      /* Modal full-screen */
+      .modal {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+    }
+
+    @media (min-width: 481px) {
+      .prod-list-mobile-dev { display: none; }
     }
   </style>
 </head>
@@ -414,6 +535,8 @@
           </thead>
           <tbody id="prod-body"></tbody>
         </table>
+        <!-- Lista mobile (≤480px) -->
+        <div class="prod-list-mobile-dev" id="prod-list-mobile-dev" aria-label="Productos del pedido devuelto"></div>
       </section>
 
       <!-- Acciones -->
@@ -565,6 +688,21 @@
       </tr>
     `;
   }).join('');
+
+  // Lista mobile
+  const listaMobileDev = document.getElementById('prod-list-mobile-dev');
+  if (listaMobileDev) {
+    listaMobileDev.innerHTML = op.lineas.map(ln => {
+      const p = prodById.get(ln.productoId);
+      if (!p) return '';
+      return `
+        <div class="pli-item">
+          <span class="pli-nombre">${p.nombre}</span>
+          <span class="pli-qty">${ln.cantidad}</span>
+        </div>
+      `;
+    }).join('');
+  }
 
   // Corregir y reenviar: precarga draft en localStorage y va a op-nueva
   document.getElementById('btn-corregir').addEventListener('click', () => {

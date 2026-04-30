@@ -275,6 +275,23 @@
       color: var(--text-muted);
     }
 
+    /* Acordeon de filtros en mobile */
+    .filters-toggle {
+      display: none; /* solo visible en mobile */
+    }
+    .filters-collapsible {
+      /* siempre visible en desktop */
+    }
+
+    /* Cards de historial mobile */
+    .hist-card-mobile {
+      display: none; /* solo en mobile */
+    }
+
+    /* =========================================================
+       Mobile cajera — op-historial
+       ========================================================= */
+
     @media (max-width: 900px) {
       .cajera-header {
         grid-template-columns: auto auto;
@@ -293,6 +310,121 @@
       .tab-btn { min-width: 140px; }
       .cajera-main { padding: var(--sp-3); }
       .col-code, .col-date, .col-unid { display: none; }
+    }
+
+    /* --- Smartphone (≤480px) --- */
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+
+      .cajera-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto;
+        padding: var(--sp-2) var(--sp-3);
+        gap: var(--sp-2);
+      }
+      .cajera-hello { display: none; }
+
+      .cajera-topbar {
+        padding: 0 var(--sp-2);
+        gap: 0;
+        justify-content: space-around;
+      }
+      .tab-btn {
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--sp-2) var(--sp-2);
+        font-size: 11px;
+        min-width: 0;
+        min-height: 52px;
+        border-radius: 0;
+        border: none;
+        border-bottom: 3px solid transparent;
+        flex: 1;
+        justify-content: center;
+      }
+      .tab-btn.active { background: transparent; border-bottom-color: var(--primary); color: var(--primary); }
+      .tab-btn svg { width: 22px; height: 22px; }
+
+      .cajera-main { padding: var(--sp-3); }
+
+      .page-title { font-size: var(--fs-xl); margin-bottom: var(--sp-3); }
+
+      /* Filtros colapsables */
+      .filters-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-3) var(--sp-4);
+        font-size: var(--fs-md);
+        font-weight: 600;
+        color: var(--text-strong);
+        cursor: pointer;
+        margin-bottom: var(--sp-3);
+      }
+      .filters-toggle svg { transition: transform var(--t-base); }
+      .filters-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+      .filters-row {
+        /* Colapsa por default en mobile */
+        display: none;
+        flex-direction: column;
+        gap: var(--sp-3);
+        padding: var(--sp-3);
+        margin-bottom: var(--sp-3);
+      }
+      .filters-row.open { display: flex; }
+      .search-wrap { min-width: 0; }
+      .filters-row select, .filters-row .input { height: 44px; font-size: 16px; }
+      .search-wrap .input { height: 44px; font-size: 16px; }
+
+      /* Ocultar tabla, mostrar cards */
+      .hist-table { display: none; }
+
+      .hist-card-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+      }
+      .hist-card-item {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-3) var(--sp-4);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        cursor: pointer;
+        transition: background var(--t-fast);
+        text-decoration: none;
+        color: inherit;
+      }
+      .hist-card-item:hover { background: var(--bg-elev-2); text-decoration: none; }
+      .hist-card-left { flex: 1; min-width: 0; }
+      .hist-card-code {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: var(--fs-md);
+        color: var(--text-strong);
+      }
+      .hist-card-date {
+        font-size: var(--fs-sm);
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .hist-card-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--sp-1);
+        flex-shrink: 0;
+      }
+      .hist-card-arrow {
+        color: var(--text-muted);
+      }
     }
   </style>
 </head>
@@ -350,8 +482,14 @@
 
       <h1 class="page-title">Mi historial de OPs</h1>
 
+      <!-- Toggle de filtros (solo visible en ≤480px) -->
+      <button type="button" class="filters-toggle" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel">
+        <span>Filtros de búsqueda</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
       <!-- Filtros -->
-      <div class="filters-row">
+      <div class="filters-row" id="filters-panel">
         <div class="search-wrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="search" id="filter-search" class="input" placeholder="Buscar por producto (ej. cargador, cable)&hellip;" aria-label="Buscar por producto" />
@@ -382,8 +520,9 @@
         </span>
       </div>
 
-      <!-- Tabla -->
+      <!-- Tabla (desktop) + Cards (mobile) -->
       <div id="hist-wrap"></div>
+      <div class="hist-card-mobile" id="hist-cards-mobile"></div>
 
       <!-- Paginador (simple, decorativo) -->
       <div class="paginator" id="paginator" style="display: none;">
@@ -614,6 +753,51 @@
         }
       });
     });
+
+    // Cards mobile
+    const cardsMobileWrap = document.getElementById('hist-cards-mobile');
+    if (cardsMobileWrap) {
+      if (filtradas.length === 0) {
+        cardsMobileWrap.innerHTML = '';
+      } else {
+        cardsMobileWrap.innerHTML = filtradas.map(op => {
+          const href = op.estado === 'devuelta'
+            ? 'op-devuelta.html?id=' + op.id
+            : 'op-detalle.html?id=' + op.id;
+          const prod = op.lineas.length;
+          return `
+            <a href="${href}" class="hist-card-item">
+              <div class="hist-card-left">
+                <div class="hist-card-code">${op.id.toUpperCase()}</div>
+                <div class="hist-card-date">${fmtFecha(op.fechaEnvio)} &middot; ${prod} prod.</div>
+                <div style="margin-top:4px;">${badgeForEstado(op.estado)}</div>
+              </div>
+              <div class="hist-card-right">
+                <svg class="hist-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+    }
+  }
+
+  // Toggle filtros mobile
+  const filtersToggle = document.getElementById('filters-toggle');
+  const filtersPanel = document.getElementById('filters-panel');
+  if (filtersToggle && filtersPanel) {
+    filtersToggle.addEventListener('click', () => {
+      const abierto = filtersPanel.classList.toggle('open');
+      filtersToggle.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    });
+    // En desktop siempre visible
+    function syncFiltrosDesktop() {
+      if (window.innerWidth > 480) {
+        filtersPanel.classList.remove('open'); // el CSS lo muestra con flex por defecto en desktop
+        filtersPanel.style.display = '';
+      }
+    }
+    syncFiltrosDesktop();
   }
 
   // Eventos
