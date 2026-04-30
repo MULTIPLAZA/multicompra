@@ -79,6 +79,69 @@ function toInt(v, fallback = 0) {
 }
 
 /* =============================================================================
+   Numeración correlativa por local — OPs y OCs
+   ----------------------------------------------------------------------------
+   Formato:
+     OP: OP-{LOC}-{NNNNN}   (ej. OP-KIW-00001, secuencial por local)
+     OC: OC-{LOC}-{NNNNN}   si todos los OPs vinculados son del mismo local
+         OC-MIX-{NNNNN}     si abarca múltiples locales
+
+   {LOC} son las primeras 3 letras alfanuméricas del nombre del local en
+   mayúsculas (KIWI SHOP → KIW, SAN LORENZO → SAN). Las primeras 5 cifras
+   permiten hasta 99.999 órdenes por local antes de necesitar más dígitos.
+   ============================================================================= */
+export function localCodigo(localNombre) {
+  if (!localNombre) return 'XXX';
+  const cleaned = String(localNombre).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return cleaned.slice(0, 3) || 'XXX';
+}
+
+async function _siguienteSecuencia(supa, tabla, prefijo) {
+  // tabla: 'op' | 'oc' — busca el numero más alto que matchee el prefijo
+  // y devuelve secuencia + 1. Si no hay ninguno, arranca en 1.
+  if (!supa) {
+    const key = tabla === 'op' ? KEYS.OPS : KEYS.OCS;
+    const arr = lsGet(key, []);
+    let max = 0;
+    for (const o of arr) {
+      const m = String(o.numero || o.id || '').match(new RegExp(`^${prefijo}-(\\d+)$`));
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    }
+    return max + 1;
+  }
+  const { data } = await supa.from(tabla)
+    .select('numero')
+    .like('numero', `${prefijo}-%`)
+    .order('numero', { ascending: false })
+    .limit(1);
+  let max = 0;
+  if (data && data.length > 0) {
+    const m = String(data[0].numero || '').match(new RegExp(`^${prefijo}-(\\d+)$`));
+    if (m) max = parseInt(m[1], 10);
+  }
+  return max + 1;
+}
+
+export async function generarNumeroOP(localNombre) {
+  const supa = await getClient();
+  const loc = localCodigo(localNombre);
+  const prefijo = `OP-${loc}`;
+  const seq = await _siguienteSecuencia(supa, 'op', prefijo);
+  return `${prefijo}-${String(seq).padStart(5, '0')}`;
+}
+
+export async function generarNumeroOC(localesNombres) {
+  // localesNombres: array de strings (ej. ['KIWI SHOP', 'SAN LORENZO']).
+  // Si todos son el mismo → usa ese código. Si hay varios distintos → MIX.
+  const supa = await getClient();
+  const codigosUnicos = [...new Set((localesNombres || []).map(localCodigo))];
+  const loc = codigosUnicos.length === 1 ? codigosUnicos[0] : 'MIX';
+  const prefijo = `OC-${loc}`;
+  const seq = await _siguienteSecuencia(supa, 'oc', prefijo);
+  return `${prefijo}-${String(seq).padStart(5, '0')}`;
+}
+
+/* =============================================================================
    USUARIOS — registrar / actualizar usuario en Supabase tras login real
    ============================================================================= */
 export async function upsertUsuario({ id_erp, usuario, nombre, rol, activo = true }) {
@@ -94,27 +157,31 @@ export async function upsertUsuario({ id_erp, usuario, nombre, rol, activo = tru
    OP — Órdenes de Pedido (cajera)
    ============================================================================= */
 export async function guardarOP(op) {
-  // op: { numero, cajeraId, cajera, localId, localNombre, sucursal,
+  // op: { numero?, cajeraId, cajera, localId, localNombre, sucursal,
   //       lineas: [{ productoId, productoCodigo, productoNombre, productoCosto,
   //                  productoPrecio, idProveedor, cantidad }],
   //       esExcepcion, motivoExcepcion }
+  // Si op.numero no viene, se genera correlativo por local: OP-{LOC}-{NNNNN}
   const supa = await getClient();
+  const numero = op.numero || await generarNumeroOP(op.localNombre || op.sucursal);
+
   if (!supa) {
-    // Fallback: localStorage (lo que hace hoy op-nueva.html)
+    // Fallback: localStorage
     const arr = lsGet(KEYS.OPS, []);
     arr.unshift({
       ...op,
-      id: op.numero,
+      id: numero,
+      numero,
       fecha: op.fecha || formatearFecha(new Date()),
       estado: 'enviada'
     });
     lsSet(KEYS.OPS, arr);
-    return { ok: true, fallback: true, opId: op.numero };
+    return { ok: true, fallback: true, opId: numero, opNumero: numero, numero };
   }
 
   // Insert OP + líneas en transacción (vía RPC o secuencial)
   const { data: opRow, error: errOp } = await supa.from('op').insert({
-    numero: op.numero,
+    numero,
     cajera_id_erp: toInt(op.cajeraId),
     cajera_nombre: op.cajera,
     local_id: toInt(op.localId),
@@ -139,9 +206,9 @@ export async function guardarOP(op) {
     orden: i
   }));
   const { error: errL } = await supa.from('op_lineas').insert(lineas);
-  if (errL) return { ok: false, error: errL.message, opId: opRow.id };
+  if (errL) return { ok: false, error: errL.message, opId: opRow.id, opNumero: opRow.numero, numero: opRow.numero };
 
-  return { ok: true, opId: opRow.id };
+  return { ok: true, opId: opRow.id, opNumero: opRow.numero, numero: opRow.numero };
 }
 
 export async function listarOPs({ cajeraIdErp, estado, estadoResolucion, limit = 100 } = {}) {
@@ -331,22 +398,29 @@ export async function resolverOP({ opId, estado, supervisorIdErp, supervisorNomb
    OC — Órdenes de Compra (consolidación)
    ============================================================================= */
 export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveedorRuc,
-                                opIds, lineas, totalGs, creadoPorIdErp, creadoPorNombre }) {
+                                opIds, lineas, totalGs, creadoPorIdErp, creadoPorNombre,
+                                localesNombres }) {
+  // Si no se pasa numero, lo generamos correlativo segun los locales involucrados.
+  // localesNombres: array de strings (los nombres de los locales de las OPs vinculadas).
+  //   - Si todos son el mismo → OC-{LOC}-{NNNNN}
+  //   - Si hay varios → OC-MIX-{NNNNN}
   const supa = await getClient();
+  const numeroFinal = numero || await generarNumeroOC(localesNombres || []);
+
   if (!supa) {
     const arr = lsGet(KEYS.OCS, []);
     const oc = {
-      id: numero, numero, proveedorId: proveedorIdErp, proveedorNombre,
+      id: numeroFinal, numero: numeroFinal, proveedorId: proveedorIdErp, proveedorNombre,
       opIds, lineas, totalGs, fecha: formatearFecha(new Date()),
       estado: 'abierta', creadaPor: creadoPorNombre
     };
     arr.unshift(oc);
     lsSet(KEYS.OCS, arr);
-    return { ok: true, fallback: true, ocId: numero };
+    return { ok: true, fallback: true, ocId: numeroFinal, ocNumero: numeroFinal, numero: numeroFinal };
   }
 
   const { data: ocRow, error: errOc } = await supa.from('oc').insert({
-    numero, proveedor_id_erp: toInt(proveedorIdErp), proveedor_nombre: proveedorNombre,
+    numero: numeroFinal, proveedor_id_erp: toInt(proveedorIdErp), proveedor_nombre: proveedorNombre,
     proveedor_ruc: proveedorRuc, fecha_creacion: new Date().toISOString(),
     estado: 'abierta', total_gs: totalGs,
     creada_por_id_erp: toInt(creadoPorIdErp), creada_por_nombre: creadoPorNombre
@@ -375,7 +449,7 @@ export async function crearOC({ numero, proveedorIdErp, proveedorNombre, proveed
     await supa.from('oc_ops').insert(linkUUIDs);
   }
 
-  return { ok: true, ocId: ocRow.id, ocNumero: ocRow.numero };
+  return { ok: true, ocId: ocRow.id, ocNumero: ocRow.numero, numero: ocRow.numero };
 }
 
 /* =============================================================================

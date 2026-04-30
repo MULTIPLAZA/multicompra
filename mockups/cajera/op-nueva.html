@@ -1906,9 +1906,9 @@
         };
       });
 
-      const numero = 'op-loc-' + Date.now().toString(36);
+      // El numero correlativo (OP-{LOC}-{NNNNN}) lo genera el wrapper guardarOP
+      // a partir del nombre del local. No lo armamos acá.
       const opPayload = {
-        numero,
         cajeraId:         cajeraActual.id,
         cajera:           cajeraActual.nombre,
         localId:          cajeraActual.localId,
@@ -1926,6 +1926,8 @@
           throw new Error(res.error || 'Error desconocido al guardar');
         }
 
+        const numero = res.numero || res.opNumero || 'OP-???';
+
         // Limpiar el draft
         localStorage.removeItem(DRAFT_KEY);
 
@@ -1934,7 +1936,7 @@
         const backdrop = document.getElementById('enviado-backdrop');
         document.getElementById('enviado-prod').textContent = lineas.length;
         document.getElementById('enviado-unid').textContent = totalUnid;
-        document.getElementById('enviado-codigo').textContent = numero.toUpperCase();
+        document.getElementById('enviado-codigo').textContent = numero;
         document.getElementById('enviado-meta-text').innerHTML = res.fallback
           ? '⚠ Sin conexión — se sincronizará cuando vuelva la red.'
           : '✓ <strong>Sincronizado en la nube.</strong> Shirley ya lo puede ver.';

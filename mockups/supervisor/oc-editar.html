@@ -698,7 +698,7 @@
   import { fmtGs, solicitudesAltaProducto } from '../shared/mock-data.js';
   import {
     obtenerOP, obtenerOC, crearOC, actualizarLineasOC,
-    cambiarEstadoOC, resolverOP
+    cambiarEstadoOC, resolverOP, generarNumeroOC
   } from '../shared/supabase.js';
   import { getProductoPorId, getLocales, getStockProducto, getStockMap, getProductos, isCargado, prefetchAll } from '../shared/data.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
@@ -840,7 +840,9 @@
       }
     }
 
-    const ocNumero = 'OC-loc-' + Date.now().toString(36).toUpperCase();
+    // Generar número correlativo de OC en base a los locales involucrados
+    const localesNombres = opsOrigen.map(o => o.localNombre).filter(Boolean);
+    const ocNumero = await generarNumeroOC(localesNombres);
     return {
       numero: ocNumero,
       proveedorId: sesion.proveedorId,
@@ -848,6 +850,7 @@
       proveedorRuc: sesion.proveedorRuc || '—',
       grupos: [...gruposMap.values()],
       opsOrigen,
+      localesNombres, // para pasarle a crearOC al cerrar
       _modo: 'nueva',
       _supervisorId: sesion.supervisorId,
       _supervisorNombre: sesion.supervisorNombre
@@ -1731,7 +1734,7 @@
       if (oc._modo === 'nueva') {
         const opIds = oc.opsOrigen.map(o => o.id);
         const res = await crearOC({
-          numero: oc.numero,
+          numero: oc.numero, // ya viene pre-generado correlativo
           proveedorIdErp: oc.proveedorId,
           proveedorNombre: oc.proveedorNombre,
           proveedorRuc: oc.proveedorRuc,
@@ -1739,7 +1742,8 @@
           lineas,
           totalGs,
           creadoPorIdErp: oc._supervisorId,
-          creadoPorNombre: oc._supervisorNombre
+          creadoPorNombre: oc._supervisorNombre,
+          localesNombres: oc.localesNombres || oc.opsOrigen.map(o => o.localNombre).filter(Boolean)
         });
         if (!res.ok) throw new Error(res.error || 'Error al crear OC');
 
