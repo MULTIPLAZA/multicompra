@@ -1,459 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MultiCompra — Devoluciones de OPs</title>
-  <script>
-    (function () {
-      try {
-        var t = localStorage.getItem('multicompra:theme');
-        if (!t) {
-          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
-    })();
-  </script>
-  <link rel="stylesheet" href="../../shared/styles.css" />
-  <style>
-    :root {
-      --admin-header-h: 56px;
-      --admin-bottombar-h: 60px;
-      --admin-sidebar-w: 220px;
-    }
-    body { min-height: 100vh; display: flex; flex-direction: column; }
-
-    .admin-header {
-      position: sticky; top: 0; z-index: 10;
-      height: var(--admin-header-h);
-      background: var(--bg-elev);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: var(--sp-2);
-      padding: 0 var(--sp-3);
-    }
-    .admin-header .logo { font-size: var(--fs-md); font-weight: 700; color: var(--primary); }
-    .admin-title {
-      font-size: var(--fs-md); font-weight: 600; color: var(--text-strong);
-      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    @media (max-width: 480px) {
-      .admin-header .logo .logo-text { display: none; }
-      .admin-header .user-chip .user-name { display: none; }
-    }
-
-    .admin-layout { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-    .admin-main {
-      flex: 1;
-      padding: var(--sp-4) var(--sp-3);
-      padding-bottom: calc(var(--admin-bottombar-h) + var(--sp-4));
-      max-width: 1200px; width: 100%;
-      margin: 0 auto;
-      display: flex; flex-direction: column; gap: var(--sp-4);
-    }
-
-    .breadcrumb {
-      display: flex; align-items: center; gap: var(--sp-1);
-      font-size: var(--fs-sm); color: var(--text-muted);
-    }
-    .breadcrumb a { color: var(--primary); }
-    .page-title { font-size: var(--fs-xl); font-weight: 700; color: var(--text-strong); margin: 0; }
-    .page-title-sub { font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.5; }
-
-    .filters-card {
-      background: var(--bg-elev); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: var(--sp-3);
-    }
-    .periodo-chips { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
-    .chip-period {
-      padding: 6px var(--sp-3); background: var(--bg-elev-2);
-      border: 1px solid var(--border-strong); border-radius: var(--radius-pill);
-      font-size: var(--fs-sm); cursor: pointer;
-    }
-    .chip-period:hover { background: var(--border); }
-    .chip-period.active {
-      background: var(--primary-soft); border-color: var(--primary);
-      color: var(--primary); font-weight: 600;
-    }
-
-    .kpi-big {
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: var(--radius); padding: var(--sp-4);
-      display: flex; align-items: center; justify-content: space-between;
-      gap: var(--sp-4); flex-wrap: wrap;
-    }
-    .kpi-big-label {
-      font-size: var(--fs-xs); color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600;
-    }
-    .kpi-big-value {
-      font-size: 36px;
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      color: var(--text-strong); font-weight: 700;
-    }
-    .kpi-big-delta { font-size: var(--fs-sm); font-weight: 600; margin-top: 2px; }
-    .kpi-big-delta.up   { color: var(--warning-text); }
-    .kpi-big-delta.down { color: var(--success); }
-
-    .card {
-      background: var(--bg-elev); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: var(--sp-3);
-    }
-    .card-head {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: var(--sp-3);
-    }
-    .card-title { font-size: var(--fs-md); font-weight: 600; color: var(--text-strong); }
-
-    .cajera-group {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-elev-2);
-      margin-bottom: var(--sp-2);
-      overflow: hidden;
-    }
-    .cajera-group:last-child { margin-bottom: 0; }
-    .cajera-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: var(--sp-3) var(--sp-4);
-      cursor: pointer; gap: var(--sp-3);
-    }
-    .cajera-head-main { display: flex; align-items: center; gap: var(--sp-3); flex: 1; }
-    .cajera-name {
-      font-weight: 600; color: var(--text-strong);
-      font-size: var(--fs-md);
-    }
-    .cajera-local {
-      font-size: var(--fs-xs); color: var(--text-muted);
-      font-family: var(--font-mono); text-transform: uppercase;
-      background: var(--bg-elev); padding: 1px var(--sp-2);
-      border-radius: var(--radius-pill);
-    }
-    .cajera-count {
-      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-      font-size: var(--fs-xl); font-weight: 700; color: var(--warning-text);
-    }
-    .toggle-btn {
-      background: transparent; border: none; cursor: pointer;
-      color: var(--text-muted); padding: 0;
-      display: inline-flex; align-items: center;
-    }
-    .toggle-btn svg { transition: transform var(--t-fast); }
-    .cajera-group.open .toggle-btn svg { transform: rotate(180deg); }
-
-    .cajera-detail {
-      display: none;
-      padding: 0 var(--sp-4) var(--sp-3);
-      background: var(--bg-elev);
-      border-top: 1px solid var(--border);
-    }
-    .cajera-group.open .cajera-detail { display: block; }
-
-    /* Timeline de devoluciones */
-    .timeline-dev {
-      position: relative;
-      padding-left: var(--sp-5);
-      margin-top: var(--sp-3);
-    }
-    .timeline-dev::before {
-      content: "";
-      position: absolute;
-      left: 6px;
-      top: 8px; bottom: 8px;
-      width: 2px;
-      background: var(--border);
-    }
-    .tl-dev-item {
-      position: relative;
-      padding: var(--sp-3) 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .tl-dev-item:last-child { border-bottom: none; }
-    .tl-dev-item::before {
-      content: "";
-      position: absolute;
-      left: calc(-1 * var(--sp-5) + 2px);
-      top: 20px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--warning);
-      border: 2px solid var(--bg-elev);
-    }
-    .tl-dev-item.corregida::before {
-      background: var(--success);
-    }
-    .tl-dev-head {
-      display: flex; align-items: center; gap: var(--sp-2);
-      flex-wrap: wrap;
-      margin-bottom: var(--sp-2);
-    }
-    .tl-dev-op {
-      font-family: var(--font-mono);
-      font-weight: 600;
-      color: var(--primary);
-      font-size: var(--fs-sm);
-    }
-    .tl-dev-date {
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
-      color: var(--text-muted);
-    }
-    .nota-box {
-      background: var(--warning-soft);
-      border-left: 3px solid var(--warning);
-      padding: var(--sp-2) var(--sp-3);
-      border-radius: var(--radius-sm);
-      font-size: var(--fs-sm);
-      color: var(--text);
-      line-height: 1.5;
-      font-style: italic;
-    }
-    .nota-box strong { color: var(--warning-text); font-style: normal; font-weight: 600; }
-    .estado-pill {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px var(--sp-2); border-radius: var(--radius-pill);
-      font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.3px;
-    }
-    .estado-corregida {
-      background: var(--success-soft); color: var(--success-text);
-    }
-    .estado-pendiente {
-      background: var(--warning-soft); color: var(--warning-text);
-    }
-
-    /* Bottombar mobile / sidebar desktop */
-    .admin-bottombar {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      height: var(--admin-bottombar-h);
-      background: var(--bg-elev); border-top: 1px solid var(--border);
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      z-index: 20;
-    }
-    .bb-item {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 2px;
-      color: var(--text-muted); text-decoration: none;
-      font-size: 10px; font-weight: 500;
-    }
-    .bb-item svg { width: 20px; height: 20px; }
-    .bb-item.active { color: var(--primary); }
-    .bb-item:hover { color: var(--text-strong); text-decoration: none; }
-    .bb-item.active:hover { color: var(--primary); }
-
-    @media (min-width: 1024px) {
-      .admin-layout { flex-direction: row; }
-      .admin-bottombar {
-        position: sticky; top: var(--admin-header-h);
-        height: calc(100vh - var(--admin-header-h));
-        width: var(--admin-sidebar-w);
-        border-top: 0; border-right: 1px solid var(--border);
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto 1fr;
-        align-content: start;
-        padding: var(--sp-3) var(--sp-2); gap: var(--sp-1);
-        flex-shrink: 0;
-      }
-      .bb-item {
-        flex-direction: row; justify-content: flex-start;
-        gap: var(--sp-3); padding: var(--sp-2) var(--sp-3);
-        border-radius: var(--radius); font-size: var(--fs-base);
-      }
-      .bb-item.active { background: var(--primary-soft); }
-      .bb-item svg { width: 18px; height: 18px; }
-      .admin-main { padding: var(--sp-5); padding-bottom: var(--sp-8); }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<title>MultiCompra — Próximamente</title>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('multicompra:theme');
+      if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  })();
+</script>
+<link rel="stylesheet" href="/shared/styles.css" />
+<style>
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    background: var(--bg);
+  }
+  .placeholder-card {
+    max-width: 560px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 56px 48px;
+    box-shadow: var(--shadow);
+  }
+  .placeholder-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .placeholder-card h1 {
+    margin: 0 0 12px;
+    color: var(--text-strong);
+    font-size: var(--fs-xl);
+  }
+  .placeholder-card p {
+    color: var(--text-muted);
+    margin: 0 0 24px;
+    line-height: 1.5;
+  }
+  .placeholder-card .actions {
+    display: flex;
+    gap: var(--sp-2);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>
 </head>
 <body>
 
-  <header class="admin-header">
-    <div class="logo"><span class="logo-text">MultiCompra</span></div>
-    <div class="admin-title">Reporte · Devoluciones</div>
-    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
-      <span class="avatar">DG</span><span class="user-name">Diego</span>
-    </div>
-  </header>
-
-  <div class="admin-layout">
-
-    <nav class="admin-bottombar">
-      <a class="bb-item" href="../dashboard.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-        <span>Dashboard</span>
-      </a>
-      <a class="bb-item active" href="devoluciones.html" aria-current="page">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span>Reportes</span>
-      </a>
-      <a class="bb-item" href="../config/locales.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
-        <span>Config</span>
-      </a>
-      <a class="bb-item" href="../../logout.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span>Salir</span>
-      </a>
-    </nav>
-
-    <main class="admin-main">
-
-      <div>
-        <div class="breadcrumb">
-          <a href="../dashboard.html">Dashboard</a> <span>/</span> <span>Reportes</span> <span>/</span> <span>Devoluciones</span>
-        </div>
-        <h1 class="page-title" style="margin-top: var(--sp-2);">Devoluciones de OPs</h1>
-        <p class="page-title-sub">
-          Cuando Shirley devuelve una OP a la cajera con una nota, estamos en ciclo de educación. Medimos quién necesita más acompañamiento. Las corregidas bajan la preocupación; las pendientes son tarea viva.
-        </p>
-      </div>
-
-      <section class="filters-card">
-        <div class="periodo-chips">
-          <button type="button" class="chip-period" data-periodo="7d">Últimos 7 días</button>
-          <button type="button" class="chip-period" data-periodo="mes">Mes actual</button>
-          <button type="button" class="chip-period active" data-periodo="3m">Últimos 3 meses</button>
-          <button type="button" class="chip-period" data-periodo="anio">Este año</button>
-        </div>
-      </section>
-
-      <!-- KPI -->
-      <div class="kpi-big">
-        <div>
-          <div class="kpi-big-label">Total devoluciones en el período</div>
-          <div class="kpi-big-value" id="kpi-total">-</div>
-          <div class="kpi-big-delta up" id="kpi-delta">-</div>
-        </div>
-        <div style="text-align: right; font-size: var(--fs-sm); color: var(--text-muted); max-width: 280px;">
-          <strong id="kpi-pendientes" style="color: var(--warning-text);">-</strong> pendientes de corrección por la cajera<br>
-          <strong id="kpi-corregidas" style="color: var(--success);">-</strong> ya corregidas y reenviadas
-        </div>
-      </div>
-
-      <!-- Lista -->
-      <section class="card">
-        <div class="card-head">
-          <div class="card-title">Por cajera</div>
-          <span style="font-size: var(--fs-sm); color: var(--text-muted);">Click para ver detalle de cada devolución</span>
-        </div>
-
-        <div id="lista-cajeras"></div>
-      </section>
-
-    </main>
+<div class="placeholder-card">
+  <div class="placeholder-icon">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
   </div>
-
-  <script type="module">
-    import { requireRol } from '../../shared/auth-guard.js';
-    requireRol('admin');
-
-    import { reporteDevoluciones } from '../../shared/mock-data.js';
-    import { initAvatarMenu } from '../../shared/ui.js';
-    import { initDateRangePicker } from '../../shared/date-range-picker.js';
-
-    const r = reporteDevoluciones;
-    document.getElementById('kpi-total').textContent = r.totalDevoluciones;
-    const delta = r.totalDevoluciones - r.totalAnterior;
-    const deltaEl = document.getElementById('kpi-delta');
-    deltaEl.textContent = (delta >= 0 ? '+' : '') + delta + ' vs período anterior (' + (r.deltaPct >= 0 ? '+' : '') + r.deltaPct + '%)';
-    deltaEl.className = 'kpi-big-delta ' + (delta > 0 ? 'up' : 'down');
-
-    const totalPend = r.porCajera.reduce((s, c) => s + c.devoluciones.filter(d => !d.corregida).length, 0);
-    const totalCorr = r.totalDevoluciones - totalPend;
-    document.getElementById('kpi-pendientes').textContent = totalPend;
-    document.getElementById('kpi-corregidas').textContent = totalCorr;
-
-    const orden = [...r.porCajera].sort((a, b) => b.count - a.count);
-    const lista = document.getElementById('lista-cajeras');
-
-    function fmtFecha(s) {
-      const [y, m, d] = s.split('-');
-      return `${d}/${m}/${y.slice(2)}`;
-    }
-
-    lista.innerHTML = orden.map((c, idx) => {
-      const timeline = c.devoluciones.map(d => {
-        const isCorr = !!d.corregida;
-        return `
-          <div class="tl-dev-item ${isCorr ? 'corregida' : ''}">
-            <div class="tl-dev-head">
-              <span class="tl-dev-op">${d.opId.toUpperCase()}</span>
-              <span class="tl-dev-date">Devuelta el ${fmtFecha(d.fecha)}</span>
-              <span class="estado-pill ${isCorr ? 'estado-corregida' : 'estado-pendiente'}">
-                ${isCorr ? '✓ Corregida' : 'Pendiente'}
-              </span>
-              ${isCorr && d.fechaCorreccion ? `<span class="tl-dev-date">Reenviada el ${fmtFecha(d.fechaCorreccion)}</span>` : ''}
-            </div>
-            <div class="nota-box">
-              <strong>${d.supervisora}:</strong> "${d.nota}"
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      return `
-        <div class="cajera-group" data-idx="${idx}">
-          <div class="cajera-head" role="button" tabindex="0">
-            <div class="cajera-head-main">
-              <div class="cajera-name">${c.cajera}</div>
-              <span class="cajera-local">${c.localCodigo}</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: var(--sp-3);">
-              <span class="cajera-count">${c.count}</span>
-              <button type="button" class="toggle-btn" aria-label="Expandir">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-            </div>
-          </div>
-          <div class="cajera-detail">
-            <div class="timeline-dev">${timeline}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    lista.querySelectorAll('.cajera-head').forEach(h => {
-      h.addEventListener('click', () => h.closest('.cajera-group').classList.toggle('open'));
-      h.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          h.closest('.cajera-group').classList.toggle('open');
-        }
-      });
-    });
-    const firstGroup = lista.querySelector('.cajera-group');
-    if (firstGroup) firstGroup.classList.add('open');
-
-    document.querySelectorAll('.chip-period').forEach(c => {
-      c.addEventListener('click', () => {
-        document.querySelectorAll('.chip-period').forEach(x => x.classList.remove('active'));
-        c.classList.add('active');
-      });
-    });
-
-    initDateRangePicker({
-      containerSelector: '.periodo-chips',
-      initialFromQS: true,
-      onApply: ({ desde, hasta }) => {
-        // pendiente: filtrar devoluciones por fecha
-      },
-    });
-
-    initAvatarMenu({
-      avatarBtnSelector: '#avatar-btn',
-      logoutHref: '../../logout.html',
-      perfilHref: null,
-      userName: 'Diego',
-      userRole: 'admin',
-      userLocal: null,
-    });
-  </script>
+  <h1>Próximamente</h1>
+  <p>
+    Esta pantalla todavía está en desarrollo. La estamos integrando con el
+    sistema base. Cuando esté lista, vamos a avisarte.
+  </p>
+  <div class="actions">
+    <a href="javascript:history.back()" class="btn">← Volver</a>
+    <a href="/supervisor/dashboard.html" class="btn btn-primary">Ir al dashboard</a>
+  </div>
+</div>
 
 </body>
 </html>

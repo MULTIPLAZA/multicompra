@@ -33,7 +33,7 @@
         var DEST = {
           cajera:     'cajera/dashboard.html',
           supervisor: 'supervisor/dashboard.html',
-          admin:      'admin/dashboard.html'
+          admin:      'supervisor/dashboard.html'
         };
         var next = DEST[u.rol] || 'cajera/dashboard.html';
         window.location.replace(next);
@@ -398,56 +398,6 @@
       </form>
     </div>
 
-    <!-- Sección de usuarios demo -->
-    <div class="demo-section">
-      <button type="button" class="demo-toggle" id="btn-demo-toggle" aria-expanded="false" aria-controls="demo-cards">
-        <span>¿Querés probar la app?</span>
-        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-
-      <div class="demo-cards" id="demo-cards" role="region" aria-label="Usuarios demo">
-
-        <div class="demo-card">
-          <div class="demo-card-head">
-            <div class="demo-avatar">CA</div>
-            <div class="demo-info">
-              <div class="demo-name">Cajera Carolina</div>
-              <div class="demo-role">Cajera</div>
-              <div class="demo-local">Local Shopping del Sol</div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-demo" data-role="cajera">Entrar como Carolina</button>
-        </div>
-
-        <div class="demo-card">
-          <div class="demo-card-head">
-            <div class="demo-avatar acc-super">SH</div>
-            <div class="demo-info">
-              <div class="demo-name">Supervisora Shirley</div>
-              <div class="demo-role">Supervisor</div>
-              <div class="demo-local">Depósito central</div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-demo" data-role="supervisor">Entrar como Shirley</button>
-        </div>
-
-        <div class="demo-card">
-          <div class="demo-card-head">
-            <div class="demo-avatar acc-admin">DG</div>
-            <div class="demo-info">
-              <div class="demo-name">Admin Diego</div>
-              <div class="demo-role">Dueño · Admin</div>
-              <div class="demo-local">Vista global</div>
-            </div>
-          </div>
-          <button type="button" class="btn btn-demo" data-role="admin">Entrar como Diego</button>
-        </div>
-
-      </div>
-    </div>
-
   </div>
 
   <!-- ================================================================== -->
@@ -712,55 +662,8 @@
         btnEye.querySelector('.eye-hide').style.display = isPass ? '' : 'none';
       });
 
-      // Toggle demo section
-      var btnDemo = document.getElementById('btn-demo-toggle');
-      var demoCards = document.getElementById('demo-cards');
-      btnDemo.addEventListener('click', function () {
-        var open = btnDemo.getAttribute('aria-expanded') === 'true';
-        btnDemo.setAttribute('aria-expanded', String(!open));
-        demoCards.classList.toggle('visible', !open);
-      });
-
       // (la lógica del form submit real se maneja en el script type="module"
       //  más abajo, que importa apiAuth y apiLocales del wrapper.)
-
-      // Entrar como usuario demo
-      var USERS = {
-        // IDs altos (90xx) para que no choquen con los reales del ERP.
-        // Son ints porque las columnas *_id_erp en Supabase son integer.
-        cajera: {
-          id: 9001,
-          nombre: 'Carolina',
-          rol: 'cajera',
-          iniciales: 'CA',
-          localId: 1,
-          localNombre: 'Shopping del Sol (demo)',
-          redirect: 'cajera/dashboard.html'
-        },
-        supervisor: {
-          id: 9002,
-          nombre: 'Shirley',
-          rol: 'supervisor',
-          iniciales: 'SH',
-          localId: 0,
-          localNombre: 'Depósito central',
-          redirect: 'supervisor/dashboard.html'
-        },
-        admin: {
-          id: 9003,
-          nombre: 'Diego',
-          rol: 'admin',
-          iniciales: 'DG',
-          localId: 0,
-          localNombre: 'Vista global',
-          redirect: 'admin/dashboard.html'
-        }
-      };
-
-      // Los handlers de botones demo se enganchan en el script type="module"
-      // de más abajo (porque necesitan acceso a mostrarSplashYPrefetchar)
-      // Acá expongo solamente el USERS para que el módulo lo lea.
-      window.__DEMO_USERS__ = USERS;
 
       // ── Caps Lock detection ──────────────────────────────────────────────
       var capsWarn = document.getElementById('caps-lock-warn');
@@ -899,6 +802,26 @@
         if (!res.ok) {
           showToast(res.mensaje || 'No se pudo iniciar sesión.', 'error');
           return;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // PARCHE TEMPORAL — hasta que Carlos arregle el SP MULTICOMPRA_AUTH
+        // El SP hoy devuelve rol='cajera' siempre y sin idLocal/nombreLocal.
+        // Forzamos los roles correctos para los usuarios conocidos según su id.
+        // Cuando el SP devuelva los valores correctos, este bloque se puede
+        // eliminar y todo sigue funcionando.
+        // ──────────────────────────────────────────────────────────────
+        const ROLES_CONOCIDOS = {
+          // id → { rol, idLocal, nombreLocal }
+          2: { rol: 'admin',      idLocal: 27, nombreLocal: 'DEPOSITO' },  // Diego
+          6: { rol: 'supervisor', idLocal: 27, nombreLocal: 'DEPOSITO' }   // Shirley
+        };
+        const override = ROLES_CONOCIDOS[res.id];
+        if (override) {
+          if (override.rol)         res.rol = override.rol;
+          if (override.idLocal)     res.idLocal = override.idLocal;
+          if (override.nombreLocal) res.nombreLocal = override.nombreLocal;
+          console.log('[login] override aplicado para', usuario, '→', override);
         }
 
         // Login OK — recordar el usuario para la próxima vez
@@ -1083,7 +1006,7 @@
       const REDIRECTS = {
         cajera:     'cajera/dashboard.html',
         supervisor: 'supervisor/dashboard.html',
-        admin:      'admin/dashboard.html'
+        admin:      'supervisor/dashboard.html'
       };
       window.location.href = REDIRECTS[rol] || 'cajera/dashboard.html';
     }
@@ -1131,63 +1054,7 @@
       else window.location.reload();
     });
 
-    /* =============================================================================
-       Botones demo (Carolina / Shirley / Diego) — guardan el user mock pero
-       PREFETCHEAN datos reales del ERP para que las pantallas tengan locales,
-       proveedores, productos y stock cargados en cache.
-       Sin esto, el dashboard del supervisor se ve "cortado" porque no hay data.
-       ============================================================================= */
-    const DEMO_USERS = window.__DEMO_USERS__ || {};
-    document.querySelectorAll('.btn-demo').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const role = btn.getAttribute('data-role');
-        const u = DEMO_USERS[role];
-        if (!u) return;
-        // Guardar user demo en localStorage (con localId placeholder; lo
-        // actualizamos a un local REAL del ERP después del prefetch para
-        // que el stock por local matchee).
-        try {
-          localStorage.setItem('multicompra:user', JSON.stringify({
-            id: u.id, nombre: u.nombre, rol: u.rol, iniciales: u.iniciales,
-            localId: u.localId, localNombre: u.localNombre
-          }));
-          localStorage.setItem('multicompra:last-user', u.nombre);
-        } catch (_) {}
-        await mostrarSplashYPrefetchar({ rol: u.rol, nombre: u.nombre });
-
-        // Después del prefetch, si la demo es de cajera, le asignamos un
-        // local REAL del ERP (el primero activo y diferente del DEPOSITO
-        // central) para que las consultas de stock por local funcionen.
-        // Para Shirley/Diego (supervisor/admin) dejamos el localId tal
-        // cual porque ellos miran TODO, no un local en particular.
-        if (u.rol === 'cajera') {
-          try {
-            const cache = JSON.parse(sessionStorage.getItem('multicompra:cache:v1') || 'null');
-            const locales = cache?.locales || [];
-            const realLocal = locales.find(l => {
-              const n = String(l.nombre || '').toLowerCase();
-              const s = String(l.Sucursal || '').toLowerCase();
-              const esDepo = n.includes('deposito') || n.includes('depósito') ||
-                             s.includes('deposito') || s.includes('depósito');
-              return l.activo && !esDepo;
-            }) || locales.find(l => l.activo) || locales[0];
-            if (realLocal) {
-              const userRaw = localStorage.getItem('multicompra:user');
-              const userObj = userRaw ? JSON.parse(userRaw) : {};
-              userObj.localId = realLocal.id;
-              userObj.localNombre = realLocal.Sucursal && realLocal.Sucursal !== realLocal.nombre
-                ? `${realLocal.Sucursal} · ${realLocal.nombre}`
-                : (realLocal.nombre || realLocal.Sucursal || 'Local');
-              userObj.localSucursal = realLocal.Sucursal || '';
-              localStorage.setItem('multicompra:user', JSON.stringify(userObj));
-              console.log('[demo] Carolina ahora opera desde local REAL:', userObj.localId, userObj.localNombre);
-            }
-          } catch (e) {
-            console.warn('[demo] no pude reasignar localId real:', e);
-          }
-        }
-      });
-    });
+    // (botones demo eliminados — la app va contra el login real del ERP)
   </script>
 </body>
 </html>

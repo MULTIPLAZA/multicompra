@@ -1,418 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MultiCompra — Nueva Compra</title>
-  <script>
-    (function () {
-      try {
-        var t = localStorage.getItem('multicompra:theme');
-        if (!t) {
-          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
-    })();
-  </script>
-  <link rel="stylesheet" href="../shared/styles.css" />
-  <style>
-    .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: var(--sp-4);
-    }
-    .page-wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-4);
-    }
-
-    .card {
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .card-head {
-      padding: var(--sp-3) var(--sp-4);
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-elev-2);
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-    }
-    .card-head h2 {
-      font-size: var(--fs-md);
-      margin: 0;
-      flex: 1;
-    }
-    .card-body { padding: var(--sp-4); }
-
-    .oc-option {
-      display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) auto;
-      gap: var(--sp-3);
-      align-items: center;
-      padding: var(--sp-3);
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: border-color var(--t-fast), box-shadow var(--t-fast);
-    }
-    .oc-option + .oc-option { margin-top: var(--sp-2); }
-    .oc-option:hover { border-color: var(--border-strong); }
-    .oc-option.selected {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px var(--primary);
-      background: var(--primary-soft);
-    }
-    [data-theme="dark"] .oc-option.selected { background: var(--bg-elev-2); }
-
-    .oc-option input[type="radio"] {
-      width: 18px; height: 18px;
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
-
-    .oc-main {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-1);
-      min-width: 0;
-    }
-    .oc-top {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      flex-wrap: wrap;
-    }
-    .oc-num {
-      font-family: var(--font-mono);
-      font-size: var(--fs-base);
-      font-weight: 600;
-      color: var(--text-strong);
-    }
-    .oc-proveedor {
-      color: var(--text);
-      font-size: var(--fs-sm);
-    }
-    .oc-meta {
-      display: flex;
-      gap: var(--sp-4);
-      font-size: var(--fs-xs);
-      color: var(--text-muted);
-      flex-wrap: wrap;
-    }
-    .oc-meta strong {
-      color: var(--text-strong);
-      font-family: var(--font-mono);
-      font-variant-numeric: tabular-nums;
-      font-weight: 600;
-    }
-
-    .oc-compras-count {
-      font-size: var(--fs-xs);
-      padding: 2px var(--sp-2);
-      background: var(--bg-elev-2);
-      border-radius: var(--radius-pill);
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .oc-compras-count.has { background: var(--warning-soft); color: var(--warning-text); }
-
-    .badge-en-edicion { background: var(--warning-soft); color: var(--warning-text); }
-
-    .sin-oc-box {
-      margin-top: var(--sp-5);
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--bg-elev-2);
-      border: 1px dashed var(--border-strong);
-      border-radius: var(--radius);
-      font-size: var(--fs-sm);
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-    }
-    .sin-oc-box input[type="radio"] {
-      width: 18px; height: 18px;
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
-    .sin-oc-box label {
-      flex: 1;
-      cursor: pointer;
-    }
-    .sin-oc-box label strong { color: var(--text); display: block; margin-bottom: 2px; }
-
-    .footer-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
-      padding: var(--sp-3) var(--sp-4);
-      background: var(--bg-elev);
-      border-top: 1px solid var(--border);
-      min-height: var(--footer-h);
-      box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.04);
-    }
-    [data-theme="dark"] .footer-actions { box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35); }
-
-    .cta-primary {
-      background: var(--primary);
-      color: var(--primary-on);
-      border-color: var(--primary);
-    }
-    .cta-primary:hover { background: var(--primary-hover); }
-
-    .empty-state {
-      padding: var(--sp-8) var(--sp-4);
-      text-align: center;
-      color: var(--text-muted);
-    }
-    .empty-state h3 { color: var(--text-strong); margin-bottom: var(--sp-2); }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<title>MultiCompra — Próximamente</title>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('multicompra:theme');
+      if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  })();
+</script>
+<link rel="stylesheet" href="/shared/styles.css" />
+<style>
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    background: var(--bg);
+  }
+  .placeholder-card {
+    max-width: 560px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 56px 48px;
+    box-shadow: var(--shadow);
+  }
+  .placeholder-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .placeholder-card h1 {
+    margin: 0 0 12px;
+    color: var(--text-strong);
+    font-size: var(--fs-xl);
+  }
+  .placeholder-card p {
+    color: var(--text-muted);
+    margin: 0 0 24px;
+    line-height: 1.5;
+  }
+  .placeholder-card .actions {
+    display: flex;
+    gap: var(--sp-2);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>
 </head>
 <body>
 
-<div class="app" id="app">
-
-  <header class="app-header" role="banner">
-    <button class="btn btn-ghost btn-icon" id="btn-toggle-sidebar" aria-label="Expandir/colapsar menú lateral" title="Expandir/colapsar menú">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-    </button>
-    <div class="logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v4H4zM4 10h16v10H4z"/></svg>
-      <span class="logo-text">MultiCompra</span>
-    </div>
-    <nav class="breadcrumbs" aria-label="Ubicación">
-      <a href="compra-lista.html">Compras</a>
-      <span class="sep">&rsaquo;</span>
-      <span class="current">Nueva</span>
-    </nav>
-    <div class="grow"></div>
-    <div class="header-search">
-      <input type="search" class="input input-search" placeholder="Buscar en la app&hellip;  (Ctrl+K)" aria-label="Buscador global" />
-    </div>
-    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
-      <span class="avatar" aria-hidden="true">SH</span>
-      <span>Hola Shirley</span>
-    </div>
-  </header>
-
-  <aside class="app-sidebar" aria-label="Navegación principal">
-    <nav class="nav">
-      <a class="nav-item" href="dashboard.html" data-label="Dashboard">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
-        <span class="nav-item-label">Dashboard</span>
-      </a>
-      <a class="nav-item" href="dashboard.html" data-label="OPs pendientes">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
-        <span class="nav-item-label">OPs pendientes</span>
-      </a>
-      <a class="nav-item" href="oc-lista.html" data-label="OCs">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg></span>
-        <span class="nav-item-label">OCs</span>
-      </a>
-      <a class="nav-item active" href="compra-lista.html" data-label="Compras" aria-current="page">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
-        <span class="nav-item-label">Compras</span>
-      </a>
-      <a class="nav-item" href="solicitudes-alta.html" data-label="Altas pendientes">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
-        <span class="nav-item-label">Altas pendientes</span>
-        <span class="nav-item-count" id="nav-count-altas" hidden>0</span>
-      </a>
-      <a class="nav-item" href="catalogo.html" data-label="Catálogo">
-        <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
-        <span class="nav-item-label">Catálogo</span>
-      </a>
-    </nav>
-  </aside>
-
-  <main class="app-main">
-
-    <div class="screen-subheader">
-      <a href="compra-lista.html" class="btn btn-ghost btn-sm" aria-label="Volver al listado">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
-        Volver
-      </a>
-      <div>
-        <h1 class="screen-title">Nueva Compra</h1>
-        <p class="text-sm text-muted" style="margin-top: 4px;">
-          Elegí la OC origen para precargar las líneas. El siguiente paso es cargar la factura física.
-        </p>
-      </div>
-    </div>
-
-    <div class="scroll-area">
-      <div class="page-wrap">
-
-        <section class="card" aria-label="OCs elegibles">
-          <header class="card-head">
-            <h2>OCs elegibles</h2>
-            <span class="text-sm text-muted"><strong id="oc-count">0</strong> OCs disponibles</span>
-          </header>
-          <div class="card-body">
-            <p class="text-sm text-muted" style="margin-bottom: var(--sp-3);">
-              Solo se muestran OCs en estado <strong>Cerrada</strong>, <strong>Enviada al proveedor</strong> o <strong>Parcialmente recibida</strong>.
-            </p>
-            <div id="oc-options" role="radiogroup" aria-label="OCs elegibles"></div>
-
-            <div class="sin-oc-box">
-              <input type="radio" name="oc-select" id="sin-oc" value="sin-oc" />
-              <label for="sin-oc">
-                <strong>Sin OC vinculada</strong>
-                Caso excepcional: llegó mercadería sin OC previa (ej. bonificación, pedido urgente). Tendrás que cargar todas las líneas manualmente.
-              </label>
-            </div>
-          </div>
-        </section>
-
-      </div>
-    </div>
-
-    <footer class="footer-actions">
-      <a href="compra-lista.html" class="btn btn-ghost">Cancelar</a>
-      <div class="grow"></div>
-      <span class="text-sm text-muted" id="selection-info">Elegí una OC para continuar.</span>
-      <a href="compra-verificar.html" class="btn cta-primary" id="btn-continuar" aria-disabled="true" style="opacity: 0.5; pointer-events: none;">
-        Continuar → Cargar factura
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-      </a>
-    </footer>
-
-  </main>
-
+<div class="placeholder-card">
+  <div class="placeholder-icon">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  </div>
+  <h1>Próximamente</h1>
+  <p>
+    Esta pantalla todavía está en desarrollo. La estamos integrando con el
+    sistema base. Cuando esté lista, vamos a avisarte.
+  </p>
+  <div class="actions">
+    <a href="javascript:history.back()" class="btn">← Volver</a>
+    <a href="/supervisor/dashboard.html" class="btn btn-primary">Ir al dashboard</a>
+  </div>
 </div>
-
-<script type="module">
-  import { requireRol } from '../shared/auth-guard.js';
-  requireRol('supervisor', 'admin');
-
-  import { ocsHistorico, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
-  import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
-
-  // OCs elegibles: cerrada, enviada_a_proveedor, parcialmente_recibida
-  const ESTADOS_ELEG = new Set(['cerrada', 'enviada_a_proveedor', 'parcialmente_recibida']);
-  const elegibles = ocsHistorico.filter(oc => ESTADOS_ELEG.has(oc.estado));
-
-  document.getElementById('oc-count').textContent = elegibles.length;
-
-  const ESTADO_BADGE = {
-    cerrada:                { cls: 'badge-cerrada',              txt: 'Cerrada' },
-    enviada_a_proveedor:    { cls: 'badge-enviada-proveedor',    txt: 'Enviada' },
-    parcialmente_recibida:  { cls: 'badge-parcial',              txt: 'Parcial' }
-  };
-
-  const host = document.getElementById('oc-options');
-
-  // Detectar OC preseleccionada por ?oc=
-  const preOcParam = (new URLSearchParams(window.location.search)).get('oc');
-  const preOcId = preOcParam ? preOcParam.toLowerCase() : null;
-
-  function ocHTML(oc) {
-    const badge = ESTADO_BADGE[oc.estado] || ESTADO_BADGE.cerrada;
-    const prechecked = preOcId === oc.id.toLowerCase();
-    const comprasInfo = oc.comprasCount > 0
-      ? `<span class="oc-compras-count has" title="Ya tiene ${oc.comprasCount} compra${oc.comprasCount > 1 ? 's' : ''} asociada${oc.comprasCount > 1 ? 's' : ''}">${oc.comprasCount} compra${oc.comprasCount > 1 ? 's' : ''}</span>`
-      : `<span class="oc-compras-count">sin compras</span>`;
-    return `
-      <label class="oc-option ${prechecked ? 'selected' : ''}" data-oc-id="${oc.id}">
-        <input type="radio" name="oc-select" value="${oc.id}" ${prechecked ? 'checked' : ''} />
-        <div class="oc-main">
-          <div class="oc-top">
-            <span class="oc-num">${oc.numero}</span>
-            <span class="badge ${badge.cls}">${badge.txt}</span>
-            ${comprasInfo}
-          </div>
-          <div class="oc-proveedor">${oc.proveedorNombre}</div>
-          <div class="oc-meta">
-            <span>Fecha: <strong>${fmtFecha(oc.fechaCreacion)}</strong></span>
-            <span>Unidades: <strong>${oc.unidadesTotal.toLocaleString('es-PY')}</strong></span>
-            <span>Total: <strong>Gs. ${fmtGs(oc.totalGs)}</strong></span>
-          </div>
-        </div>
-      </label>
-    `;
-  }
-
-  if (elegibles.length === 0) {
-    host.innerHTML = `
-      <div class="empty-state">
-        <h3>No hay OCs elegibles</h3>
-        <p>Todavía no hay OCs cerradas o enviadas al proveedor para registrar compras.</p>
-      </div>
-    `;
-  } else {
-    host.innerHTML = elegibles.map(ocHTML).join('');
-  }
-
-  // Estado local
-  let seleccion = preOcId && elegibles.some(oc => oc.id === preOcId) ? preOcId : null;
-  const btnContinuar = document.getElementById('btn-continuar');
-  const info = document.getElementById('selection-info');
-
-  function actualizar() {
-    // Quitar highlight de todas
-    document.querySelectorAll('.oc-option').forEach(el => el.classList.remove('selected'));
-    if (seleccion && seleccion !== 'sin-oc') {
-      const el = document.querySelector(`.oc-option[data-oc-id="${seleccion}"]`);
-      if (el) el.classList.add('selected');
-      const oc = elegibles.find(o => o.id === seleccion);
-      info.textContent = `OC ${oc ? oc.numero : ''} seleccionada. La factura se precargará con sus líneas.`;
-    } else if (seleccion === 'sin-oc') {
-      info.textContent = 'Compra sin OC vinculada. Vas a tener que cargar las líneas manualmente.';
-    } else {
-      info.textContent = 'Elegí una OC (o "Sin OC vinculada") para continuar.';
-    }
-
-    const habilitado = seleccion !== null;
-    btnContinuar.style.opacity = habilitado ? '' : '0.5';
-    btnContinuar.style.pointerEvents = habilitado ? '' : 'none';
-    btnContinuar.setAttribute('aria-disabled', habilitado ? 'false' : 'true');
-    if (habilitado) {
-      btnContinuar.href = seleccion === 'sin-oc'
-        ? 'compra-verificar.html?sin_oc=1'
-        : `compra-verificar.html?oc=${encodeURIComponent(seleccion)}`;
-    } else {
-      btnContinuar.removeAttribute('href');
-    }
-  }
-
-  document.querySelectorAll('input[name="oc-select"]').forEach(r => {
-    r.addEventListener('change', (e) => {
-      seleccion = e.target.value;
-      actualizar();
-    });
-  });
-
-  actualizar();
-
-  // App shell
-  const app = document.getElementById('app');
-  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
-    app.classList.toggle('sidebar-collapsed');
-  });
-  initSidebarClickOutside();
-
-  initAvatarMenu({
-    avatarBtnSelector: '#avatar-btn',
-    logoutHref: '../logout.html',
-    perfilHref: null,
-    userName: 'Shirley',
-    userRole: 'supervisor',
-    userLocal: null,
-  });
-
-  updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
-</script>
 
 </body>
 </html>

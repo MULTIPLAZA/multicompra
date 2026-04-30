@@ -1,303 +1,86 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MultiCompra — Config · Parámetros</title>
-  <script>
-    (function () {
-      try {
-        var t = localStorage.getItem('multicompra:theme');
-        if (!t) {
-          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
-    })();
-  </script>
-  <link rel="stylesheet" href="../../shared/styles.css" />
-  <link rel="stylesheet" href="config-shared.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<title>MultiCompra — Próximamente</title>
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('multicompra:theme');
+      if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  })();
+</script>
+<link rel="stylesheet" href="/shared/styles.css" />
+<style>
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    background: var(--bg);
+  }
+  .placeholder-card {
+    max-width: 560px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 56px 48px;
+    box-shadow: var(--shadow);
+  }
+  .placeholder-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .placeholder-card h1 {
+    margin: 0 0 12px;
+    color: var(--text-strong);
+    font-size: var(--fs-xl);
+  }
+  .placeholder-card p {
+    color: var(--text-muted);
+    margin: 0 0 24px;
+    line-height: 1.5;
+  }
+  .placeholder-card .actions {
+    display: flex;
+    gap: var(--sp-2);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>
 </head>
 <body>
 
-  <header class="admin-header" role="banner">
-    <div class="logo"><span class="logo-text">MultiCompra</span></div>
-    <div class="admin-title">Config · Parámetros</div>
-    <div class="user-chip" id="avatar-btn" tabindex="0" role="button" aria-label="Menú de usuario" aria-haspopup="true" aria-expanded="false">
-      <span class="avatar" aria-hidden="true">DG</span>
-      <span class="user-name">Diego</span>
-    </div>
-  </header>
-
-  <div class="admin-layout">
-
-    <nav class="admin-bottombar" aria-label="Navegación principal">
-      <a class="bb-item" href="../dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
-      <a class="bb-item" href="../reportes/op-vs-compra-vs-venta.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Reportes</span></a>
-      <a class="bb-item active" href="locales.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Config</span></a>
-      <a class="bb-item" href="../../logout.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Salir</span></a>
-    </nav>
-
-    <main class="admin-main" role="main">
-
-      <nav class="config-tabs" aria-label="Secciones de configuración">
-        <a class="config-tab" href="locales.html">Locales</a>
-        <a class="config-tab" href="cajeras.html">Cajeras</a>
-        <a class="config-tab" href="proveedores.html">Proveedores</a>
-        <a class="config-tab active" href="parametros.html" aria-current="page">Parámetros</a>
-      </nav>
-
-      <section class="page-head">
-        <div>
-          <h1 class="page-title">Parámetros del sistema</h1>
-          <p class="page-sub">Valores globales que afectan cómo cajeras y supervisor trabajan. Cambiarlos impacta en las validaciones y alertas del resto de la app.</p>
-        </div>
-      </section>
-
-      <form id="form-params">
-
-        <!-- OP ------------------------------------------------------------- -->
-        <section class="param-section" aria-label="Parámetros de OP">
-          <h3>Órdenes de Pedido (OP)</h3>
-          <p class="section-sub">Disciplina de pedido de las cajeras.</p>
-
-          <div class="param-list">
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-dia">Día fijo del protocolo</label>
-                <div class="param-control">
-                  <select class="select" id="p-dia" name="diaFijoProtocolo">
-                    <option value="lunes">Lunes</option>
-                    <option value="martes">Martes</option>
-                    <option value="miercoles">Miércoles</option>
-                    <option value="jueves">Jueves</option>
-                    <option value="viernes">Viernes</option>
-                  </select>
-                </div>
-              </div>
-              <span class="param-row-hint">Día de la semana en que las cajeras deberían enviar su OP semanal sin marcar excepción.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-min-motivo">Mínimo de caracteres en motivo de excepción</label>
-                <div class="param-control">
-                  <input class="input" id="p-min-motivo" type="number" min="10" max="200" step="1" name="minCaracteresMotivoExcepcion" />
-                </div>
-              </div>
-              <span class="param-row-hint">Número mínimo de caracteres al marcar OP como excepción (fuera del día fijo). Decisión 29: default 30.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-permitir-exc">Permitir OPs de excepción</label>
-                <div class="param-control">
-                  <label class="switch">
-                    <input type="checkbox" id="p-permitir-exc" name="permitirExcepciones" />
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-              <span class="param-row-hint">Si está apagado, las cajeras solo pueden cargar OP el día fijo. Recomendado: encendido (flexibilidad para urgencias).</span>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- OC ------------------------------------------------------------- -->
-        <section class="param-section" aria-label="Parámetros de OC">
-          <h3>Órdenes de Compra (OC)</h3>
-          <p class="section-sub">Reglas del armado y cierre de OC por parte del supervisor.</p>
-
-          <div class="param-list">
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-snapshot">Vigencia del snapshot de stock antes de refresh obligatorio</label>
-                <div class="param-control">
-                  <input class="input" id="p-snapshot" type="number" min="5" max="180" step="5" name="snapshotMaxMinutos" />
-                  <span class="text-xs text-muted">minutos</span>
-                </div>
-              </div>
-              <span class="param-row-hint">Si el snapshot tiene más de este tiempo, al cerrar OC se obliga a refrescar. Decisión 33: default 30 min.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-valida-total">Validar total factura = suma de líneas</label>
-                <div class="param-control">
-                  <label class="switch">
-                    <input type="checkbox" id="p-valida-total" name="validarTotalFacturaVsLineas" />
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-              <span class="param-row-hint">Si está encendido, al confirmar Compra se bloquea si total_factura ≠ suma_líneas salvo que el supervisor escriba una justificación. Decisión 37.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-justif-dif">Exigir justificación en líneas con diferencia</label>
-                <div class="param-control">
-                  <label class="switch">
-                    <input type="checkbox" id="p-justif-dif" name="exigirJustificacionLineaDiferencia" />
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-              <span class="param-row-hint">Si está encendido, cada línea donde cantidad_recibida ≠ cantidad_esperada requiere motivo tipificado. Decisión 38.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-sug-default">Usar sugerido del sistema como default al cambiar a "Comprar"</label>
-                <div class="param-control">
-                  <label class="switch">
-                    <input type="checkbox" id="p-sug-default" name="usarSugeridoComoDefaultComprar" />
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-              </div>
-              <span class="param-row-hint">Si está encendido, al cambiar un pedido a "Comprar" la cantidad arranca con el sugerido del sistema base (calculado por rotación y stock). Si el producto × local no tiene historial, arranca en 0. Decisión 40.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-umbral-sobre">Umbral de alerta "sobrepedido"</label>
-                <div class="param-control">
-                  <input class="input" id="p-umbral-sobre" type="number" min="0" max="200" step="5" name="umbralSobrepedidoPct" />
-                  <span class="text-xs text-muted">%</span>
-                </div>
-              </div>
-              <span class="param-row-hint">Cuando el pedido de la cajera supera al sugerido del sistema por más de este porcentaje, aparece el chip ámbar "Sobrepedido" en la planilla de OC. El chip "Subpedido" (azul) se dispara con la mitad de este umbral hacia abajo. Decisión 40: default 20%.</span>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- Alertas -------------------------------------------------------- -->
-        <section class="param-section" aria-label="Parámetros de alertas">
-          <h3>Alertas</h3>
-          <p class="section-sub">Umbrales que disparan alertas en el dashboard del admin.</p>
-
-          <div class="param-list">
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-ops-viejas">OPs pendientes — umbral de antigüedad</label>
-                <div class="param-control">
-                  <input class="input" id="p-ops-viejas" type="number" min="1" max="30" step="1" name="opsViejasUmbralDias" />
-                  <span class="text-xs text-muted">días</span>
-                </div>
-              </div>
-              <span class="param-row-hint">A partir de este número de días sin ser agrupadas, la OP cuenta como "vieja" y dispara alerta.</span>
-            </div>
-
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-excep-cajera">Excepciones por cajera — umbral para alerta</label>
-                <div class="param-control">
-                  <input class="input" id="p-excep-cajera" type="number" min="1" max="20" step="1" name="excepcionesCajeraUmbral" />
-                  <span class="text-xs text-muted">en el mes</span>
-                </div>
-              </div>
-              <span class="param-row-hint">Cajera que supera este número de OPs de excepción en el mes aparece marcada en ámbar en el dashboard.</span>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- Notificaciones ------------------------------------------------- -->
-        <section class="param-section" aria-label="Parámetros de notificaciones">
-          <h3>Notificaciones</h3>
-          <p class="section-sub">Placeholder — integración de email real pendiente.</p>
-
-          <div class="param-list">
-            <div class="param-row">
-              <div class="param-row-head">
-                <label class="param-row-label" for="p-email-admin">Email del admin para alertas críticas</label>
-                <div class="param-control">
-                  <input class="input" id="p-email-admin" type="email" style="min-width: 240px;" name="emailAdmin" />
-                </div>
-              </div>
-              <span class="param-row-hint">Destinatario de las notificaciones críticas (Compras con error de sincronización, OPs viejas, etc.).</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- Save bar ------------------------------------------------------- -->
-        <section class="param-save-bar">
-          <span class="status-pill" id="status-pill">Cambios guardados.</span>
-          <button type="button" class="btn btn-secondary" id="btn-reset">Descartar cambios</button>
-          <button type="button" class="btn btn-primary" id="btn-save">Guardar cambios</button>
-        </section>
-
-      </form>
-
-    </main>
+<div class="placeholder-card">
+  <div class="placeholder-icon">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
   </div>
+  <h1>Próximamente</h1>
+  <p>
+    Esta pantalla todavía está en desarrollo. La estamos integrando con el
+    sistema base. Cuando esté lista, vamos a avisarte.
+  </p>
+  <div class="actions">
+    <a href="javascript:history.back()" class="btn">← Volver</a>
+    <a href="/supervisor/dashboard.html" class="btn btn-primary">Ir al dashboard</a>
+  </div>
+</div>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script type="module">
-    import { requireRol } from '../../shared/auth-guard.js';
-    requireRol('admin');
-
-    import { parametros } from '../../shared/mock-data.js';
-    import { initAvatarMenu } from '../../shared/ui.js';
-
-    // Precarga valores desde mock
-    function load() {
-      document.getElementById('p-dia').value               = parametros.op.diaFijoProtocolo;
-      document.getElementById('p-min-motivo').value        = parametros.op.minCaracteresMotivoExcepcion;
-      document.getElementById('p-permitir-exc').checked    = !!parametros.op.permitirExcepciones;
-
-      document.getElementById('p-snapshot').value          = parametros.oc.snapshotMaxMinutos;
-      document.getElementById('p-valida-total').checked    = !!parametros.oc.validarTotalFacturaVsLineas;
-      document.getElementById('p-justif-dif').checked      = !!parametros.oc.exigirJustificacionLineaDiferencia;
-      document.getElementById('p-sug-default').checked     = !!parametros.oc.usarSugeridoComoDefaultComprar;
-      document.getElementById('p-umbral-sobre').value      = (parametros.oc.umbralSobrepedidoPct != null ? parametros.oc.umbralSobrepedidoPct : 20);
-
-      document.getElementById('p-ops-viejas').value        = parametros.alertas.opsViejasUmbralDias;
-      document.getElementById('p-excep-cajera').value      = parametros.alertas.excepcionesCajeraUmbral;
-
-      document.getElementById('p-email-admin').value       = parametros.notificaciones.emailAdmin || '';
-    }
-    load();
-
-    const pill = document.getElementById('status-pill');
-    document.getElementById('btn-save').addEventListener('click', () => {
-      pill.classList.add('visible');
-      showToast('Parámetros guardados correctamente.');
-      setTimeout(() => pill.classList.remove('visible'), 3000);
-    });
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      load();
-      showToast('Cambios descartados.');
-    });
-
-    // Toast + theme
-    const toast = document.getElementById('toast');
-    let toastTimer;
-    function showToast(msg) {
-      clearTimeout(toastTimer);
-      toast.textContent = msg;
-      toast.classList.add('visible');
-      toastTimer = setTimeout(() => toast.classList.remove('visible'), 2400);
-    }
-
-    initAvatarMenu({
-      avatarBtnSelector: '#avatar-btn',
-      logoutHref: '../../logout.html',
-      perfilHref: null,
-      userName: 'Diego',
-      userRole: 'admin',
-      userLocal: null,
-    });
-  </script>
 </body>
 </html>
