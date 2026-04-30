@@ -374,7 +374,9 @@
            Si la cajera tiene un draft en localStorage o seed, mostramos
            resumen y CTA para continuar cargando.
            ============================================================= -->
-      <section class="state-card state-borrador" id="state-main">
+      <!-- El JS más abajo elige qué tarjeta mostrar (borrador / sin OP)
+           según haya o no draft real en localStorage -->
+      <section class="state-card state-borrador" id="state-main" hidden>
         <div class="state-icon info" aria-hidden="true">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -385,11 +387,27 @@
         </div>
         <h1 class="state-title">Tenés una OP en borrador</h1>
         <p class="state-sub" id="draft-summary">
-          Tu pedido tiene <strong>4 productos</strong> (<strong>6 unidades</strong> totales). Todavía no se envió a Shirley.
+          Tu pedido tiene <strong>0 productos</strong>. Todavía no se envió a Shirley.
         </p>
         <a href="op-nueva.html" class="btn btn-big btn-primary">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
           Continuar cargando
+        </a>
+      </section>
+
+      <section class="state-card state-empty" id="state-empty" hidden>
+        <div class="state-icon" aria-hidden="true">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h1 class="state-title">No tenés ninguna OP pendiente</h1>
+        <p class="state-sub">Arrancá una nueva Orden de Pedido cuando te haga falta reponer.</p>
+        <a href="op-nueva.html" class="btn btn-big btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Crear nueva OP
         </a>
       </section>
 
@@ -524,29 +542,29 @@ VARIANTE 3 — OP DEVUELTA POR SHIRLEY (ciclo educativo)
     } catch (_) {}
   })();
 
-  // Draft summary: leemos localStorage o usamos seed del op-nueva.html
+  // Draft real: si la cajera tiene una OP a medio cargar en localStorage,
+  // mostramos la card "Tenés una OP en borrador". Sino, mostramos
+  // "No tenés ninguna OP pendiente" (estado limpio).
   const DRAFT_KEY = 'multicompra:draft:op';
   let draft = null;
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (raw) draft = JSON.parse(raw);
   } catch (e) {}
-  if (!draft || !Array.isArray(draft.lineas)) {
-    // Seed idéntico al de op-nueva.html
-    draft = {
-      lineas: [
-        { productoId: 'p01', cantidad: 3 },
-        { productoId: 'p02', cantidad: 1 },
-        { productoId: 'p06', cantidad: 1 },
-        { productoId: 'p09', cantidad: 1 }
-      ]
-    };
-  }
 
-  const prods = draft.lineas.length;
-  const unid = draft.lineas.reduce((s, l) => s + (l.cantidad || 0), 0);
-  document.getElementById('draft-summary').innerHTML =
-    `Tu pedido tiene <strong>${prods} producto${prods === 1 ? '' : 's'}</strong> (<strong>${unid} unidad${unid === 1 ? '' : 'es'}</strong> totales). Todavía no se envió a Shirley.`;
+  const stateBorrador = document.getElementById('state-main');
+  const stateEmpty = document.getElementById('state-empty');
+  const tieneDraft = draft && Array.isArray(draft.lineas) && draft.lineas.length > 0;
+
+  if (tieneDraft) {
+    const prods = draft.lineas.length;
+    const unid = draft.lineas.reduce((s, l) => s + (l.cantidad || 0), 0);
+    document.getElementById('draft-summary').innerHTML =
+      `Tu pedido tiene <strong>${prods} producto${prods === 1 ? '' : 's'}</strong> (<strong>${unid} unidad${unid === 1 ? '' : 'es'}</strong> totales). Todavía no se envió a Shirley.`;
+    stateBorrador.removeAttribute('hidden');
+  } else {
+    stateEmpty.removeAttribute('hidden');
+  }
 
   // Historial reciente — top 4
   const listaHist = document.getElementById('historial-list');
