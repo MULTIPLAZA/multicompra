@@ -890,6 +890,13 @@
             loginAt: new Date().toISOString()
           };
           try { localStorage.setItem('multicompra:user', JSON.stringify(user)); } catch (_) {}
+          // Admin (Diego) NO pasa por el splash de prefetch — entra directo a su
+          // dashboard. No necesita el catálogo de productos cargado en memoria,
+          // los reportes hacen su propia consulta cuando se abren.
+          if (user.rol === 'admin') {
+            redirigirSegunRol(user.rol);
+            return;
+          }
           await mostrarSplashYPrefetchar(user);
           return;
         }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MultiCompra — Admin</title>
+  <title>MultiCompra — Panel de administración</title>
   <script>
     (function () {
       try {
@@ -23,6 +23,8 @@
       flex-direction: column;
       background: var(--bg);
     }
+
+    /* ── Topbar ────────────────────────────────────────────────────────── */
     .topbar {
       display: flex;
       align-items: center;
@@ -32,10 +34,11 @@
       background: var(--bg-elev);
     }
     .topbar .brand {
-      font-size: var(--fs-lg);
+      font-size: var(--fs-md);
       font-weight: 800;
       color: var(--primary);
       letter-spacing: -0.3px;
+      white-space: nowrap;
     }
     .topbar .grow { flex: 1; }
     .topbar .user-chip {
@@ -45,6 +48,7 @@
       padding: var(--sp-1) var(--sp-3);
       border-radius: var(--radius-pill);
       background: var(--bg-elev-2);
+      font-size: var(--fs-sm);
     }
     .topbar .avatar {
       width: 28px;
@@ -58,50 +62,178 @@
       font-weight: 700;
       font-size: var(--fs-xs);
     }
+    .topbar .btn-logout {
+      height: 32px;
+      padding: 0 var(--sp-3);
+      font-size: var(--fs-sm);
+    }
 
-    .admin-main {
+    @media (max-width: 600px) {
+      .topbar { padding: var(--sp-2) var(--sp-3); gap: var(--sp-2); }
+      .topbar .brand { font-size: var(--fs-sm); }
+      .topbar .user-chip span:not(.avatar) { display: none; }
+      .topbar .btn-logout { padding: 0 var(--sp-2); }
+    }
+
+    /* ── Main ──────────────────────────────────────────────────────────── */
+    main {
       flex: 1;
-      max-width: 1200px;
+      max-width: 1280px;
       width: 100%;
       margin: 0 auto;
-      padding: var(--sp-6) var(--sp-5);
+      padding: var(--sp-5) var(--sp-5);
     }
     .admin-hello {
-      margin-bottom: var(--sp-6);
+      margin-bottom: var(--sp-5);
     }
     .admin-hello h1 {
       font-size: var(--fs-2xl);
-      margin: 0 0 var(--sp-2);
+      margin: 0 0 var(--sp-1);
       color: var(--text-strong);
+      letter-spacing: -0.5px;
     }
-    .admin-hello p {
+    .admin-hello .subtitle {
       color: var(--text-muted);
       margin: 0;
       font-size: var(--fs-md);
     }
+    @media (max-width: 600px) {
+      main { padding: var(--sp-4) var(--sp-3); }
+      .admin-hello h1 { font-size: var(--fs-xl); }
+    }
 
+    /* ── KPI hero (los grandes destacados) ─────────────────────────────── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-3);
+    }
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr 1fr; }
+      .hero-card { grid-column: 1 / -1; }
+    }
+    @media (max-width: 600px) {
+      .hero-grid { grid-template-columns: 1fr; }
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, var(--primary) 0%, #14b8a6 100%);
+      color: #fff;
+      padding: var(--sp-5);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-4);
+    }
+    .hero-card .hero-icon {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hero-card .hero-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .hero-card .hero-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+    .hero-card .hero-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.05;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      word-break: break-word;
+    }
+    .hero-card .hero-sub {
+      font-size: var(--fs-sm);
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .stat-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-4);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-card .stat-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-strong);
+      font-family: var(--font-mono, ui-monospace, monospace);
+      line-height: 1.1;
+      margin: var(--sp-1) 0 2px;
+    }
+    .stat-card .stat-sub {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+    .stat-card.accent-warn .stat-value { color: var(--warning-text, var(--warning)); }
+    .stat-card.accent-info .stat-value { color: var(--info); }
+    .stat-card.accent-danger .stat-value { color: var(--danger); }
+
+    /* ── KPIs secundarios (chicos en grilla 4 columnas) ────────────────── */
+    .kpis-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-6);
+    }
+    @media (max-width: 900px) {
+      .kpis-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .kpis-row { grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); }
+      .stat-card { padding: var(--sp-3); }
+      .stat-card .stat-value { font-size: 22px; }
+    }
+
+    /* ── Secciones (Reportes / Config / Tools) ─────────────────────────── */
     .panel-section {
-      margin-bottom: var(--sp-8);
+      margin-bottom: var(--sp-6);
     }
     .panel-section h2 {
       font-size: var(--fs-md);
       text-transform: uppercase;
       letter-spacing: 0.6px;
       color: var(--text-muted);
-      margin: 0 0 var(--sp-4);
+      margin: 0 0 var(--sp-3);
       font-weight: 700;
     }
-
     .card-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: var(--sp-4);
+      gap: var(--sp-3);
     }
+    @media (max-width: 480px) {
+      .card-grid { grid-template-columns: 1fr; }
+    }
+
     .admin-card {
       background: var(--bg-elev);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: var(--sp-5);
+      padding: var(--sp-4);
       text-decoration: none;
       color: inherit;
       transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
@@ -119,8 +251,8 @@
       pointer-events: none;
     }
     .admin-card-icon {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 10px;
       background: var(--primary-soft);
       color: var(--primary);
@@ -131,14 +263,6 @@
     .admin-card.danger .admin-card-icon {
       background: var(--danger-soft);
       color: var(--danger);
-    }
-    .admin-card.warn .admin-card-icon {
-      background: var(--warning-soft);
-      color: var(--warning-text, var(--warning));
-    }
-    .admin-card.info .admin-card-icon {
-      background: var(--info-soft);
-      color: var(--info);
     }
     .admin-card h3 {
       margin: 0;
@@ -162,75 +286,159 @@
       margin-top: var(--sp-1);
     }
 
-    .topbar .btn-logout {
-      height: 32px;
-      padding: 0 var(--sp-3);
-      font-size: var(--fs-sm);
+    /* Loading shimmer */
+    .skel {
+      display: inline-block;
+      width: 80%;
+      height: 28px;
+      background: linear-gradient(90deg, var(--bg-elev-2) 0%, var(--border) 50%, var(--bg-elev-2) 100%);
+      background-size: 200% 100%;
+      animation: skel 1.4s ease-in-out infinite;
+      border-radius: 4px;
     }
+    @keyframes skel {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Banner si la consulta a Supabase falla */
+    .err-banner {
+      background: var(--danger-soft);
+      color: var(--danger-text, var(--danger));
+      border: 1px solid var(--danger);
+      border-radius: var(--radius);
+      padding: var(--sp-3) var(--sp-4);
+      margin-bottom: var(--sp-4);
+      font-size: var(--fs-sm);
+      display: none;
+    }
+    .err-banner.visible { display: block; }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <span class="brand">MultiCompra · Administración</span>
+  <span class="brand">MultiCompra · Admin</span>
   <span class="grow"></span>
   <span class="user-chip">
     <span class="avatar" id="avatar">DG</span>
     <span id="user-nombre">Hola Diego</span>
   </span>
-  <a href="/logout.html" class="btn btn-secondary btn-logout">Cerrar sesión</a>
+  <a href="/logout.html" class="btn btn-secondary btn-logout">Salir</a>
 </div>
 
-<main class="admin-main">
+<main>
 
   <div class="admin-hello">
-    <h1>Panel de administración</h1>
-    <p>Reportes y métricas sobre la operación de compras y pedidos de la cadena.</p>
+    <h1>Panel global</h1>
+    <p class="subtitle">Métricas en vivo de la operación de compras y pedidos.</p>
   </div>
 
-  <!-- Reportes -->
+  <div class="err-banner" id="err-banner"></div>
+
+  <!-- ── KPI hero (3 cards) ───────────────────────────────────────────── -->
+  <div class="hero-grid">
+
+    <a href="/admin/reportes/stock-muerto-evitado.html" class="hero-card" style="text-decoration:none;">
+      <div class="hero-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="hero-label">💰 Stock muerto evitado</div>
+        <div class="hero-value" id="hero-ahorrado"><span class="skel" style="width:60%;"></span></div>
+        <div class="hero-sub" id="hero-ahorrado-sub">Calculando...</div>
+      </div>
+    </a>
+
+    <div class="stat-card accent-info">
+      <span class="stat-label">$ Comprado al proveedor</span>
+      <span class="stat-value" id="kpi-comprado"><span class="skel"></span></span>
+      <span class="stat-sub" id="kpi-comprado-sub">Total OCs cerradas</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label">OCs cerradas</span>
+      <span class="stat-value" id="kpi-ocs"><span class="skel"></span></span>
+      <span class="stat-sub">Histórico</span>
+    </div>
+
+  </div>
+
+  <!-- ── KPIs secundarios ─────────────────────────────────────────────── -->
+  <div class="kpis-row">
+
+    <div class="stat-card">
+      <span class="stat-label">OPs procesadas</span>
+      <span class="stat-value" id="kpi-ops-proc"><span class="skel"></span></span>
+      <span class="stat-sub">Aprobadas / devueltas / en OC</span>
+    </div>
+
+    <div class="stat-card accent-warn">
+      <span class="stat-label">OPs pendientes</span>
+      <span class="stat-value" id="kpi-ops-pend"><span class="skel"></span></span>
+      <span class="stat-sub">Esperando supervisor</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label">OCs abiertas</span>
+      <span class="stat-value" id="kpi-ocs-abi"><span class="skel"></span></span>
+      <span class="stat-sub">Sin cerrar todavía</span>
+    </div>
+
+    <div class="stat-card accent-warn">
+      <span class="stat-label">Solicitudes alta</span>
+      <span class="stat-value" id="kpi-altas"><span class="skel"></span></span>
+      <span class="stat-sub">Pendientes de aprobar</span>
+    </div>
+
+  </div>
+
+  <!-- ── Reportes ─────────────────────────────────────────────────────── -->
   <section class="panel-section">
     <h2>Reportes</h2>
     <div class="card-grid">
 
+      <a href="/admin/reportes/stock-muerto-evitado.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3>Stock Muerto Evitado</h3>
+        <p>Detalle por producto del ahorro al reponer desde DEPOSITO en lugar de comprar al proveedor.</p>
+      </a>
+
       <div class="admin-card disabled">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         </div>
         <h3>OP vs Compra vs Venta</h3>
-        <p>Comparar lo pedido por las cajeras vs comprado al proveedor vs vendido.</p>
+        <p>Comparar lo pedido por las cajeras vs comprado al proveedor vs vendido al público.</p>
         <span class="badge-soon">Próximamente</span>
       </div>
 
       <div class="admin-card disabled">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
         <h3>Reposición desde central</h3>
         <p>Cuánto se reponen los locales desde el DEPOSITO sin comprar al proveedor.</p>
         <span class="badge-soon">Próximamente</span>
       </div>
 
-      <a href="/admin/reportes/stock-muerto-evitado.html" class="admin-card info">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <h3>Stock Muerto Evitado</h3>
-        <p>Cuánto dinero ahorró Shirley al reponer desde el DEPOSITO en lugar de comprar al proveedor. Por mes y por producto.</p>
-      </a>
-
       <div class="admin-card disabled">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         </div>
         <h3>Devoluciones</h3>
-        <p>OPs devueltas por cajera con sus motivos. Detección de patrones.</p>
+        <p>OPs devueltas por cajera con motivos. Detección de patrones.</p>
         <span class="badge-soon">Próximamente</span>
       </div>
 
       <div class="admin-card disabled">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
         <h3>OPs fuera de protocolo</h3>
         <p>OPs marcadas como excepción por las cajeras (con motivo).</p>
@@ -240,61 +448,17 @@
     </div>
   </section>
 
-  <!-- Configuración -->
-  <section class="panel-section">
-    <h2>Configuración</h2>
-    <div class="card-grid">
-
-      <div class="admin-card disabled">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3>Cajeras</h3>
-        <p>Alta, baja y modificación de cajeras + asignación a locales.</p>
-        <span class="badge-soon">Próximamente</span>
-      </div>
-
-      <div class="admin-card disabled">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <h3>Locales</h3>
-        <p>Listado de locales, datos de contacto, estado activo.</p>
-        <span class="badge-soon">Próximamente</span>
-      </div>
-
-      <div class="admin-card disabled">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </div>
-        <h3>Parámetros del sistema</h3>
-        <p>Umbral de OPs viejas, días entre compras, etc.</p>
-        <span class="badge-soon">Próximamente</span>
-      </div>
-
-      <div class="admin-card disabled">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-        </div>
-        <h3>Proveedores</h3>
-        <p>Catálogo de proveedores con datos de contacto y RUC.</p>
-        <span class="badge-soon">Próximamente</span>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Herramientas -->
+  <!-- ── Herramientas ─────────────────────────────────────────────────── -->
   <section class="panel-section">
     <h2>Herramientas</h2>
     <div class="card-grid">
 
       <a href="/admin/borrar-datos-prueba.html" class="admin-card danger">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </div>
         <h3>Borrar datos de prueba</h3>
-        <p>Elimina OPs, OCs y caches de testeos. Útil al arrancar de cero.</p>
+        <p>Limpia OPs/OCs/compras de testeos. Útil al arrancar de cero.</p>
       </a>
 
     </div>
@@ -306,12 +470,126 @@
   import { requireRol, getUserActual } from '/shared/auth-guard.js';
   requireRol('admin');
 
-  const user = getUserActual();
-  if (user) {
-    const ini = user.iniciales || (user.nombre || 'AD').slice(0, 2).toUpperCase();
-    document.getElementById('avatar').textContent = ini;
-    document.getElementById('user-nombre').textContent = 'Hola ' + (user.nombre || 'Admin');
+  import { listarOCs, listarOPs, obtenerOC, obtenerLineasOP, listarSolicitudesAlta } from '/shared/supabase.js';
+
+  // Avatar/saludo
+  const u = getUserActual();
+  if (u) {
+    document.getElementById('avatar').textContent = u.iniciales || (u.nombre || 'DG').slice(0, 2).toUpperCase();
+    document.getElementById('user-nombre').textContent = 'Hola ' + (u.nombre || 'Diego');
   }
+
+  function fmtGs(n) {
+    return 'Gs. ' + Math.round(Number(n) || 0).toLocaleString('es-PY');
+  }
+  function fmtNum(n) {
+    return (Number(n) || 0).toLocaleString('es-PY');
+  }
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+  function showError(msg) {
+    const banner = document.getElementById('err-banner');
+    banner.textContent = '⚠ ' + msg;
+    banner.classList.add('visible');
+  }
+
+  async function cargarKPIs() {
+    const ESTADOS_CERRADOS = ['cerrada', 'enviada_a_proveedor', 'parcialmente_recibida', 'recibida', 'cerrada_con_faltante'];
+
+    // 1) OCs (todas — para clasificar abiertas vs cerradas)
+    let ocs = [];
+    try {
+      const r = await listarOCs({ limit: 500 });
+      if (r.ok && Array.isArray(r.data)) ocs = r.data;
+    } catch (e) {
+      showError('No pude consultar OCs: ' + e.message);
+    }
+
+    const ocsCerradas = ocs.filter(o => ESTADOS_CERRADOS.includes(o.estado));
+    const ocsAbiertas = ocs.filter(o => ['abierta', 'en_edicion'].includes(o.estado));
+    setVal('kpi-ocs', fmtNum(ocsCerradas.length));
+    setVal('kpi-ocs-abi', fmtNum(ocsAbiertas.length));
+
+    // $ Total comprado al proveedor (suma total_gs de OCs cerradas)
+    const totalComprado = ocsCerradas.reduce((s, o) => s + (Number(o.total_gs) || 0), 0);
+    setVal('kpi-comprado', fmtGs(totalComprado));
+
+    // 2) Stock Muerto Evitado — calcular sobre OCs cerradas (mismo cálculo que el reporte detallado)
+    let totalAhorrado = 0;
+    let unidadesEvitadas = 0;
+    const opsVistas = new Set();
+    try {
+      for (const ocBase of ocsCerradas) {
+        const r = await obtenerOC(ocBase.numero || ocBase.id);
+        if (!r.ok || !r.data) continue;
+        const oc = r.data;
+        const lineasC = oc.lineas || [];
+        const porProd = new Map();
+        for (const ln of lineasC) {
+          const pid = String(ln.producto_id_erp ?? ln.productoId);
+          if (!porProd.has(pid)) porProd.set(pid, { compro: 0, pidio: 0, costo: Number(ln.costo_unitario) || 0 });
+          porProd.get(pid).compro += Number(ln.cantidad_pedida || ln.cantidad) || 0;
+        }
+        for (const opRef of (oc.ops || [])) {
+          const opNumero = opRef.numero || opRef.id;
+          if (!opNumero || opsVistas.has(opNumero)) continue;
+          opsVistas.add(opNumero);
+          const lr = await obtenerLineasOP(opNumero);
+          if (!lr.ok || !Array.isArray(lr.data)) continue;
+          for (const ln of lr.data) {
+            const pid = String(ln.producto_id_erp ?? ln.productoId);
+            if (!porProd.has(pid)) porProd.set(pid, { compro: 0, pidio: 0, costo: Number(ln.producto_costo) || 0 });
+            const acc = porProd.get(pid);
+            acc.pidio += Number(ln.cantidad) || 0;
+            if (!acc.costo) acc.costo = Number(ln.producto_costo) || 0;
+          }
+        }
+        for (const acc of porProd.values()) {
+          const ev = Math.max(0, acc.pidio - acc.compro);
+          unidadesEvitadas += ev;
+          totalAhorrado += ev * (acc.costo || 0);
+        }
+      }
+    } catch (e) {
+      console.warn('[admin] error calc stock muerto:', e);
+    }
+
+    setVal('hero-ahorrado', fmtGs(totalAhorrado));
+    setVal('hero-ahorrado-sub',
+      ocsCerradas.length > 0
+        ? `Sobre ${fmtNum(ocsCerradas.length)} OCs cerradas · ${fmtNum(unidadesEvitadas)} unidades evitadas`
+        : 'Aún no hay OCs cerradas para calcular'
+    );
+
+    // 3) OPs procesadas vs pendientes
+    try {
+      const procRes = await listarOPs({ limit: 500 });
+      if (procRes.ok && Array.isArray(procRes.data)) {
+        const proc = procRes.data.filter(o => ['aprobada', 'devuelta', 'en_oc'].includes(o.estado_resolucion)).length;
+        setVal('kpi-ops-proc', fmtNum(proc));
+      }
+      const pendRes = await listarOPs({ estadoResolucion: 'sin_resolucion', limit: 500 });
+      if (pendRes.ok && Array.isArray(pendRes.data)) {
+        setVal('kpi-ops-pend', fmtNum(pendRes.data.length));
+      }
+    } catch (e) {
+      console.warn('[admin] error OPs:', e);
+    }
+
+    // 4) Solicitudes de alta pendientes
+    try {
+      const sa = await listarSolicitudesAlta({ estado: 'pendiente', limit: 200 });
+      if (sa.ok && Array.isArray(sa.data)) {
+        setVal('kpi-altas', fmtNum(sa.data.length));
+      }
+    } catch (e) {
+      console.warn('[admin] error altas:', e);
+    }
+  }
+
+  cargarKPIs();
 </script>
 
 </body>
