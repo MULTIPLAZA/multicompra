@@ -1,86 +1,367 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<title>MultiCompra — Próximamente</title>
-<script>
-  (function () {
-    try {
-      var t = localStorage.getItem('multicompra:theme');
-      if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
-    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
-  })();
-</script>
-<link rel="stylesheet" href="/shared/styles.css" />
-<style>
-  body {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--sp-4);
-    background: var(--bg);
-  }
-  .placeholder-card {
-    max-width: 560px;
-    text-align: center;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 56px 48px;
-    box-shadow: var(--shadow);
-  }
-  .placeholder-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
-    background: var(--primary-soft);
-    color: var(--primary);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .placeholder-card h1 {
-    margin: 0 0 12px;
-    color: var(--text-strong);
-    font-size: var(--fs-xl);
-  }
-  .placeholder-card p {
-    color: var(--text-muted);
-    margin: 0 0 24px;
-    line-height: 1.5;
-  }
-  .placeholder-card .actions {
-    display: flex;
-    gap: var(--sp-2);
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Admin</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="/shared/styles.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-5);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev);
+    }
+    .topbar .brand {
+      font-size: var(--fs-lg);
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+    }
+    .topbar .grow { flex: 1; }
+    .topbar .user-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-1) var(--sp-3);
+      border-radius: var(--radius-pill);
+      background: var(--bg-elev-2);
+    }
+    .topbar .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--warning);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--fs-xs);
+    }
+
+    .admin-main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--sp-6) var(--sp-5);
+    }
+    .admin-hello {
+      margin-bottom: var(--sp-6);
+    }
+    .admin-hello h1 {
+      font-size: var(--fs-2xl);
+      margin: 0 0 var(--sp-2);
+      color: var(--text-strong);
+    }
+    .admin-hello p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: var(--fs-md);
+    }
+
+    .panel-section {
+      margin-bottom: var(--sp-8);
+    }
+    .panel-section h2 {
+      font-size: var(--fs-md);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin: 0 0 var(--sp-4);
+      font-weight: 700;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--sp-4);
+    }
+    .admin-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-5);
+      text-decoration: none;
+      color: inherit;
+      transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .admin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: var(--primary);
+    }
+    .admin-card.disabled {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .admin-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .admin-card.danger .admin-card-icon {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+    .admin-card.warn .admin-card-icon {
+      background: var(--warning-soft);
+      color: var(--warning-text, var(--warning));
+    }
+    .admin-card.info .admin-card-icon {
+      background: var(--info-soft);
+      color: var(--info);
+    }
+    .admin-card h3 {
+      margin: 0;
+      font-size: var(--fs-md);
+      color: var(--text-strong);
+    }
+    .admin-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+      line-height: 1.45;
+    }
+    .admin-card .badge-soon {
+      display: inline-block;
+      align-self: flex-start;
+      background: var(--bg-elev-2);
+      color: var(--text-muted);
+      padding: 2px 10px;
+      border-radius: var(--radius-pill);
+      font-size: var(--fs-xs);
+      margin-top: var(--sp-1);
+    }
+
+    .topbar .btn-logout {
+      height: 32px;
+      padding: 0 var(--sp-3);
+      font-size: var(--fs-sm);
+    }
+  </style>
 </head>
 <body>
 
-<div class="placeholder-card">
-  <div class="placeholder-icon">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <polyline points="12 6 12 12 16 14"/>
-    </svg>
-  </div>
-  <h1>Próximamente</h1>
-  <p>
-    Esta pantalla todavía está en desarrollo. La estamos integrando con el
-    sistema base. Cuando esté lista, vamos a avisarte.
-  </p>
-  <div class="actions">
-    <a href="javascript:history.back()" class="btn">← Volver</a>
-    <a href="/supervisor/dashboard.html" class="btn btn-primary">Ir al dashboard</a>
-  </div>
+<div class="topbar">
+  <span class="brand">MultiCompra · Administración</span>
+  <span class="grow"></span>
+  <span class="user-chip">
+    <span class="avatar" id="avatar">DG</span>
+    <span id="user-nombre">Hola Diego</span>
+  </span>
+  <a href="/logout.html" class="btn btn-secondary btn-logout">Cerrar sesión</a>
 </div>
+
+<main class="admin-main">
+
+  <div class="admin-hello">
+    <h1>Panel de administración</h1>
+    <p>Acá tenés acceso al panel del supervisor (donde aprobás OPs y armás OCs)
+       y herramientas administrativas.</p>
+  </div>
+
+  <!-- Operaciones del día a día -->
+  <section class="panel-section">
+    <h2>Operación diaria</h2>
+    <div class="card-grid">
+
+      <a href="/supervisor/dashboard.html" class="admin-card info">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <h3>Dashboard supervisor</h3>
+        <p>OPs pendientes, aprobación, devolución, alertas. Vista del día a día.</p>
+      </a>
+
+      <a href="/supervisor/oc-lista.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
+        </div>
+        <h3>Listado de OCs</h3>
+        <p>Todas las Órdenes de Compra (abiertas, cerradas, recibidas) con filtros.</p>
+      </a>
+
+      <a href="/supervisor/oc-nueva.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <h3>Armar nueva OC</h3>
+        <p>Consolidar OPs de varios locales en una OC al proveedor.</p>
+      </a>
+
+      <a href="/supervisor/catalogo.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h3>Catálogo</h3>
+        <p>Buscar productos y ver stock por local + DEPOSITO central.</p>
+      </a>
+
+      <a href="/supervisor/solicitudes-alta.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <h3>Solicitudes de alta</h3>
+        <p>Productos que las cajeras pidieron dar de alta — aprobar o rechazar.</p>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Reportes -->
+  <section class="panel-section">
+    <h2>Reportes</h2>
+    <div class="card-grid">
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <h3>OP vs Compra vs Venta</h3>
+        <p>Comparar lo pedido por las cajeras vs comprado al proveedor vs vendido.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Reposición desde central</h3>
+        <p>Cuánto se reponen los locales desde el DEPOSITO sin comprar al proveedor.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <h3>Stock muerto</h3>
+        <p>Productos con stock alto que no se mueven hace mucho.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </div>
+        <h3>Devoluciones</h3>
+        <p>OPs devueltas por cajera con sus motivos. Detección de patrones.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3>OPs fuera de protocolo</h3>
+        <p>OPs marcadas como excepción por las cajeras (con motivo).</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Configuración -->
+  <section class="panel-section">
+    <h2>Configuración</h2>
+    <div class="card-grid">
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Cajeras</h3>
+        <p>Alta, baja y modificación de cajeras + asignación a locales.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <h3>Locales</h3>
+        <p>Listado de locales, datos de contacto, estado activo.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <h3>Parámetros del sistema</h3>
+        <p>Umbral de OPs viejas, días entre compras, etc.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+      <div class="admin-card disabled">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+        </div>
+        <h3>Proveedores</h3>
+        <p>Catálogo de proveedores con datos de contacto y RUC.</p>
+        <span class="badge-soon">Próximamente</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Herramientas -->
+  <section class="panel-section">
+    <h2>Herramientas</h2>
+    <div class="card-grid">
+
+      <a href="/admin/borrar-datos-prueba.html" class="admin-card danger">
+        <div class="admin-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <h3>Borrar datos de prueba</h3>
+        <p>Elimina OPs, OCs y caches de testeos. Útil al arrancar de cero.</p>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+  import { requireRol, getUserActual } from '/shared/auth-guard.js';
+  requireRol('admin');
+
+  const user = getUserActual();
+  if (user) {
+    const ini = user.iniciales || (user.nombre || 'AD').slice(0, 2).toUpperCase();
+    document.getElementById('avatar').textContent = ini;
+    document.getElementById('user-nombre').textContent = 'Hola ' + (user.nombre || 'Admin');
+  }
+</script>
 
 </body>
 </html>

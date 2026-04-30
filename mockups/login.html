@@ -29,11 +29,29 @@
         var raw = localStorage.getItem('multicompra:user');
         if (!raw) return;
         var u = JSON.parse(raw);
-        if (!u || !u.rol) return;
+        if (!u || u.id == null) return;
+
+        // PARCHE TEMPORAL — forzar rol correcto si reconozco el id (mientras
+        // Carlos arregla el SP que devuelve siempre rol='cajera'). Esto
+        // arregla las sesiones viejas con rol stale en localStorage.
+        var ROLES = {
+          2: { rol: 'admin',      idLocal: 27, nombreLocal: 'DEPOSITO' },
+          6: { rol: 'supervisor', idLocal: 27, nombreLocal: 'DEPOSITO' }
+        };
+        var override = ROLES[u.id];
+        if (override) {
+          var dirty = false;
+          if (u.rol !== override.rol)               { u.rol = override.rol; dirty = true; }
+          if (u.localId !== override.idLocal)       { u.localId = override.idLocal; dirty = true; }
+          if (u.localNombre !== override.nombreLocal) { u.localNombre = override.nombreLocal; dirty = true; }
+          if (dirty) localStorage.setItem('multicompra:user', JSON.stringify(u));
+        }
+
+        if (!u.rol) return;
         var DEST = {
           cajera:     'cajera/dashboard.html',
           supervisor: 'supervisor/dashboard.html',
-          admin:      'supervisor/dashboard.html'
+          admin:      'admin/dashboard.html'
         };
         var next = DEST[u.rol] || 'cajera/dashboard.html';
         window.location.replace(next);
@@ -1006,7 +1024,7 @@
       const REDIRECTS = {
         cajera:     'cajera/dashboard.html',
         supervisor: 'supervisor/dashboard.html',
-        admin:      'supervisor/dashboard.html'
+        admin:      'admin/dashboard.html'
       };
       window.location.href = REDIRECTS[rol] || 'cajera/dashboard.html';
     }
