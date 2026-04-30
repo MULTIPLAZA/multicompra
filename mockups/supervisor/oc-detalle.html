@@ -971,12 +971,11 @@
   updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
 
   // ── Botón Descargar PDF ──────────────────────────────────────────────────
-  // Solo visible si la OC NO está en 'abierta' ni 'en_edicion'
-  const ESTADOS_SIN_PDF = new Set(['abierta', 'en_edicion']);
+  // Visible siempre (en cualquier estado de OC). Si la OC esta abierta o
+  // en edicion, el PDF sirve como vista previa.
   const btnPdf = document.getElementById('btn-descargar-pdf');
-
-  if (!ESTADOS_SIN_PDF.has(ocMeta.estado)) {
-    btnPdf.style.display = '';  // mostrar
+  if (btnPdf) {
+    btnPdf.style.display = '';
 
     btnPdf.addEventListener('click', () => {
       // ── Poblar documento print con datos reales de la OC ────────────────

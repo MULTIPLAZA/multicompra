@@ -1744,18 +1744,23 @@
         if (!res.ok) throw new Error(res.error || 'Error al crear OC');
 
         for (const opId of opIds) {
-          await resolverOP({
+          const resOP = await resolverOP({
             opId, estado: 'en_oc',
             supervisorIdErp: oc._supervisorId,
             supervisorNombre: oc._supervisorNombre,
             ocId: res.ocId
           });
+          if (!resOP.ok) console.warn('[oc-editar] resolverOP fallo para', opId, resOP.error);
         }
-        await cambiarEstadoOC({
+        const resEstado = await cambiarEstadoOC({
           ocId: res.ocId, ocNumero: oc.numero, estado: 'cerrada',
           supervisorIdErp: oc._supervisorId,
           supervisorNombre: oc._supervisorNombre
         });
+        if (!resEstado.ok) {
+          console.error('[oc-editar] cambiarEstadoOC a cerrada fallo:', resEstado.error);
+          alert('La OC se creo pero no pude cambiarla a cerrada. Quedo en abierta. Igual te llevo al detalle. Error: ' + (resEstado.error || ''));
+        }
         sessionStorage.removeItem('multicompra:oc-en-armado');
         location.href = 'oc-detalle.html?id=' + encodeURIComponent(oc.numero);
       } else {
