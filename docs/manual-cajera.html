@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MultiCompra · Manual de la Cajera</title>
+<style>
+  :root {
+    --primary: #0e9488;
+    --primary-soft: #ccfbf1;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --warning-text: #78350f;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --danger-text: #991b1b;
+    --info: #2563eb;
+    --info-soft: #dbeafe;
+    --bg: #ffffff;
+    --bg-soft: #f8fafc;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    background: var(--bg-soft);
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 56px 64px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  /* Portada */
+  .cover {
+    background: linear-gradient(135deg, #0e9488 0%, #14b8a6 100%);
+    color: #fff;
+    padding: 64px 64px 56px;
+    margin: -56px -64px 56px;
+    border-radius: 0;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  .cover h1 {
+    font-size: 44px;
+    font-weight: 800;
+    margin: 0 0 12px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    opacity: 0.92;
+    margin: 0;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+  .cover .meta {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    font-size: 13px;
+    opacity: 0.85;
+    display: flex;
+    gap: 32px;
+  }
+
+  /* Tipografía */
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0e9488;
+    margin: 56px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 24px 0 8px;
+  }
+  p { margin: 0 0 14px; }
+  strong { font-weight: 700; color: #0f172a; }
+  code {
+    background: #f1f5f9;
+    color: #0e9488;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.92em;
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 0 0 56px;
+  }
+  .toc h3 {
+    margin: 0 0 16px;
+    color: #0e9488;
+    font-size: 18px;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 22px;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc ol li {
+    margin-bottom: 8px;
+    break-inside: avoid;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .toc a:hover { color: #0e9488; text-decoration: underline; }
+
+  /* Bloques especiales */
+  .tip {
+    background: var(--info-soft);
+    border-left: 4px solid var(--info);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .tip strong { color: var(--info); }
+  .tip-warn {
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--warning-text);
+  }
+  .tip-warn strong { color: #92400e; }
+  .tip-danger {
+    background: var(--danger-soft);
+    border-left: 4px solid var(--danger);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--danger-text);
+  }
+  .tip-danger strong { color: #991b1b; }
+
+  /* Capturas / mockups inline */
+  .capture {
+    margin: 24px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .capture-head {
+    background: #0f172a;
+    color: #cbd5e1;
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'SF Mono', Consolas, monospace;
+  }
+  .capture-head .dots {
+    display: inline-flex;
+    gap: 5px;
+    margin-right: 6px;
+  }
+  .capture-head .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .capture-head .dot:nth-child(1) { background: #ef4444; }
+  .capture-head .dot:nth-child(2) { background: #f59e0b; }
+  .capture-head .dot:nth-child(3) { background: #10b981; }
+  .capture-body {
+    padding: 24px;
+    background: var(--bg-soft);
+    min-height: 120px;
+  }
+  .capture-caption {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* Wireframes inline para enseñar pantallas */
+  .wf {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .wf-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .wf-logo {
+    width: 32px; height: 32px;
+    background: #0e9488;
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+  }
+  .wf-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .wf-row:last-child { border-bottom: none; }
+  .wf-input {
+    flex: 1;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .wf-btn {
+    background: #0e9488;
+    color: #fff;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .wf-btn-success {
+    background: #16a34a;
+    color: #fff;
+  }
+  .wf-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .wf-card-icon {
+    width: 32px; height: 32px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .wf-name { font-weight: 600; font-size: 14px; }
+  .wf-meta { font-size: 11px; color: var(--text-muted); }
+  .wf-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .wf-badge-info { background: #dbeafe; color: #1e40af; }
+  .wf-badge-success { background: #d1fae5; color: #065f46; }
+  .wf-badge-warn { background: #fef3c7; color: #92400e; }
+  .wf-badge-danger { background: #fee2e2; color: #991b1b; }
+
+  /* Listas */
+  ul, ol { padding-left: 24px; margin: 12px 0 16px; }
+  ul li, ol li { margin-bottom: 8px; }
+
+  /* Pasos numerados */
+  .pasos {
+    counter-reset: paso;
+    list-style: none;
+    padding: 0;
+  }
+  .pasos li {
+    counter-increment: paso;
+    position: relative;
+    padding-left: 48px;
+    margin-bottom: 18px;
+    min-height: 32px;
+  }
+  .pasos li::before {
+    content: counter(paso);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 32px;
+    height: 32px;
+    background: #0e9488;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .pasos li strong { color: #0e9488; }
+
+  /* Tabla de estados */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--bg-soft);
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  /* Pie de página */
+  .footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; }
+    .container { box-shadow: none; padding: 24px; max-width: none; }
+    .cover { padding: 48px 24px; margin: -24px -24px 32px; break-after: page; }
+    h2 { break-before: page; }
+    h2:first-of-type { break-before: avoid; }
+    .toc { break-after: page; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       PORTADA
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="cover">
+    <span class="badge">Manual de Usuario</span>
+    <h1>MultiCompra<br>para Cajeras</h1>
+    <p class="subtitle">
+      Cómo armar y enviar tus pedidos de reposición a Shirley desde el celular o la tablet.
+    </p>
+    <div class="meta">
+      <span>📱 Celular &amp; Tablet</span>
+      <span>🌎 Multiplaza S.A.</span>
+      <span>📅 Versión Abril 2026</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TOC
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="toc">
+    <h3>📋 Índice</h3>
+    <ol>
+      <li><a href="#que-es">¿Qué es MultiCompra?</a></li>
+      <li><a href="#login">Cómo entrar (login)</a></li>
+      <li><a href="#dashboard">La pantalla principal</a></li>
+      <li><a href="#crear-op">Crear una nueva OP</a></li>
+      <li><a href="#escanear">Escanear o buscar productos</a></li>
+      <li><a href="#cantidad">Cambiar cantidad / eliminar</a></li>
+      <li><a href="#alta">Producto que no existe (solicitar alta)</a></li>
+      <li><a href="#enviar">Enviar la OP a Shirley</a></li>
+      <li><a href="#historial">Mi historial de OPs</a></li>
+      <li><a href="#estados">Estados de las OPs</a></li>
+      <li><a href="#devuelta">Si Shirley te devuelve la OP</a></li>
+      <li><a href="#tips">Tips útiles</a></li>
+      <li><a href="#soporte">Soporte y contacto</a></li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="que-es">1. ¿Qué es MultiCompra?</h2>
+
+  <p>
+    MultiCompra es la herramienta que usás para <strong>pedirle a Shirley
+    productos para reponer en tu local</strong>. Antes lo hacían por WhatsApp
+    o anotando en papel; ahora se hace desde el celular y todo queda registrado.
+  </p>
+
+  <p>El flujo es simple:</p>
+
+  <ol>
+    <li><strong>Vos</strong> armás una <strong>Orden de Pedido (OP)</strong> con
+      los productos que faltan en tu local.</li>
+    <li>La <strong>enviás a Shirley</strong> (la supervisora del depósito central).</li>
+    <li>Shirley la <strong>aprueba</strong>, la incluye en una compra al proveedor,
+      o te la <strong>devuelve</strong> con una observación.</li>
+    <li>Cuando los productos lleguen al depósito, se distribuyen a tu local.</li>
+  </ol>
+
+  <div class="tip">
+    <strong>💡 Importante:</strong> tu trabajo como cajera es solamente
+    <strong>identificar bien lo que necesitás y la cantidad</strong>. Las
+    decisiones de comprar o no, qué proveedor, cuándo, las toma Shirley.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="login">2. Cómo entrar (login)</h2>
+
+  <p>Abrí <code>multicompra.pages.dev</code> en el navegador del celular.
+  Te pide tu <strong>usuario</strong> y tu <strong>contraseña</strong> (los
+  mismos del sistema de Diego).</p>
+
+  <div class="capture">
+    <div class="capture-head">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      multicompra.pages.dev/login
+    </div>
+    <div class="capture-body">
+      <div class="wf" style="max-width:340px;margin:0 auto;">
+        <div class="wf-header">
+          <div class="wf-logo">M</div>
+          <div>
+            <div style="font-weight:800;color:#0e9488;font-size:18px;">MultiCompra</div>
+            <div style="font-size:11px;color:#6b7280;">Sistema de Órdenes de Pedido</div>
+          </div>
+        </div>
+        <div style="padding:8px 0;">
+          <label style="font-size:12px;color:#374151;font-weight:600;">Usuario</label>
+          <div class="wf-input" style="margin:4px 0 12px;">RICARDO</div>
+          <label style="font-size:12px;color:#374151;font-weight:600;">Contraseña</label>
+          <div class="wf-input" style="margin:4px 0 16px;">••••••••</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:14px;">
+            <span style="width:14px;height:14px;border:1px solid #ccc;background:#0e9488;border-radius:2px;"></span>
+            Recordarme
+          </div>
+          <div class="wf-btn" style="width:100%;text-align:center;">Entrar</div>
+        </div>
+      </div>
+    </div>
+    <div class="capture-caption">Pantalla de login. Recordá tildar "Recordarme" para no escribir cada vez.</div>
+  </div>
+
+  <h3>Después del login</h3>
+  <p>El sistema te pide elegir <strong>en qué local estás trabajando hoy</strong>.
+  Eso es importante porque cada OP queda asociada a un local. Si estás en
+  KIWI SHOP, elegí KIWI SHOP. Si por excepción estás cubriendo en otro local,
+  elegí ese.</p>
+
+  <div class="tip">
+    <strong>💡 Tip:</strong> si tildaste "Recordarme", la próxima vez que
+    entres no te pide nada — entrás directo. Si te cambian la contraseña,
+    pedile al supervisor que la actualice.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="dashboard">3. La pantalla principal</h2>
+
+  <p>Una vez adentro vas a ver tu pantalla de inicio. Tiene 3 partes:</p>
+
+  <div class="capture">
+    <div class="capture-head">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      multicompra.pages.dev/cajera/dashboard
+    </div>
+    <div class="capture-body">
+      <div class="wf" style="max-width:340px;margin:0 auto;">
+        <div class="wf-header">
+          <div style="font-weight:800;color:#0e9488;font-size:14px;">MultiCompra</div>
+          <div style="margin-left:auto;width:32px;height:32px;background:#ccfbf1;color:#0e9488;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">CA</div>
+        </div>
+        <div style="text-align:center;padding:14px 0;background:#f0fdfa;border-radius:8px;border:1px solid #99f6e4;margin-bottom:12px;">
+          <div style="font-size:30px;margin-bottom:4px;">📋</div>
+          <div style="font-weight:700;color:#0f172a;font-size:15px;">No tenés ninguna OP pendiente</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px;">Arrancá una nueva orden cuando te haga falta reponer.</div>
+          <div class="wf-btn" style="margin-top:12px;display:inline-block;">+ Crear nueva OP</div>
+        </div>
+        <div style="padding-top:12px;border-top:1px solid #e5e7eb;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Mi historial reciente</div>
+          <div style="font-size:12px;color:#6b7280;text-align:center;padding:14px 0;">Sin OPs todavía. Tu primera OP va a aparecer acá.</div>
+        </div>
+      </div>
+    </div>
+    <div class="capture-caption">Dashboard cuando todavía no tenés ninguna OP cargada.</div>
+  </div>
+
+  <ol>
+    <li><strong>El header arriba</strong> — logo de MultiCompra y tu avatar (con tus iniciales).</li>
+    <li><strong>La tarjeta del medio</strong> — te dice si tenés una OP en borrador (a medio cargar) o ninguna.</li>
+    <li><strong>Tu historial reciente</strong> — las últimas OPs que enviaste, con su estado actual.</li>
+  </ol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="crear-op">4. Crear una nueva OP</h2>
+
+  <p>Tocá el botón verde <strong>"+ Crear nueva OP"</strong> en el dashboard. Vas
+  a llegar a la pantalla de carga de productos.</p>
+
+  <ul class="pasos">
+    <li><strong>Buscá el producto</strong> en el campo grande de arriba. Podés:
+      <ul>
+        <li>Escanear el código de barras (si tenés escáner Bluetooth).</li>
+        <li>Tipear el código a mano.</li>
+        <li>Tipear parte del nombre (ej. "iphone 14").</li>
+      </ul>
+    </li>
+    <li><strong>Tocá el producto</strong> en la lista que aparece. Se agrega a tu OP.</li>
+    <li><strong>Cambiá la cantidad</strong> con los botones + y −, o tipeando el número directamente.</li>
+    <li><strong>Repetí</strong> con todos los productos que necesitás.</li>
+    <li><strong>Tocá "Enviar OP"</strong> abajo. Listo, le llegó a Shirley.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="escanear">5. Escanear o buscar productos</h2>
+
+  <p>El campo de búsqueda de la pantalla nueva OP funciona como un buscador
+  inteligente. Cuando empezás a escribir vas a ver una lista de coincidencias.</p>
+
+  <div class="tip">
+    <strong>💡 Si tu producto tiene código con muchos ceros adelante</strong>
+    (ej. <code>00006440</code>), no hace falta escribir todos. Si tipeás
+    <code>6440</code> también lo encuentra.
+  </div>
+
+  <h3>Si no aparece tu producto</h3>
+  <p>Puede ser que el producto:</p>
+  <ul>
+    <li>Esté escrito distinto en el sistema (probá con otro nombre).</li>
+    <li>No exista todavía en el catálogo de Diego.</li>
+  </ul>
+  <p>Si no aparece y no es por error de tipeo, podés
+  <a href="#alta"><strong>solicitarle a Shirley el alta del producto</strong></a>.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="cantidad">6. Cambiar cantidad / eliminar</h2>
+
+  <p>Cada producto agregado aparece en la lista debajo del buscador. Tenés:</p>
+
+  <div class="capture">
+    <div class="capture-body" style="background:#fff;">
+      <div class="wf-card" style="max-width:340px;margin:0 auto;">
+        <div class="wf-card-icon">G</div>
+        <div style="flex:1;">
+          <div class="wf-name">Glass Samsung A20</div>
+          <div class="wf-meta">Cód. 00006440</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:#f1f5f9;padding:4px;border-radius:6px;">
+          <div style="width:32px;height:32px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#0e9488;">−</div>
+          <div style="width:38px;text-align:center;font-weight:700;">5</div>
+          <div style="width:32px;height:32px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#0e9488;">+</div>
+        </div>
+        <div style="width:32px;height:32px;background:#fee2e2;color:#991b1b;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer;">✕</div>
+      </div>
+    </div>
+    <div class="capture-caption">Tarjeta de un producto en tu OP. Botones grandes para tocar con el dedo.</div>
+  </div>
+
+  <ul>
+    <li><strong>+</strong> y <strong>−</strong> aumentan o disminuyen de a 1 unidad.</li>
+    <li>El número del medio se puede tocar y escribir directamente.</li>
+    <li>El botón rojo <strong>✕</strong> elimina el producto de tu OP.</li>
+  </ul>
+
+  <div class="tip-warn">
+    <strong>⚠ Cuidado con los números muy grandes.</strong> Si pedís 200 cuando
+    querías 20, Shirley te lo va a devolver y perdés tiempo. Revisá las cantidades
+    antes de enviar.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="alta">7. Producto que no existe (solicitar alta)</h2>
+
+  <p>Si buscás un producto y no aparece (y verificaste que no es error de
+  tipeo), tocá <strong>"Solicitar alta de producto"</strong>. Aparece un
+  formulario donde completás:</p>
+
+  <ul>
+    <li><strong>Código de barras</strong> (si lo tenés — viene del producto)</li>
+    <li><strong>Descripción</strong> (mínimo 10 letras, ej. "Funda silicona iPhone 15")</li>
+    <li><strong>Categoría</strong> (opcional)</li>
+    <li><strong>Proveedor sugerido</strong> (opcional)</li>
+    <li><strong>Motivo</strong> (opcional, ej. "cliente lo está pidiendo")</li>
+  </ul>
+
+  <p>Cuando lo enviás, Shirley lo revisa y decide si dar el alta o no.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="enviar">8. Enviar la OP a Shirley</h2>
+
+  <p>Cuando ya tenés todos los productos y las cantidades correctas, tocá el
+  botón verde grande <strong>"Enviar OP"</strong> que está siempre fijo abajo
+  de la pantalla.</p>
+
+  <div class="capture">
+    <div class="capture-body">
+      <div style="max-width:340px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:14px;text-align:center;">
+        <div style="font-size:42px;margin-bottom:8px;">✅</div>
+        <div style="font-weight:800;color:#16a34a;font-size:18px;margin-bottom:6px;">¡OP enviada!</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:8px;">Tu pedido <strong>OP-KIW-00012</strong> con 8 productos (32 unidades) ya le llegó a Shirley.</div>
+        <div style="font-size:12px;color:#6b7280;">Te aviso por la app cuando lo procese.</div>
+      </div>
+    </div>
+    <div class="capture-caption">Confirmación después de enviar la OP.</div>
+  </div>
+
+  <p>Ya está. La OP te aparece en tu historial con estado <strong>"Enviada"</strong>.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="historial">9. Mi historial de OPs</h2>
+
+  <p>En el dashboard, abajo, tenés tu historial reciente (las 4 últimas).
+  Para ver todas, tocá <strong>"Ver todo mi historial"</strong>.</p>
+
+  <p>Cada OP muestra:</p>
+  <ul>
+    <li>Su número (ej. <code>OP-KIW-00012</code>)</li>
+    <li>La fecha y hora de envío</li>
+    <li>Cuántos productos y unidades</li>
+    <li>Su estado actual</li>
+  </ul>
+
+  <p>Tocando la OP podés ver el detalle completo (cada producto + cantidad).</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="estados">10. Estados de las OPs</h2>
+
+  <p>Tu OP puede estar en distintos estados según lo que haga Shirley:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:130px;">Estado</th>
+        <th>Qué significa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="wf-badge wf-badge-info">Enviada</span></td>
+        <td>Le llegó a Shirley pero todavía no la procesó.</td>
+      </tr>
+      <tr>
+        <td><span class="wf-badge wf-badge-success">Aprobada</span></td>
+        <td>Shirley la aceptó. Ahora la va a incluir en una OC al proveedor.</td>
+      </tr>
+      <tr>
+        <td><span class="wf-badge wf-badge-warn">En OC</span></td>
+        <td>Tu OP fue incluida en una Orden de Compra al proveedor. La mercadería viene en camino.</td>
+      </tr>
+      <tr>
+        <td><span class="wf-badge wf-badge-danger">Devuelta</span></td>
+        <td>Shirley te la rebotó con una observación. Tenés que corregirla y volver a enviarla. <a href="#devuelta">Ver más abajo →</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="devuelta">11. Si Shirley te devuelve la OP</h2>
+
+  <p>Cuando una OP queda en estado <strong>"Devuelta"</strong>, recibís un aviso
+  por voz y notificación push.</p>
+
+  <div class="tip-danger">
+    <strong>🔊 Notificación:</strong> "Depósito devolvió tu pedido. Por favor revisá
+    la observación para corregir."
+  </div>
+
+  <p>Para ver qué te observó Shirley:</p>
+
+  <ol>
+    <li>Andá a tu historial.</li>
+    <li>Tocá la OP devuelta (badge rojo).</li>
+    <li>Vas a ver la nota de Shirley arriba (ej. "Pediste 200 pero acordamos máximo 50 por semana, ajustá").</li>
+    <li>Tocá <strong>"Corregir y reenviar"</strong>. Te lleva a editar la OP.</li>
+    <li>Hacé los cambios y enviá de nuevo.</li>
+  </ol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="tips">12. Tips útiles</h2>
+
+  <ul>
+    <li><strong>Tildá "Recordarme"</strong> al hacer login. La app te recuerda y entrás directo.</li>
+    <li><strong>Activá las notificaciones</strong> cuando te lo pida el navegador. Así te enterás cuando Shirley aprueba o devuelve tus OPs sin tener la app abierta.</li>
+    <li><strong>Si trabajás desde el celular</strong>, la app está adaptada. Vas a ver las cards verticales y los botones grandes para tocar con el dedo.</li>
+    <li><strong>Si te corta la luz o se cuelga</strong>, tu OP a medio cargar queda guardada como borrador. Cuando vuelvas a entrar te aparece para continuar.</li>
+    <li><strong>El stock que ves no se actualiza al instante</strong>. El sistema toma una foto del stock cada un rato.</li>
+    <li><strong>No te preocupes por las cantidades exactas.</strong> Pedí lo que vos creés que necesitás. Shirley después decide cuánto comprar realmente.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="soporte">13. Soporte y contacto</h2>
+
+  <p>Si algo no funciona, hacé esto en orden:</p>
+
+  <ol>
+    <li><strong>Refrescá la página</strong> con Ctrl+F5 (o cerrá y abrí la app).</li>
+    <li>Si seguís con el problema, <strong>avisá a Shirley</strong> por WhatsApp.</li>
+    <li>Shirley contacta al equipo de soporte para resolver.</li>
+  </ol>
+
+  <p>Cuando reportás un problema, ayudá indicando:</p>
+  <ul>
+    <li>En qué pantalla estabas</li>
+    <li>Qué intentaste hacer</li>
+    <li>Qué te apareció (mensaje, error, pantalla en blanco, etc.)</li>
+    <li>El número de tu OP si tenía una</li>
+  </ul>
+
+  <div class="footer">
+    <strong>MultiCompra</strong> · Multiplaza S.A. · Manual de la Cajera v1.0<br>
+    Desarrollado por NODO Informática · 2026
+  </div>
+
+</div>
+
+</body>
+</html>

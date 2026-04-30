@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MultiCompra · Manual de la Supervisora</title>
+<style>
+  :root {
+    --primary: #0e9488;
+    --primary-soft: #ccfbf1;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --warning-text: #78350f;
+    --danger: #dc2626;
+    --danger-soft: #fee2e2;
+    --danger-text: #991b1b;
+    --info: #2563eb;
+    --info-soft: #dbeafe;
+    --bg: #ffffff;
+    --bg-soft: #f8fafc;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    background: var(--bg-soft);
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 56px 64px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  .cover {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0e9488 100%);
+    color: #fff;
+    padding: 64px 64px 56px;
+    margin: -56px -64px 56px;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  .cover h1 {
+    font-size: 44px;
+    font-weight: 800;
+    margin: 0 0 12px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .cover .subtitle {
+    font-size: 18px;
+    opacity: 0.92;
+    margin: 0;
+    font-weight: 400;
+  }
+  .cover .meta {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    font-size: 13px;
+    opacity: 0.85;
+    display: flex;
+    gap: 32px;
+  }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0e9488;
+    margin: 56px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 24px 0 8px;
+  }
+  p { margin: 0 0 14px; }
+  strong { font-weight: 700; color: #0f172a; }
+  code {
+    background: #f1f5f9;
+    color: #0e9488;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.92em;
+  }
+
+  .toc {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 0 0 56px;
+  }
+  .toc h3 {
+    margin: 0 0 16px;
+    color: #0e9488;
+    font-size: 18px;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 22px;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc ol li { margin-bottom: 8px; break-inside: avoid; }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: #0e9488; text-decoration: underline; }
+
+  .tip {
+    background: var(--info-soft);
+    border-left: 4px solid var(--info);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .tip strong { color: var(--info); }
+  .tip-warn {
+    background: var(--warning-soft);
+    border-left: 4px solid var(--warning);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--warning-text);
+  }
+  .tip-warn strong { color: #92400e; }
+  .tip-danger {
+    background: var(--danger-soft);
+    border-left: 4px solid var(--danger);
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--danger-text);
+  }
+  .tip-success {
+    background: #d1fae5;
+    border-left: 4px solid #16a34a;
+    padding: 14px 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    color: #065f46;
+  }
+
+  .capture {
+    margin: 24px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .capture-head {
+    background: #0f172a;
+    color: #cbd5e1;
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'SF Mono', Consolas, monospace;
+  }
+  .capture-head .dots { display: inline-flex; gap: 5px; margin-right: 6px; }
+  .capture-head .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .capture-head .dot:nth-child(1) { background: #ef4444; }
+  .capture-head .dot:nth-child(2) { background: #f59e0b; }
+  .capture-head .dot:nth-child(3) { background: #10b981; }
+  .capture-body {
+    padding: 24px;
+    background: var(--bg-soft);
+  }
+  .capture-caption {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .wf {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  ul, ol { padding-left: 24px; margin: 12px 0 16px; }
+  ul li, ol li { margin-bottom: 8px; }
+
+  .pasos {
+    counter-reset: paso;
+    list-style: none;
+    padding: 0;
+  }
+  .pasos li {
+    counter-increment: paso;
+    position: relative;
+    padding-left: 48px;
+    margin-bottom: 18px;
+    min-height: 32px;
+  }
+  .pasos li::before {
+    content: counter(paso);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 32px;
+    height: 32px;
+    background: #0e9488;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .pasos li strong { color: #0e9488; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--bg-soft);
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .wf-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .wf-badge-info { background: #dbeafe; color: #1e40af; }
+  .wf-badge-success { background: #d1fae5; color: #065f46; }
+  .wf-badge-warn { background: #fef3c7; color: #92400e; }
+  .wf-badge-danger { background: #fee2e2; color: #991b1b; }
+
+  /* Cajas de las 3 decisiones */
+  .decisiones {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0 24px;
+  }
+  .decision {
+    border-left: 4px solid;
+    padding: 16px;
+    border-radius: 0 8px 8px 0;
+  }
+  .decision h4 { margin: 0 0 8px; font-size: 15px; }
+  .decision p { font-size: 13px; margin: 0; line-height: 1.5; }
+  .decision-no { background: #f1f5f9; border-left-color: #94a3b8; }
+  .decision-no h4 { color: #475569; }
+  .decision-central { background: var(--primary-soft); border-left-color: var(--primary); }
+  .decision-central h4 { color: var(--primary); }
+  .decision-comprar { background: var(--warning-soft); border-left-color: var(--warning); }
+  .decision-comprar h4 { color: var(--warning-text); }
+
+  .footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .container { box-shadow: none; padding: 24px; max-width: none; }
+    .cover { padding: 48px 24px; margin: -24px -24px 32px; break-after: page; }
+    h2 { break-before: page; }
+    h2:first-of-type { break-before: avoid; }
+    .toc { break-after: page; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- PORTADA -->
+  <div class="cover">
+    <span class="badge">Manual de Usuario</span>
+    <h1>MultiCompra<br>para Supervisión de Compras</h1>
+    <p class="subtitle">
+      Cómo aprobar pedidos, armar órdenes de compra al proveedor y administrar
+      el flujo de reposición de toda la cadena.
+    </p>
+    <div class="meta">
+      <span>💻 Desktop / Tablet</span>
+      <span>🌎 Multiplaza S.A.</span>
+      <span>📅 Versión Abril 2026</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h3>📋 Índice</h3>
+    <ol>
+      <li><a href="#que-es">¿Qué es MultiCompra?</a></li>
+      <li><a href="#flujo">Visión general del flujo</a></li>
+      <li><a href="#login">Cómo entrar (login)</a></li>
+      <li><a href="#dashboard">El dashboard de supervisor</a></li>
+      <li><a href="#aprobar">Aprobar o devolver una OP</a></li>
+      <li><a href="#armar-oc">Armar una nueva OC</a></li>
+      <li><a href="#planilla">La planilla de la OC en detalle</a></li>
+      <li><a href="#decisiones">Las 3 decisiones por línea</a></li>
+      <li><a href="#filtros">Filtros y bulks</a></li>
+      <li><a href="#cerrar">Cerrar la OC</a></li>
+      <li><a href="#pdf">Descargar el PDF para el proveedor</a></li>
+      <li><a href="#editar-oc">Editar una OC abierta</a></li>
+      <li><a href="#listado-oc">El listado de OCs</a></li>
+      <li><a href="#catalogo">Catálogo de productos</a></li>
+      <li><a href="#altas">Solicitudes de alta de productos</a></li>
+      <li><a href="#notif">Notificaciones (push y voz)</a></li>
+      <li><a href="#tips">Tips útiles</a></li>
+      <li><a href="#soporte">Soporte y contacto</a></li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="que-es">1. ¿Qué es MultiCompra?</h2>
+
+  <p>
+    MultiCompra es la herramienta que <strong>centraliza los pedidos de
+    reposición de los locales</strong>. Vos sos quien decide qué se compra,
+    a qué proveedor y en qué cantidades.
+  </p>
+
+  <p>Lo que hacés con la herramienta:</p>
+  <ul>
+    <li><strong>Recibís</strong> las OPs (Órdenes de Pedido) de las cajeras de los locales.</li>
+    <li><strong>Aprobás o devolvés</strong> las OPs según tu criterio.</li>
+    <li><strong>Consolidás</strong> varias OPs en una OC (Orden de Compra) al proveedor.</li>
+    <li><strong>Decidís línea por línea</strong> qué productos comprar, cuánto, y cuáles reponer desde el DEPOSITO.</li>
+    <li><strong>Cerrás la OC</strong> y descargás el PDF para enviarle al proveedor.</li>
+    <li><strong>Cuando llega la mercadería</strong>, registrás la compra (esta parte se conecta al sistema de Diego).</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="flujo">2. Visión general del flujo</h2>
+
+  <div class="capture">
+    <div class="capture-body" style="padding:32px;">
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto;">
+
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#dbeafe;border-radius:8px;border-left:4px solid #2563eb;">
+          <div style="font-size:28px;">📋</div>
+          <div>
+            <div style="font-weight:700;color:#1e40af;">1. Cajera envía OP</div>
+            <div style="font-size:13px;color:#374151;">Carolina pide reposición desde KIWI SHOP. Te llega notificación.</div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#94a3b8;font-size:18px;">↓</div>
+
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
+          <div style="font-size:28px;">✅❌</div>
+          <div>
+            <div style="font-weight:700;color:#92400e;">2. Vos aprobás o devolvés</div>
+            <div style="font-size:13px;color:#374151;">Si está OK, la aprobás. Si pidió mal, la devolvés con observación.</div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#94a3b8;font-size:18px;">↓</div>
+
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#ccfbf1;border-radius:8px;border-left:4px solid #0e9488;">
+          <div style="font-size:28px;">📊</div>
+          <div>
+            <div style="font-weight:700;color:#0e9488;">3. Armás la OC</div>
+            <div style="font-size:13px;color:#374151;">Seleccionás varias OPs aprobadas y elegís proveedor. Se abre la planilla.</div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#94a3b8;font-size:18px;">↓</div>
+
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#fce7f3;border-radius:8px;border-left:4px solid #db2777;">
+          <div style="font-size:28px;">🎯</div>
+          <div>
+            <div style="font-weight:700;color:#9d174d;">4. Decidís en la planilla</div>
+            <div style="font-size:13px;color:#374151;">Por cada línea: comprar / reponer del DEPOSITO / no necesita.</div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#94a3b8;font-size:18px;">↓</div>
+
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#d1fae5;border-radius:8px;border-left:4px solid #16a34a;">
+          <div style="font-size:28px;">📨</div>
+          <div>
+            <div style="font-weight:700;color:#065f46;">5. Cerrás la OC + descargás PDF</div>
+            <div style="font-size:13px;color:#374151;">Mandás el PDF al proveedor por WhatsApp o email.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="capture-caption">Flujo completo: cajera → supervisor → planilla → cierre → PDF al proveedor.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="login">3. Cómo entrar (login)</h2>
+
+  <p>Abrí <code>multicompra.pages.dev</code> y entrá con tu usuario y contraseña.
+  Si tildás <strong>"Recordarme"</strong>, las próximas veces entrás directo.</p>
+
+  <p>Después del login, elegís en qué local estás trabajando. Para vos
+  (supervisora), generalmente es el <strong>DEPOSITO</strong>.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="dashboard">4. El dashboard de supervisor</h2>
+
+  <p>Una vez adentro vas a ver la pantalla principal con 3 partes:</p>
+
+  <div class="capture">
+    <div class="capture-body">
+      <div class="wf">
+        <div style="display:flex;align-items:center;padding-bottom:12px;border-bottom:1px solid #e5e7eb;margin-bottom:14px;">
+          <div style="font-weight:800;color:#0e9488;">MultiCompra</div>
+          <div style="margin-left:auto;font-size:13px;color:#374151;">Hola Shirley</div>
+          <div style="margin-left:8px;width:32px;height:32px;background:#fee2e2;color:#991b1b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">SH</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div style="padding:10px;background:#dbeafe;border-radius:6px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:#1e40af;">3</div>
+            <div style="font-size:11px;color:#374151;">OPs pendientes</div>
+          </div>
+          <div style="padding:10px;background:#ccfbf1;border-radius:6px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:#0e9488;">1</div>
+            <div style="font-size:11px;color:#374151;">OCs abiertas</div>
+          </div>
+          <div style="padding:10px;background:#fef3c7;border-radius:6px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:#92400e;">0</div>
+            <div style="font-size:11px;color:#374151;">Compras pendientes</div>
+          </div>
+        </div>
+
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">OPs pendientes (3)</div>
+        <div style="background:#f8fafc;padding:10px;border-radius:6px;font-size:12px;color:#374151;margin-bottom:6px;">
+          <strong>OP-KIW-00012</strong> · KIWI SHOP · Carolina · 8 productos · hace 2h
+        </div>
+        <div style="background:#f8fafc;padding:10px;border-radius:6px;font-size:12px;color:#374151;margin-bottom:6px;">
+          <strong>OP-VIL-00003</strong> · VILLA MORRA · Romina · 12 productos · hace 4h
+        </div>
+        <div style="background:#fef3c7;padding:10px;border-radius:6px;font-size:12px;color:#374151;border-left:3px solid #f59e0b;">
+          <strong>OP-SAN-00007</strong> · SAN LORENZO · Andrea · 5 productos · <strong>hace 8 días</strong> ⚠
+        </div>
+      </div>
+    </div>
+    <div class="capture-caption">Dashboard del supervisor — KPIs arriba + OPs pendientes para procesar.</div>
+  </div>
+
+  <ol>
+    <li><strong>Sidebar izquierda</strong> — navegación: Dashboard, OCs, Compras, Catálogo, Altas pendientes.</li>
+    <li><strong>Lista central</strong> — todas las OPs pendientes (sin resolver) de todas las cajeras.</li>
+    <li><strong>Panel derecho "Resumen"</strong> — KPIs de la semana + alertas.</li>
+  </ol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="aprobar">5. Aprobar o devolver una OP</h2>
+
+  <p>Cada OP en la lista tiene 3 acciones:</p>
+
+  <ul>
+    <li><strong>Ver detalle</strong> — mostrás la OP completa: productos + cantidades + observaciones de la cajera.</li>
+    <li><strong>Aprobar</strong> — la marcás como buena. Va a aparecer en "Nueva OC" cuando armes una.</li>
+    <li><strong>Devolver</strong> — la rebotás con una observación. La cajera la corrige y reenvía.</li>
+  </ul>
+
+  <h3>Cuándo aprobar</h3>
+  <p>La cajera pidió cantidades razonables y productos que tienen sentido para su local.</p>
+
+  <h3>Cuándo devolver</h3>
+  <ul>
+    <li>Pidió una cantidad enorme que no corresponde (ej. 1000 unidades de un producto que vende 10/mes).</li>
+    <li>Productos que no son del rubro o están duplicados.</li>
+    <li>OP enviada por error.</li>
+  </ul>
+
+  <p>Al devolver, escribís una <strong>nota mínima de 20 caracteres</strong>
+  para que la cajera entienda qué tiene que corregir.</p>
+
+  <div class="tip">
+    <strong>💡 No hace falta aprobar todas.</strong> Con el flujo nuevo,
+    cuando armás una OC podés incluir directamente OPs sin aprobar — solo
+    aprobás explícitamente las que querés validar primero.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="armar-oc">6. Armar una nueva OC</h2>
+
+  <p>Para crear una OC nueva tenés 2 caminos:</p>
+
+  <h3>Opción A: desde el dashboard</h3>
+  <ul class="pasos">
+    <li><strong>Tildá los checkboxes</strong> de las OPs que querés incluir (pueden ser de varios locales).</li>
+    <li>Tocá <strong>"Armar OC con las seleccionadas"</strong> en la barra que aparece arriba.</li>
+    <li>Te lleva a "Nueva OC" con esas OPs ya marcadas.</li>
+  </ul>
+
+  <h3>Opción B: desde el menú</h3>
+  <ul class="pasos">
+    <li>Tocá <strong>"Armar nueva OC"</strong> arriba a la derecha del dashboard.</li>
+    <li>Te lleva al listado de TODAS las OPs disponibles (aprobadas + sin aprobar).</li>
+    <li>Tildás las que querés y elegís proveedor (opcional).</li>
+    <li>Tocá <strong>"Armar OC y abrir planilla"</strong>.</li>
+  </ul>
+
+  <div class="tip">
+    <strong>💡 Proveedor es opcional.</strong> Podés armar la OC sin elegir
+    proveedor (queda como "sin proveedor") y asignarlo después.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="planilla">7. La planilla de la OC en detalle</h2>
+
+  <p>La planilla es la pantalla central donde tomás todas las decisiones.
+  Te muestra los productos pedidos por las cajeras <strong>agrupados por
+  producto</strong>, con todas las OPs cruzadas.</p>
+
+  <div class="capture">
+    <div class="capture-head">
+      <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      multicompra.pages.dev/supervisor/oc-editar?fromNueva=1
+    </div>
+    <div class="capture-body" style="padding:14px;">
+      <div class="wf">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px;">OC-MIX-00001 · Borrador</div>
+
+        <!-- Grupo 1 -->
+        <div style="background:#fef3c7;padding:8px 10px;border-radius:4px;font-size:12px;margin-bottom:6px;border-left:3px solid #f59e0b;">
+          <strong>Glass samsung A20 A30 A50 5D</strong> · Stk DEPOSITO: 416 ·
+          <span style="color:#92400e;">⚠ Central insuficiente (450 > 416)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 60px 60px 60px 100px;gap:8px;font-size:11px;padding:6px 8px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+          <span>KIWI SHOP · Carolina</span>
+          <span style="text-align:right;">200</span>
+          <span style="text-align:right;">2</span>
+          <span style="text-align:right;color:#0e9488;">198</span>
+          <span><span class="wf-badge wf-badge-info">Repone</span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 60px 60px 60px 100px;gap:8px;font-size:11px;padding:6px 8px;background:#fff;border-bottom:1px solid #e5e7eb;">
+          <span>SAN LORENZO · Andrea</span>
+          <span style="text-align:right;">250</span>
+          <span style="text-align:right;">19</span>
+          <span style="text-align:right;color:#0e9488;">231</span>
+          <span><span class="wf-badge wf-badge-info">Repone</span></span>
+        </div>
+
+        <!-- Grupo 2 -->
+        <div style="background:#fff7ed;padding:8px 10px;border-radius:4px;font-size:12px;margin-top:10px;margin-bottom:6px;border-left:3px solid #f59e0b;">
+          <strong>Pendrive Sandisk 32GB</strong> · Stk DEPOSITO: 3
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 60px 60px 60px 100px;gap:8px;font-size:11px;padding:6px 8px;background:#f8fafc;">
+          <span>KIWI SHOP · Carolina</span>
+          <span style="text-align:right;">5</span>
+          <span style="text-align:right;">0</span>
+          <span style="text-align:right;color:#0e9488;">5</span>
+          <span><span class="wf-badge wf-badge-warn">Comprar</span></span>
+        </div>
+
+        <div style="margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:#6b7280;">Total a comprar: <strong style="color:#0f172a;">15 unidades</strong></span>
+          <div style="background:#16a34a;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;">Cerrar OC</div>
+        </div>
+      </div>
+    </div>
+    <div class="capture-caption">Planilla de OC. Cada producto muestra de qué locales viene, cuánto pidieron y la decisión por línea.</div>
+  </div>
+
+  <h3>Las columnas de la tabla</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Columna</th>
+        <th>Qué muestra</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Local</strong></td><td>De qué local viene el pedido + nombre de la cajera.</td></tr>
+      <tr><td><strong>Pidió</strong></td><td>Cantidad pedida por la cajera.</td></tr>
+      <tr><td><strong>Stk Local</strong></td><td>Stock actual del producto en ese local.</td></tr>
+      <tr><td><strong>Excedente</strong></td><td>Diferencia (stockLocal − pidió). Negativo = falta stock.</td></tr>
+      <tr><td><strong>Sugerido</strong></td><td>Cantidad calculada por el sistema (max(0, pidió − stockLocal)).</td></tr>
+      <tr><td><strong>Decisión</strong></td><td>Tu decisión: No necesita / Repone central / Comprar.</td></tr>
+      <tr><td><strong>A comprar</strong></td><td>Cantidad final que va al proveedor (solo si decisión = Comprar).</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="decisiones">8. Las 3 decisiones por línea</h2>
+
+  <div class="decisiones">
+    <div class="decision decision-no">
+      <h4>No necesita</h4>
+      <p>El local ya tiene suficiente stock. La línea se ignora y NO entra en la OC.</p>
+    </div>
+    <div class="decision decision-central">
+      <h4>Repone central</h4>
+      <p>Hay stock en el DEPOSITO. La reposición sale de ahí, no se compra al proveedor.</p>
+    </div>
+    <div class="decision decision-comprar">
+      <h4>Comprar</h4>
+      <p>No hay (o no alcanza) en el DEPOSITO. Se compra al proveedor. Esta cantidad va al PDF de la OC.</p>
+    </div>
+  </div>
+
+  <h3>Decisión default del sistema</h3>
+  <p>Cuando abrís la planilla, el sistema asigna una decisión inicial:</p>
+  <ul>
+    <li>Si el <strong>DEPOSITO tiene stock ≥ pidió</strong> → <strong>Repone central</strong></li>
+    <li>Si el <strong>DEPOSITO no alcanza</strong> → <strong>Comprar</strong></li>
+  </ul>
+  <p>Vos podés cambiar la decisión de cada línea según tu criterio.</p>
+
+  <h3>La alerta "⚠ Central insuficiente"</h3>
+  <p>Si para un producto la <strong>suma de pedidos en "Repone central"</strong>
+  supera el stock del DEPOSITO, aparece este chip en la cabecera del grupo.</p>
+
+  <p>Ejemplo: Glass samsung A20 — stock DEPOSITO=416. KIWI pide 200 (repone)
+  + SAN pide 250 (repone). Suma = 450 > 416 → la alerta aparece. Tenés que
+  decidir cuáles dejás en "Repone" y cuáles pasás a "Comprar".</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="filtros">9. Filtros y bulks</h2>
+
+  <h3>Filtros chip (arriba de la tabla)</h3>
+  <ul>
+    <li><strong>Solo editados</strong> — solo las filas donde cambiaste cantidad o decisión del default.</li>
+    <li><strong>No necesita</strong> — solo las filas marcadas como "No necesita".</li>
+    <li><strong>Comprar &gt; 0</strong> — solo las filas que efectivamente van al proveedor.</li>
+    <li><strong>⚠ Central insuficiente</strong> — solo los productos con la alerta.</li>
+  </ul>
+
+  <h3>Bulks (acciones masivas)</h3>
+  <p>Tildás los checkboxes de varias filas (columna izquierda) y aplicás:</p>
+  <ul>
+    <li><strong>Ninguno compra</strong> — las marca como "No necesita".</li>
+    <li><strong>Comprar todo lo pedido</strong> — pasa a "Comprar" con cantidad = pedido.</li>
+    <li><strong>Repone si alcanza</strong> — para cada una, si stock central alcanza → "Repone central"; sino → "Comprar".</li>
+  </ul>
+
+  <h3>Botón "Usar sug" en cada fila</h3>
+  <p>Cuando una fila está en "Comprar", aparece un botón pequeño tipo
+  <code>sug 198</code>. Al tocarlo, aplica la cantidad sugerida por el
+  sistema (lo que falta para cubrir el pedido).</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="cerrar">10. Cerrar la OC</h2>
+
+  <p>Cuando ya decidiste cada línea, tocá <strong>"Cerrar OC"</strong> abajo.
+  Te aparece un modal con resumen:</p>
+
+  <ul>
+    <li>Cantidad de productos que vas a comprar al proveedor.</li>
+    <li>Total en Gs.</li>
+    <li>Confirmación de que <strong>no se podrá editar</strong> después.</li>
+  </ul>
+
+  <p>Confirmás → la OC pasa a estado <strong>cerrada</strong>, las OPs incluidas
+  pasan a <strong>en_oc</strong>, y vas al detalle de la OC donde podés
+  descargar el PDF.</p>
+
+  <div class="tip-success">
+    <strong>✅ Antes de cerrar:</strong> revisá el total. Si te parece muy
+    alto o muy bajo, probablemente hay alguna línea con cantidad rara que
+    podés ajustar antes de confirmar.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="pdf">11. Descargar el PDF para el proveedor</h2>
+
+  <p>Una vez cerrada la OC, en el detalle vas a ver el botón verde grande
+  <strong>"Descargar PDF"</strong>.</p>
+
+  <p>Al tocarlo, se descarga directamente al disco un archivo
+  <code>OC-XXX.pdf</code> con:</p>
+
+  <ul>
+    <li>Encabezado con MULTIPLAZA S.A. y el número de OC</li>
+    <li>Datos del proveedor</li>
+    <li>Tabla de productos con cantidades y costos</li>
+    <li>Total en Gs destacado</li>
+    <li>Condiciones de la operación</li>
+    <li>Espacio para observaciones y firmas</li>
+  </ul>
+
+  <p>Ese archivo lo podés enviar directamente al proveedor por WhatsApp,
+  email o imprimir si lo recogen en el local.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="editar-oc">12. Editar una OC abierta</h2>
+
+  <p>Si dejaste una OC en estado <strong>abierta</strong> o
+  <strong>en edición</strong> (no cerrada), podés volver a abrir la planilla
+  y modificarla.</p>
+
+  <ol>
+    <li>Andá al <strong>Listado de OCs</strong> (sidebar → "OCs").</li>
+    <li>Tocá una OC con badge <strong>"Abierta"</strong> o <strong>"En edición"</strong>.</li>
+    <li>Te lleva a la planilla con los datos cargados.</li>
+    <li>Hacé los cambios que necesites.</li>
+    <li>Tocá <strong>"Guardar borrador"</strong> para mantener editable, o <strong>"Cerrar OC"</strong> para finalizar.</li>
+  </ol>
+
+  <div class="tip-danger">
+    <strong>⚠ Una vez cerrada NO se puede editar más.</strong> Si te equivocaste,
+    avisame y vemos cómo anularla y rehacerla.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="listado-oc">13. El listado de OCs</h2>
+
+  <p>En la sidebar tocá <strong>"OCs"</strong>. Vas a ver todas las OCs,
+  ordenadas por fecha (más recientes primero). Podés filtrar por:</p>
+
+  <ul>
+    <li><strong>Estado</strong> (abierta, cerrada, recibida, anulada, etc.)</li>
+    <li><strong>Proveedor</strong></li>
+    <li><strong>Rango de fechas</strong></li>
+    <li><strong>Búsqueda</strong> por número de OC o nombre de proveedor</li>
+  </ul>
+
+  <p>El número de OC tiene un prefijo que identifica el local:</p>
+  <ul>
+    <li><code>OC-KIW-00001</code> → solo OPs de KIWI SHOP</li>
+    <li><code>OC-SAN-00001</code> → solo OPs de SAN LORENZO</li>
+    <li><code>OC-MIX-00001</code> → OPs de varios locales mezclados</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="catalogo">14. Catálogo de productos</h2>
+
+  <p>En la sidebar tocá <strong>"Catálogo"</strong>. Te permite buscar
+  cualquier producto del sistema y ver:</p>
+
+  <ul>
+    <li><strong>Stock en el DEPOSITO central</strong> (resaltado arriba)</li>
+    <li><strong>Stock en cada local</strong> (KIWI, SAN LORENZO, VILLA MORRA, etc.)</li>
+    <li><strong>Total en toda la cadena</strong></li>
+    <li>Costo, precio sugerido, código de barras</li>
+  </ul>
+
+  <p>Útil cuando una cajera te pregunta "¿hay stock de tal producto?" o
+  cuando estás decidiendo si comprar más.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="altas">15. Solicitudes de alta de productos</h2>
+
+  <p>Si una cajera no encuentra un producto que necesita pedir, te manda una
+  <strong>solicitud de alta</strong>. Aparece en el sidebar con un badge
+  rojo en <strong>"Altas pendientes"</strong>.</p>
+
+  <p>Al entrar ves cada solicitud con:</p>
+  <ul>
+    <li>Código de barras (si lo tiene)</li>
+    <li>Descripción que escribió la cajera</li>
+    <li>Categoría y proveedor sugeridos</li>
+    <li>Motivo (opcional)</li>
+  </ul>
+
+  <p>Podés <strong>aprobar</strong> (con nota opcional) o <strong>rechazar</strong>
+  (con motivo). Si aprobás, le pasás el alta a Diego para que lo cree en el
+  sistema.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="notif">16. Notificaciones (push y voz)</h2>
+
+  <p>El sistema te avisa cuando llega una OP nueva con dos canales:</p>
+
+  <ul>
+    <li><strong>Notificación de voz</strong>: una voz dice <em>"Pedido nuevo de KIWI SHOP"</em>
+      desde la app si la tenés abierta.</li>
+    <li><strong>Notificación push</strong>: si la pestaña está minimizada o
+      cerrada, te aparece la notificación en la barra del navegador (iOS y
+      Android también soportan).</li>
+  </ul>
+
+  <p>Para activar las notificaciones push, la primera vez que entrás te
+  aparece un banner pidiendo permiso. Tocá <strong>"Permitir"</strong> y listo.</p>
+
+  <p>Si querés silenciar las notificaciones (ej. fuera de horario), tenés un
+  toggle en el menú de tu avatar arriba a la derecha.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="tips">17. Tips útiles</h2>
+
+  <ul>
+    <li><strong>Procesá las OPs en bloque</strong> — si tenés 5 OPs pendientes,
+      no las proceses una por una. Andá a "Armar OC" y consolidá las que
+      podés en una sola OC al proveedor.</li>
+    <li><strong>Usá los bulks de la planilla</strong> — para 50 líneas no
+      tiene sentido cambiar una por una. Tildá las que querés y aplicá
+      "Comprar todo" o "Repone si alcanza".</li>
+    <li><strong>Aprovechá el filtro "Solo editados"</strong> — después de
+      revisar la planilla, este filtro te muestra solo lo que tocaste, así
+      revisás antes de cerrar.</li>
+    <li><strong>El PDF queda con un nombre claro</strong> (<code>OC-KIW-00012.pdf</code>)
+      así organizás los archivos sin renombrarlos.</li>
+    <li><strong>Si dudás con una decisión</strong>, mejor "Repone central"
+      (no le compres al proveedor algo que ya tenés). Si después no alcanza,
+      la cajera vuelve a pedir.</li>
+    <li><strong>Activá el modo oscuro</strong> desde el avatar si trabajás
+      muchas horas en pantalla — descansa la vista.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2 id="soporte">18. Soporte y contacto</h2>
+
+  <p>Si algo no funciona, hacé esto en orden:</p>
+
+  <ol>
+    <li><strong>Refrescá la página</strong> con Ctrl+F5.</li>
+    <li><strong>Mirá la consola</strong> (F12 → Console). Si hay un mensaje en
+      rojo, copialo.</li>
+    <li><strong>Sacale screenshot</strong> a la pantalla con el problema.</li>
+    <li><strong>Avisá al soporte de NODO</strong> con la descripción del problema,
+      el screenshot, el log de consola si lo tenés, y el número de OC/OP afectada.</li>
+  </ol>
+
+  <p>Para borrar datos de prueba (si estás testeando) hay una utilidad en:</p>
+  <p><code>multicompra.pages.dev/admin/borrar-datos-prueba.html</code></p>
+
+  <div class="footer">
+    <strong>MultiCompra</strong> · Multiplaza S.A. · Manual de la Supervisora v1.0<br>
+    Desarrollado por NODO Informática · 2026
+  </div>
+
+</div>
+
+</body>
+</html>
