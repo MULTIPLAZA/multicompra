@@ -489,9 +489,7 @@
   const _normCat = s => String(s || '').toLowerCase();
   const _localDepoCat = locales.find(l =>
     _normCat(l.nombre).includes('deposito') ||
-    _normCat(l.nombre).includes('depósito') ||
-    _normCat(l.Sucursal).includes('deposito') ||
-    _normCat(l.Sucursal).includes('depósito')
+    _normCat(l.nombre).includes('depósito')
   );
 
   function renderResults() {
@@ -502,11 +500,19 @@
     }
     resultsEl.innerHTML = currentResults.map((p, i) => {
       const stkDepo = _localDepoCat ? (p.stockPorLocal[_localDepoCat.id] ?? 0) : 0;
+      const stkOtros = locales.reduce((s, l) => {
+        if (_localDepoCat && l.id === _localDepoCat.id) return s;
+        return s + (p.stockPorLocal[l.id] || 0);
+      }, 0);
       return `
         <div class="search-result-item ${i === currentIdx ? 'active' : ''}" data-idx="${i}" role="option" aria-selected="${i === currentIdx}">
           <span class="search-result-barras">${p.barras}</span>
           <span class="search-result-nombre">${p.nombre}</span>
-          <span class="search-result-stock">DEPOSITO: <strong>${stkDepo}</strong></span>
+          <span class="search-result-stock" style="display:flex;gap:8px;align-items:center;">
+            <span title="Stock en el DEPOSITO central">DEPOSITO: <strong>${stkDepo}</strong></span>
+            <span style="color:var(--text-muted);">·</span>
+            <span title="Suma de stock en los otros locales (excluye el DEPOSITO)" style="color:var(--text-muted);">Locales: <strong>${stkOtros}</strong></span>
+          </span>
         </div>
       `;
     }).join('');
