@@ -180,7 +180,7 @@
     .cta-primary:hover { background: var(--primary-hover); }
 
     /* ── Botón descargar PDF ─────────────────────────────────────────────── */
-    #btn-descargar-pdf { display: none; } /* oculto por defecto; JS lo muestra */
+    /* Visible por default — el JS solo se asegura del listener */
 
     /* ═══════════════════════════════════════════════════════════════════════
        @media print — documento formal de OC para proveedor
@@ -1063,11 +1063,12 @@
   updateAltasBadge({ mockSolicitudes: solicitudesAltaProducto });
 
   // ── Botón Descargar PDF ──────────────────────────────────────────────────
-  // Visible siempre (en cualquier estado de OC). Si la OC esta abierta o
-  // en edicion, el PDF sirve como vista previa.
+  // Visible siempre (cualquier estado de OC). Si la OC esta abierta o en
+  // edicion, el PDF sirve como vista previa.
   const btnPdf = document.getElementById('btn-descargar-pdf');
   if (btnPdf) {
-    btnPdf.style.display = '';
+    btnPdf.style.display = 'inline-flex';
+    console.log('[oc-detalle] boton PDF mostrado');
 
     btnPdf.addEventListener('click', () => {
       // ── Poblar documento print con datos reales de la OC ────────────────
