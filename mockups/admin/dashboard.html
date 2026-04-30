@@ -257,6 +257,75 @@
       padding: var(--sp-4);
     }
 
+    /* ─── Top altas pedidas (lista en tarjeta) ───────────────────────── */
+    .altas-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+    }
+    .alta-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: var(--sp-3);
+      align-items: center;
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: border-color var(--t-fast);
+    }
+    .alta-item:hover { border-color: var(--primary); }
+    .alta-rank {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .alta-rank.top1 { background: #fef3c7; color: #92400e; }
+    .alta-rank.top2 { background: #e0e7ff; color: #3730a3; }
+    .alta-rank.top3 { background: #fce7f3; color: #9d174d; }
+    [data-theme="dark"] .alta-rank.top1 { background: #78350f; color: #fbbf24; }
+    [data-theme="dark"] .alta-rank.top2 { background: #312e81; color: #a5b4fc; }
+    [data-theme="dark"] .alta-rank.top3 { background: #831843; color: #f9a8d4; }
+    .alta-info { min-width: 0; }
+    .alta-desc {
+      font-weight: 600;
+      color: var(--text-strong);
+      font-size: var(--fs-sm);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alta-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alta-count {
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-weight: 800;
+      color: var(--text-strong);
+      font-size: var(--fs-sm);
+      flex-shrink: 0;
+    }
+    .alta-count small {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: block;
+      text-align: right;
+    }
+
     /* ─── Sección Disciplina del equipo ──────────────────────────────── */
     .section {
       margin-bottom: var(--sp-6);
@@ -636,6 +705,27 @@
   <div class="charts-row">
     <div class="chart-card">
       <div class="chart-head">
+        <h3>💰 Stock muerto evitado por mes</h3>
+        <span class="chart-sub" id="chart-ahorro-sub">Ahorro acumulado en cada cierre de OC</span>
+      </div>
+      <div class="chart-canvas-wrap" id="chart-ahorro-wrap"><canvas id="chart-ahorro-mes"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>🆕 Lo que más piden las cajeras</h3>
+        <span class="chart-sub" id="chart-altas-sub">Solicitudes de alta de producto agrupadas</span>
+      </div>
+      <div class="chart-canvas-wrap" id="chart-altas-wrap" style="overflow:auto;">
+        <div id="altas-list-host">
+          <div class="chart-empty">Cargando solicitudes…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-head">
         <h3>Top 10 locales por OPs</h3>
         <span class="chart-sub">Cantidad de OPs creadas</span>
       </div>
@@ -696,12 +786,33 @@
   <section class="panel-section section">
     <h2>Reportes detallados</h2>
     <div class="card-grid">
-      <a href="/admin/reportes/stock-muerto-evitado.html" class="admin-card">
+      <a href="/admin/reportes/devoluciones.html" class="admin-card">
         <div class="admin-card-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7l-3 3"/></svg>
         </div>
-        <h3>Stock Muerto Evitado</h3>
-        <p>Detalle por producto del ahorro al reponer desde DEPOSITO en lugar de comprar al proveedor.</p>
+        <h3>Devoluciones</h3>
+        <p>Qué OPs Shirley devolvió y por qué motivos. Ayuda a detectar patrones por cajera/producto.</p>
+      </a>
+      <a href="/admin/reportes/reposicion-central.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <h3>Reposición central</h3>
+        <p>Qué locales se reponen más desde DEPOSITO y cuál es el peso de cada uno en el ahorro.</p>
+      </a>
+      <a href="/admin/reportes/op-vs-compra-vs-venta.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <h3>OP vs Compra vs Venta</h3>
+        <p>Cruce de lo que se pidió, lo que se compró y lo que se vendió. Cierra el ciclo de compra.</p>
+      </a>
+      <a href="/admin/reportes/op-fuera-protocolo.html" class="admin-card">
+        <div class="admin-card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3>OPs fuera de protocolo</h3>
+        <p>Pedidos que rompen reglas (cantidades raras, productos con poca rotación, horarios atípicos).</p>
       </a>
       <a href="/admin/borrar-datos-prueba.html" class="admin-card danger">
         <div class="admin-card-icon">
@@ -807,11 +918,13 @@
     setVal('k-ops-pend', fmtNum(opsPendientes.length));
     setVal('k-tasa', tasaApr + '%');
 
-    let altasPend = 0;
+    // Solicitudes de alta — cargo todas para ranking + count pendientes
+    let solicitudesAlta = [];
     try {
-      const sa = await listarSolicitudesAlta({ estado: 'pendiente', limit: 200 });
-      if (sa.ok && Array.isArray(sa.data)) altasPend = sa.data.length;
+      const sa = await listarSolicitudesAlta({ limit: 500 });
+      if (sa.ok && Array.isArray(sa.data)) solicitudesAlta = sa.data;
     } catch (_) {}
+    const altasPend = solicitudesAlta.filter(s => s.estado === 'pendiente').length;
     setVal('k-altas', fmtNum(altasPend));
 
     // ─── Cargar detalle de cada OC cerrada (para Stock Muerto + atribución por cajera) ──────
@@ -828,10 +941,12 @@
     // ─── Stock Muerto Evitado total + atribución por OP ──────
     // estructura: opAhorroById[opNumero] = { cajera_nombre, $ahorrado }
     const opAhorroById = new Map();
+    const ahorradoPorMes = new Map(); // 'YYYY-MM' → $ ahorrado
     let totalAhorrado = 0, unidadesEvitadas = 0;
     const productoMontos = new Map(); // para chart top productos
 
     for (const oc of ocsDetalle) {
+      let ahorradoEstaOC = 0;
       const lineasC = oc.lineas || [];
       const compradoPorProd = new Map(); // pid → { cantidad, costo, nombre }
       for (const ln of lineasC) {
@@ -883,6 +998,7 @@
         unidadesEvitadas += evitado;
         const $ahorradoProd = evitado * (c.costo || 0);
         totalAhorrado += $ahorradoProd;
+        ahorradoEstaOC += $ahorradoProd;
         // Atribuir proporcionalmente a cada OP
         for (const [opNumero, op] of pedidoPorOp.entries()) {
           const pidio = op.lineasMap.get(pid) || 0;
@@ -891,6 +1007,15 @@
           const $aOp = $ahorradoProd * peso;
           if (!opAhorroById.has(opNumero)) opAhorroById.set(opNumero, { cajera: op.cajera_nombre, ahorrado: 0 });
           opAhorroById.get(opNumero).ahorrado += $aOp;
+        }
+      }
+
+      // Acumular $ ahorrado por mes (basado en fecha de la OC)
+      if (ahorradoEstaOC > 0) {
+        const f = oc.fecha_creacion || oc.fecha_cierre;
+        if (f) {
+          const mes = String(f).slice(0, 7);
+          ahorradoPorMes.set(mes, (ahorradoPorMes.get(mes) || 0) + ahorradoEstaOC);
         }
       }
     }
@@ -1170,6 +1295,110 @@
           scales: { x: { beginAtZero: true, ticks: { callback: (v) => fmtGsCorto(v) } } }
         }
       });
+    }
+
+    // Chart 5: Stock muerto evitado por mes (line area)
+    const mesesAhorro = [...ahorradoPorMes.entries()].sort((a,b) => a[0].localeCompare(b[0])).slice(-12);
+    if (mesesAhorro.length === 0) {
+      emptyChart('chart-ahorro-wrap', 'Aún no hay OCs cerradas con ahorro calculable.');
+    } else {
+      const nombresMes = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const labelsAhorro = mesesAhorro.map(([k]) => {
+        const [y, m] = k.split('-');
+        return nombresMes[parseInt(m, 10) - 1] + ' ' + y.slice(2);
+      });
+      const dataAhorro = mesesAhorro.map(([_, v]) => v);
+      // Acumulado mes a mes para mostrar la curva creciente
+      let acc = 0;
+      const dataAcum = dataAhorro.map(v => (acc += v));
+      new Chart(document.getElementById('chart-ahorro-mes'), {
+        type: 'line',
+        data: {
+          labels: labelsAhorro,
+          datasets: [
+            {
+              label: 'Mensual',
+              data: dataAhorro,
+              borderColor: COLORS.success,
+              backgroundColor: 'rgba(22,163,74,0.18)',
+              fill: true, tension: 0.35, borderWidth: 2.5,
+              pointRadius: 4, pointBackgroundColor: COLORS.success,
+              pointBorderColor: '#fff', pointBorderWidth: 2,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Acumulado',
+              data: dataAcum,
+              borderColor: COLORS.primary,
+              borderDash: [6, 4],
+              backgroundColor: 'transparent',
+              fill: false, tension: 0.3, borderWidth: 2,
+              pointRadius: 3, pointBackgroundColor: COLORS.primary,
+              pointBorderColor: '#fff', pointBorderWidth: 1.5,
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, boxWidth: 8 } },
+            tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtGs(ctx.raw) } }
+          },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => fmtGsCorto(v) } } }
+        }
+      });
+      const totalUlt = dataAhorro.reduce((s, v) => s + v, 0);
+      setVal('chart-ahorro-sub', mesesAhorro.length + ' meses · acum ' + fmtGsCorto(totalUlt));
+    }
+
+    // Chart 6: Top altas pedidas por las cajeras
+    // Agrupo por código (si está) o por descripción normalizada
+    function normalizarDesc(s) {
+      return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+    const altasMap = new Map();
+    for (const sa of solicitudesAlta) {
+      const cod = String(sa.codigo || '').trim();
+      const desc = String(sa.descripcion || '').trim();
+      const key = cod || normalizarDesc(desc);
+      if (!key) continue;
+      if (!altasMap.has(key)) {
+        altasMap.set(key, { codigo: cod, descripcion: desc, total: 0, pendientes: 0, aprobadas: 0, rechazadas: 0, cajeras: new Set(), locales: new Set() });
+      }
+      const a = altasMap.get(key);
+      a.total++;
+      if (sa.estado === 'pendiente') a.pendientes++;
+      else if (sa.estado === 'aprobado' || sa.estado === 'aprobada') a.aprobadas++;
+      else if (sa.estado === 'rechazado' || sa.estado === 'rechazada') a.rechazadas++;
+      if (sa.cajera_nombre || sa.cajera) a.cajeras.add(sa.cajera_nombre || sa.cajera);
+      if (sa.local_nombre || sa.local) a.locales.add(sa.local_nombre || sa.local);
+    }
+    const topAltas = [...altasMap.values()].sort((a, b) => b.total - a.total).slice(0, 8);
+    const altasHost = document.getElementById('altas-list-host');
+    if (topAltas.length === 0) {
+      altasHost.innerHTML = `<div class="chart-empty">Todavía no hay solicitudes de alta. Cuando una cajera escanee un código que no está en el catálogo, aparece acá.</div>`;
+      setVal('chart-altas-sub', '0 productos solicitados');
+    } else {
+      altasHost.innerHTML = `<div class="altas-list">${topAltas.map((a, idx) => {
+        const rankClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
+        const meta = [];
+        if (a.codigo) meta.push('Cód ' + escapeHTML(a.codigo));
+        if (a.cajeras.size > 0) meta.push(a.cajeras.size + ' ' + (a.cajeras.size === 1 ? 'cajera' : 'cajeras'));
+        if (a.locales.size > 0) meta.push(a.locales.size + ' ' + (a.locales.size === 1 ? 'local' : 'locales'));
+        if (a.pendientes > 0) meta.push(a.pendientes + ' pend.');
+        return `
+          <div class="alta-item">
+            <div class="alta-rank ${rankClass}">${idx + 1}</div>
+            <div class="alta-info">
+              <div class="alta-desc">${escapeHTML(a.descripcion || a.codigo || 'Sin descripción')}</div>
+              <div class="alta-meta">${meta.join(' · ')}</div>
+            </div>
+            <div class="alta-count">${fmtNum(a.total)}<small>${a.total === 1 ? 'pedido' : 'pedidos'}</small></div>
+          </div>
+        `;
+      }).join('')}</div>`;
+      setVal('chart-altas-sub', altasMap.size + ' productos distintos · ' + solicitudesAlta.length + ' solicitudes');
     }
   }
 
