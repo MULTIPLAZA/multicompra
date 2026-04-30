@@ -348,14 +348,14 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
         </span>
         <span class="nav-item-label">OCs</span>
-        <span class="nav-item-count">3</span>
+        <span class="nav-item-count" id="nav-count-ocs" hidden>0</span>
       </a>
       <a class="nav-item" href="compra-lista.html" data-label="Compras">
         <span class="nav-item-icon" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         </span>
         <span class="nav-item-label">Compras</span>
-        <span class="nav-item-count">2</span>
+        <span class="nav-item-count" id="nav-count-compras" hidden>0</span>
       </a>
       <a class="nav-item" href="solicitudes-alta.html" data-label="Altas pendientes">
         <span class="nav-item-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
@@ -446,21 +446,21 @@
       <h4>Esta semana</h4>
       <div class="resumen-kpi">
         <span class="resumen-kpi-label">OPs procesadas</span>
-        <span class="resumen-kpi-value">12</span>
+        <span class="resumen-kpi-value" id="kpi-ops-procesadas">0</span>
       </div>
       <div class="resumen-kpi">
         <span class="resumen-kpi-label">
           OCs abiertas
           <a href="oc-lista.html" title="Ver todas las OCs">ver</a>
         </span>
-        <span class="resumen-kpi-value">3</span>
+        <span class="resumen-kpi-value" id="kpi-ocs-abiertas">0</span>
       </div>
       <div class="resumen-kpi">
         <span class="resumen-kpi-label">
           Compras pendientes verificar
           <a href="compra-lista.html">ver</a>
         </span>
-        <span class="resumen-kpi-value">2</span>
+        <span class="resumen-kpi-value" id="kpi-compras-pendientes">0</span>
       </div>
       <div class="resumen-kpi" id="kpi-altas">
         <span class="resumen-kpi-label">
@@ -539,7 +539,7 @@
   requireRol('supervisor', 'admin');
 
   import { opsPendientes as opsPendientesMock, productos, locales, solicitudesAltaProducto } from '../shared/mock-data.js';
-  import { listarOPs, obtenerLineasOP, suscribirseRealtime } from '../shared/supabase.js';
+  import { listarOPs, obtenerLineasOP, suscribirseRealtime, listarOCs } from '../shared/supabase.js';
   import { playNotifSupervisor } from '../shared/sonido.js';
   import { initSidebarClickOutside, initAvatarMenu, updateAltasBadge } from '../shared/ui.js';
   import { mostrarBannerPermisoSiCorresponde, notificar, getPushHabilitado } from '../shared/push.js';
@@ -660,6 +660,57 @@
   }
 
   await recargarOPs();
+
+  // =====================================================================
+  // KPIs del panel "Resumen" — datos reales de Supabase
+  // =====================================================================
+  async function actualizarKPIs() {
+    // OPs procesadas esta semana = con resolución (aprobada/devuelta/en_oc) en últimos 7 días.
+    let opsProcesadas = 0;
+    try {
+      const haceUnaSemana = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const r = await listarOPs({ limit: 500 });
+      if (r.ok && Array.isArray(r.data)) {
+        opsProcesadas = r.data.filter(o => {
+          if (!o.estado_resolucion) return false;
+          if (!['aprobada', 'devuelta', 'en_oc'].includes(o.estado_resolucion)) return false;
+          const t = o.fecha_resolucion ? new Date(o.fecha_resolucion).getTime() : 0;
+          return t >= haceUnaSemana;
+        }).length;
+      }
+    } catch (e) { console.warn('[dashboard] OPs procesadas:', e); }
+
+    // OCs abiertas = estado in ('abierta','en_edicion')
+    let ocsAbiertas = 0;
+    try {
+      const r = await listarOCs({ limit: 500 });
+      if (r.ok && Array.isArray(r.data)) {
+        ocsAbiertas = r.data.filter(oc => ['abierta', 'en_edicion'].includes(oc.estado)).length;
+      }
+    } catch (e) { console.warn('[dashboard] OCs abiertas:', e); }
+
+    // Compras pendientes — 0 hasta que Carlos entregue MULTICOMPRA_COMPRA_REGISTRAR
+    const comprasPendientes = 0;
+
+    const setKpi = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    const setBadge = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val;
+      if (val > 0) el.removeAttribute('hidden');
+      else el.setAttribute('hidden', '');
+    };
+
+    setKpi('kpi-ops-procesadas', opsProcesadas);
+    setKpi('kpi-ocs-abiertas', ocsAbiertas);
+    setKpi('kpi-compras-pendientes', comprasPendientes);
+    setBadge('nav-count-ocs', ocsAbiertas);
+    setBadge('nav-count-compras', comprasPendientes);
+  }
+  actualizarKPIs(); // background
 
   // =====================================================================
   // Calcular "vieja" en vivo si no viene en el mock
