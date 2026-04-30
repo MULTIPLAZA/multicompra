@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra — Borrar datos de prueba</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="../shared/styles.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: var(--sp-6) var(--sp-4);
+      background: var(--bg);
+    }
+    .wipe-card {
+      max-width: 640px;
+      width: 100%;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-6);
+      box-shadow: var(--shadow);
+    }
+    .wipe-title {
+      font-size: var(--fs-xl);
+      font-weight: 800;
+      color: var(--danger);
+      margin: 0 0 var(--sp-2);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    .wipe-sub {
+      color: var(--text-muted);
+      margin: 0 0 var(--sp-5);
+      font-size: var(--fs-sm);
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-5);
+    }
+    .stat-card {
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--sp-3) var(--sp-4);
+    }
+    .stat-card .stat-label {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--sp-1);
+    }
+    .stat-card .stat-value {
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      font-family: var(--font-mono);
+    }
+    .options {
+      background: var(--bg-elev-2);
+      border-radius: var(--radius);
+      padding: var(--sp-4);
+      margin-bottom: var(--sp-5);
+      border: 1px solid var(--border);
+    }
+    .opt-row {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-3);
+    }
+    .opt-row:last-child { margin-bottom: 0; }
+    .opt-row input[type="checkbox"] {
+      width: 18px; height: 18px;
+      margin-top: 2px;
+      accent-color: var(--danger);
+    }
+    .opt-row label {
+      flex: 1;
+      cursor: pointer;
+      font-size: var(--fs-sm);
+    }
+    .opt-row label .opt-title {
+      display: block;
+      font-weight: 600;
+      color: var(--text-strong);
+      margin-bottom: 2px;
+    }
+    .opt-row label .opt-desc {
+      color: var(--text-muted);
+      font-size: var(--fs-xs);
+    }
+    .actions {
+      display: flex;
+      gap: var(--sp-2);
+      justify-content: flex-end;
+    }
+    .btn-wipe {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
+    }
+    .btn-wipe:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+    .btn-wipe:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .log-box {
+      margin-top: var(--sp-5);
+      padding: var(--sp-3) var(--sp-4);
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+      line-height: 1.5;
+    }
+    .log-box.visible { display: block; }
+    .log-line { padding: 2px 0; }
+    .log-line.ok { color: #86efac; }
+    .log-line.error { color: #fca5a5; }
+    .log-line.info { color: #93c5fd; }
+    .warn-banner {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger);
+      color: var(--danger-text);
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--radius);
+      margin-bottom: var(--sp-4);
+      font-size: var(--fs-sm);
+    }
+    .warn-banner strong { font-weight: 700; }
+    .back-link {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: var(--sp-3);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .back-link:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="wipe-card">
+
+  <a href="../index.html" class="back-link">&larr; Volver al catálogo</a>
+
+  <h1 class="wipe-title">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+    </svg>
+    Borrar datos de prueba
+  </h1>
+  <p class="wipe-sub">
+    Limpia OPs, OCs, compras, solicitudes de alta y resoluciones de las pruebas
+    anteriores. Usalo cuando empezás una ronda de testeo desde cero. <strong>No
+    toca</strong> el catálogo (productos, locales, proveedores) — eso vive en el
+    ERP de Diego.
+  </p>
+
+  <div class="warn-banner" id="warn-loading">
+    Cargando estadísticas…
+  </div>
+
+  <div class="stat-grid" id="stats" style="display:none;">
+    <div class="stat-card">
+      <div class="stat-label">OPs (Supabase)</div>
+      <div class="stat-value" id="stat-ops">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">OCs (Supabase)</div>
+      <div class="stat-value" id="stat-ocs">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Solicitudes alta</div>
+      <div class="stat-value" id="stat-altas">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">localStorage drafts</div>
+      <div class="stat-value" id="stat-local">—</div>
+    </div>
+  </div>
+
+  <div class="options">
+    <div class="opt-row">
+      <input type="checkbox" id="opt-supabase" checked />
+      <label for="opt-supabase">
+        <span class="opt-title">Borrar OPs y OCs de Supabase</span>
+        <span class="opt-desc">Elimina órdenes de pedido, órdenes de compra, líneas, resoluciones y vínculos. Acción IRREVERSIBLE en la base.</span>
+      </label>
+    </div>
+    <div class="opt-row">
+      <input type="checkbox" id="opt-altas" checked />
+      <label for="opt-altas">
+        <span class="opt-title">Borrar solicitudes de alta de productos</span>
+        <span class="opt-desc">Tabla solicitudes_alta_producto + sus resoluciones.</span>
+      </label>
+    </div>
+    <div class="opt-row">
+      <input type="checkbox" id="opt-localstorage" checked />
+      <label for="opt-localstorage">
+        <span class="opt-title">Limpiar caches del browser</span>
+        <span class="opt-desc">Borra todas las claves <code>multicompra:*</code> de localStorage y sessionStorage.</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a href="../index.html" class="btn">Cancelar</a>
+    <button type="button" class="btn btn-wipe" id="btn-wipe" disabled>
+      Borrar todo lo seleccionado
+    </button>
+  </div>
+
+  <div class="log-box" id="log-box"></div>
+
+</div>
+
+<script type="module">
+  import { initSidebarClickOutside } from '../shared/ui.js';
+
+  // Necesitamos acceso directo al cliente Supabase. Importo y uso getClient interno.
+  const SUPABASE_URL = 'https://asangpkbfuxvysdcbyms.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzYW5ncGtiZnV4dnlzZGNieW1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjU5MTMsImV4cCI6MjA5MzA0MTkxM30.UgI3yX5S6_KOXRPeoRyH_2iAamgHlzaCt1Lhfc_2-rk';
+
+  let supa = null;
+  try {
+    const mod = await import('https://esm.sh/@supabase/supabase-js@2');
+    supa = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false }
+    });
+  } catch (e) {
+    console.error('No se pudo cargar Supabase:', e);
+  }
+
+  const $ = id => document.getElementById(id);
+  const log = (msg, tipo = 'info') => {
+    const box = $('log-box');
+    box.classList.add('visible');
+    const line = document.createElement('div');
+    line.className = 'log-line ' + tipo;
+    const time = new Date().toLocaleTimeString('es-PY', { hour12: false });
+    line.textContent = `[${time}] ${msg}`;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  };
+
+  // ─── Cargar estadísticas ─────────────────────────────────────────────────
+  async function cargarStats() {
+    if (!supa) {
+      $('warn-loading').textContent = 'No hay conexión a Supabase. Solo se podrá limpiar localStorage.';
+      $('stats').style.display = 'grid';
+      $('btn-wipe').disabled = false;
+      $('opt-supabase').disabled = true;
+      $('opt-altas').disabled = true;
+      $('stat-ops').textContent = 'n/a';
+      $('stat-ocs').textContent = 'n/a';
+      $('stat-altas').textContent = 'n/a';
+      $('stat-local').textContent = countLocalStorage();
+      return;
+    }
+    try {
+      const [opsRes, ocsRes, altasRes] = await Promise.all([
+        supa.from('op').select('id', { count: 'exact', head: true }),
+        supa.from('oc').select('id', { count: 'exact', head: true }),
+        supa.from('solicitudes_alta_producto').select('id', { count: 'exact', head: true })
+      ]);
+      $('stat-ops').textContent = opsRes.count ?? '?';
+      $('stat-ocs').textContent = ocsRes.count ?? '?';
+      $('stat-altas').textContent = altasRes.count ?? '?';
+      $('stat-local').textContent = countLocalStorage();
+      $('warn-loading').style.display = 'none';
+      $('stats').style.display = 'grid';
+      $('btn-wipe').disabled = false;
+    } catch (e) {
+      $('warn-loading').textContent = 'Error al consultar estadísticas: ' + e.message;
+    }
+  }
+
+  function countLocalStorage() {
+    let n = 0;
+    for (const k in localStorage) {
+      if (k.startsWith('multicompra:')) n++;
+    }
+    return n;
+  }
+
+  // ─── Wipe ────────────────────────────────────────────────────────────────
+  async function wipeAll() {
+    const btn = $('btn-wipe');
+    btn.disabled = true;
+    btn.textContent = 'Borrando…';
+
+    const wipeSupa = $('opt-supabase').checked && supa;
+    const wipeAltas = $('opt-altas').checked && supa;
+    const wipeLocal = $('opt-localstorage').checked;
+
+    if (wipeSupa) {
+      log('Borrando vínculos OC ↔ OP...', 'info');
+      try {
+        const { error } = await supa.from('oc_ops').delete().neq('oc_id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  oc_ops: ' + error.message, 'error');
+        else log('  oc_ops borrados', 'ok');
+      } catch (e) { log('  oc_ops EXC: ' + e.message, 'error'); }
+
+      log('Borrando líneas de OC...', 'info');
+      try {
+        const { error } = await supa.from('oc_lineas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  oc_lineas: ' + error.message, 'error');
+        else log('  oc_lineas borradas', 'ok');
+      } catch (e) { log('  oc_lineas EXC: ' + e.message, 'error'); }
+
+      log('Borrando OCs...', 'info');
+      try {
+        const { error } = await supa.from('oc').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  oc: ' + error.message, 'error');
+        else log('  oc borradas', 'ok');
+      } catch (e) { log('  oc EXC: ' + e.message, 'error'); }
+
+      log('Borrando resoluciones de OP...', 'info');
+      try {
+        const { error } = await supa.from('op_resoluciones').delete().neq('op_id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  op_resoluciones: ' + error.message, 'error');
+        else log('  op_resoluciones borradas', 'ok');
+      } catch (e) { log('  op_resoluciones EXC: ' + e.message, 'error'); }
+
+      log('Borrando líneas de OP...', 'info');
+      try {
+        const { error } = await supa.from('op_lineas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  op_lineas: ' + error.message, 'error');
+        else log('  op_lineas borradas', 'ok');
+      } catch (e) { log('  op_lineas EXC: ' + e.message, 'error'); }
+
+      log('Borrando OPs...', 'info');
+      try {
+        const { error } = await supa.from('op').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  op: ' + error.message, 'error');
+        else log('  op borradas', 'ok');
+      } catch (e) { log('  op EXC: ' + e.message, 'error'); }
+
+      // Compras (si la tabla existe)
+      log('Borrando compras (si existen)...', 'info');
+      try {
+        const { error } = await supa.from('compras').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error && !/does not exist|relation/i.test(error.message)) {
+          log('  compras: ' + error.message, 'error');
+        } else {
+          log('  compras borradas (o tabla inexistente)', 'ok');
+        }
+      } catch (e) { /* puede no existir */ }
+    }
+
+    if (wipeAltas && supa) {
+      log('Borrando solicitudes de alta...', 'info');
+      try {
+        const { error } = await supa.from('solicitudes_alta_producto').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) log('  solicitudes_alta_producto: ' + error.message, 'error');
+        else log('  solicitudes borradas', 'ok');
+      } catch (e) { log('  EXC: ' + e.message, 'error'); }
+    }
+
+    if (wipeLocal) {
+      log('Limpiando localStorage y sessionStorage...', 'info');
+      let n = 0;
+      const keys = [];
+      for (const k in localStorage) {
+        if (k.startsWith('multicompra:')) keys.push(k);
+      }
+      for (const k of keys) { localStorage.removeItem(k); n++; }
+      const skeys = [];
+      for (const k in sessionStorage) {
+        if (k.startsWith('multicompra:')) skeys.push(k);
+      }
+      for (const k of skeys) { sessionStorage.removeItem(k); n++; }
+      log(`  ${n} clave(s) borradas del storage`, 'ok');
+    }
+
+    log('Listo. Recargá las pantallas para ver el estado limpio.', 'ok');
+    btn.textContent = 'Borrado completo';
+
+    // Refrescar stats
+    await cargarStats();
+    btn.disabled = false;
+    btn.textContent = 'Borrar todo lo seleccionado';
+  }
+
+  $('btn-wipe').addEventListener('click', async () => {
+    const opciones = [];
+    if ($('opt-supabase').checked) opciones.push('OPs/OCs de Supabase');
+    if ($('opt-altas').checked) opciones.push('Solicitudes de alta');
+    if ($('opt-localstorage').checked) opciones.push('localStorage');
+    if (opciones.length === 0) return;
+
+    const ok = confirm(
+      'Vas a BORRAR DEFINITIVAMENTE:\n\n' +
+      opciones.map(o => '  • ' + o).join('\n') +
+      '\n\nEsta acción es IRREVERSIBLE en Supabase. ¿Continuar?'
+    );
+    if (!ok) return;
+
+    await wipeAll();
+  });
+
+  cargarStats();
+</script>
+
+</body>
+</html>
+</content>
+</invoke>
