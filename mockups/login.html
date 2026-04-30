@@ -344,10 +344,10 @@
       <h2>Ingresar</h2>
       <p class="card-hint">Accedé con tu cuenta para trabajar.</p>
 
-      <form id="login-form" novalidate>
+      <form id="login-form" novalidate autocomplete="off" data-form-type="other">
         <div class="field" id="field-usuario">
           <label for="inp-usuario">Usuario</label>
-          <input class="input" id="inp-usuario" name="usuario" type="text" autocomplete="username" placeholder="ej: RICARDO" required autocapitalize="characters" />
+          <input class="input" id="inp-usuario" name="usuario" type="text" autocomplete="off" data-form-type="other" placeholder="ej: RICARDO" required autocapitalize="characters" />
           <div class="field-error-msg">Ingresá tu nombre de usuario.</div>
           <!-- Link "Cambiar usuario" — visible solo cuando hay un último usuario recordado -->
           <div id="last-user-hint" style="display:none; margin-top:4px; font-size:var(--fs-xs); color:var(--text-muted);">
@@ -362,7 +362,7 @@
         <div class="field" id="field-pass">
           <label for="inp-pass">Contraseña</label>
           <div class="field-pass-wrap">
-            <input class="input" id="inp-pass" name="password" type="password" autocomplete="current-password" placeholder="Tu clave" required />
+            <input class="input" id="inp-pass" name="password" type="password" autocomplete="new-password" data-form-type="other" data-lpignore="true" data-1p-ignore placeholder="Tu clave" required />
             <button type="button" class="btn-eye" id="btn-eye" aria-label="Mostrar / ocultar contraseña" title="Mostrar / ocultar">
               <svg class="eye-show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
