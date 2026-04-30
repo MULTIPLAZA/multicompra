@@ -822,12 +822,10 @@
       <!-- Banda de marca -->
       <div class="pd-brand-band">
         <div class="pd-brand-left">
-          <div class="pd-logo-box" style="background:#fff;padding:1pt;overflow:hidden;">
-            <img src="/MultitechLogo.jpg" alt="Multitech" style="width:24pt;height:24pt;object-fit:contain;border-radius:50%;display:block;"/>
-          </div>
+          <div class="pd-logo-box">M</div>
           <div class="pd-brand-info">
-            <div class="pd-empresa">MULTITECH</div>
-            <div class="pd-empresa-sub">Accesorios para celulares · Shopping Multiplaza</div>
+            <div class="pd-empresa">MULTIPLAZA S.A.</div>
+            <div class="pd-empresa-sub">Accesorios para celulares · Cadena de locales</div>
           </div>
         </div>
         <div class="pd-brand-right">
@@ -842,7 +840,6 @@
         <div class="pd-box">
           <div class="pd-box-title">Emisor</div>
           <p class="pd-box-nombre">CLUSTER PARAGUAY S.A.</p>
-          <p class="pd-row"><span>Marca:</span> <span>Multitech</span></p>
           <p class="pd-row"><span>RUC:</span> <span>80118425-8</span></p>
           <p class="pd-row"><span>Dirección:</span> <span>Av. Eusebio Ayala 4599 — Shopping Multiplaza</span></p>
           <p class="pd-row"><span>Teléfono:</span> <span>0994 988000</span></p>
@@ -913,7 +910,7 @@
 
       <!-- Pie -->
       <div class="pd-footer">
-        Documento generado por MultiCompra · Multitech (CLUSTER PARAGUAY S.A. · RUC 80118425-8) · <span id="pd-footer-fecha"></span>
+        Documento generado por MultiCompra · CLUSTER PARAGUAY S.A. · RUC 80118425-8 · <span id="pd-footer-fecha"></span>
       </div>
 
     </div><!-- /#print-doc -->
@@ -924,7 +921,7 @@
 
 <script type="module">
   import { requireRol } from '../shared/auth-guard.js';
-  requireRol('supervisor', 'admin');
+  requireRol('supervisor');
 
   import { ocsHistorico, oc as ocActual, ops, auditoria, fmtGs, fmtFecha, solicitudesAltaProducto } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';

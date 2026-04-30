@@ -185,57 +185,8 @@
 
   <div class="admin-hello">
     <h1>Panel de administración</h1>
-    <p>Acá tenés acceso al panel del supervisor (donde aprobás OPs y armás OCs)
-       y herramientas administrativas.</p>
+    <p>Reportes y métricas sobre la operación de compras y pedidos de la cadena.</p>
   </div>
-
-  <!-- Operaciones del día a día -->
-  <section class="panel-section">
-    <h2>Operación diaria</h2>
-    <div class="card-grid">
-
-      <a href="/supervisor/dashboard.html" class="admin-card info">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        </div>
-        <h3>Dashboard supervisor</h3>
-        <p>OPs pendientes, aprobación, devolución, alertas. Vista del día a día.</p>
-      </a>
-
-      <a href="/supervisor/oc-lista.html" class="admin-card">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3zM3 9h18v4H3zM3 15h18v4H3z"/></svg>
-        </div>
-        <h3>Listado de OCs</h3>
-        <p>Todas las Órdenes de Compra (abiertas, cerradas, recibidas) con filtros.</p>
-      </a>
-
-      <a href="/supervisor/oc-nueva.html" class="admin-card">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>
-        <h3>Armar nueva OC</h3>
-        <p>Consolidar OPs de varios locales en una OC al proveedor.</p>
-      </a>
-
-      <a href="/supervisor/catalogo.html" class="admin-card">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        </div>
-        <h3>Catálogo</h3>
-        <p>Buscar productos y ver stock por local + DEPOSITO central.</p>
-      </a>
-
-      <a href="/supervisor/solicitudes-alta.html" class="admin-card">
-        <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        </div>
-        <h3>Solicitudes de alta</h3>
-        <p>Productos que las cajeras pidieron dar de alta — aprobar o rechazar.</p>
-      </a>
-
-    </div>
-  </section>
 
   <!-- Reportes -->
   <section class="panel-section">
@@ -260,14 +211,13 @@
         <span class="badge-soon">Próximamente</span>
       </div>
 
-      <div class="admin-card disabled">
+      <a href="/admin/reportes/stock-muerto-evitado.html" class="admin-card info">
         <div class="admin-card-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         </div>
-        <h3>Stock muerto</h3>
-        <p>Productos con stock alto que no se mueven hace mucho.</p>
-        <span class="badge-soon">Próximamente</span>
-      </div>
+        <h3>Stock Muerto Evitado</h3>
+        <p>Cuánto dinero ahorró Shirley al reponer desde el DEPOSITO en lugar de comprar al proveedor. Por mes y por producto.</p>
+      </a>
 
       <div class="admin-card disabled">
         <div class="admin-card-icon">

@@ -9,7 +9,7 @@
    refresh — ej: 'mc-v1' → 'mc-v2'.
    ============================================================================= */
 
-const CACHE_VERSION = 'mc-v4'; // rebranding Multitech PY — bumped 2026-04-29
+const CACHE_VERSION = 'mc-v5'; // revert visual Multitech → teal M
 const CACHE_NAME = `multicompra-${CACHE_VERSION}`;
 
 // Recursos estáticos que precacheamos en el install (app shell)
@@ -25,8 +25,7 @@ const APP_SHELL = [
   '/shared/ui.js',
   '/shared/auth-guard.js',
   '/shared/sonido.js',
-  '/shared/push.js',
-  '/MultitechLogo.jpg'
+  '/shared/push.js'
 ];
 
 self.addEventListener('install', (event) => {

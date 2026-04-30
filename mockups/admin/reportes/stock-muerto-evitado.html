@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MultiCompra · Stock Muerto Evitado</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('multicompra:theme');
+        if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    })();
+  </script>
+  <link rel="stylesheet" href="/shared/styles.css" />
+  <script src="/shared/pwa-register.js" defer></script>
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-5);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev);
+    }
+    .topbar .brand {
+      font-size: var(--fs-md);
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .topbar .grow { flex: 1; }
+    .topbar .breadcrumbs {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+    .topbar .breadcrumbs a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .topbar .breadcrumbs a:hover { color: var(--primary); }
+    .topbar .user-chip {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-1) var(--sp-3);
+      border-radius: var(--radius-pill);
+      background: var(--bg-elev-2);
+    }
+    .topbar .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--warning);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: var(--fs-xs);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--sp-6) var(--sp-5);
+    }
+    .page-title {
+      margin: 0 0 var(--sp-2);
+      color: var(--text-strong);
+      font-size: var(--fs-2xl);
+    }
+    .page-subtitle {
+      color: var(--text-muted);
+      margin: 0 0 var(--sp-6);
+      font-size: var(--fs-md);
+      line-height: 1.5;
+    }
+    .page-subtitle strong { color: var(--text); }
+
+    /* Hero KPI grande */
+    .hero-card {
+      background: linear-gradient(135deg, var(--primary) 0%, #14b8a6 100%);
+      color: #fff;
+      padding: var(--sp-6);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--sp-6);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--sp-5);
+      align-items: center;
+    }
+    .hero-label {
+      font-size: var(--fs-sm);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      opacity: 0.9;
+      margin-bottom: var(--sp-2);
+    }
+    .hero-value {
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      line-height: 1;
+    }
+    .hero-unit {
+      font-size: var(--fs-md);
+      opacity: 0.85;
+      margin-top: var(--sp-2);
+    }
+    .hero-icon {
+      width: 96px; height: 96px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Sub KPIs */
+    .kpis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-6);
+    }
+    .kpi-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--sp-4);
+    }
+    .kpi-card .kpi-label {
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: var(--sp-1);
+      font-weight: 600;
+    }
+    .kpi-card .kpi-value {
+      font-size: var(--fs-xl);
+      font-weight: 700;
+      color: var(--text-strong);
+      font-family: var(--font-mono, ui-monospace, monospace);
+    }
+    .kpi-card .kpi-sub {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Tabla por producto */
+    .section-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: var(--sp-5);
+    }
+    .section-head {
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--bg-elev-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: var(--fs-md);
+      flex: 1;
+    }
+    .section-head .text-muted {
+      font-size: var(--fs-xs);
+      color: var(--text-muted);
+    }
+
+    table.tabla {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    table.tabla thead th {
+      text-align: left;
+      padding: var(--sp-2) var(--sp-3);
+      background: var(--bg-elev-2);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    table.tabla tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+    }
+    table.tabla tbody tr:last-child td { border-bottom: none; }
+    table.tabla .col-num {
+      text-align: right;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-variant-numeric: tabular-nums;
+    }
+    table.tabla .col-num strong { color: var(--text-strong); }
+
+    /* Loading / empty / error states */
+    .state-box {
+      padding: var(--sp-8) var(--sp-4);
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .state-box svg {
+      width: 56px; height: 56px;
+      color: var(--text-subtle);
+      margin: 0 auto var(--sp-3);
+    }
+    .state-box h3 {
+      color: var(--text-strong);
+      margin: 0 0 var(--sp-2);
+      font-size: var(--fs-lg);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto var(--sp-3);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Mini bar chart en cabecera de producto */
+    .bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-elev-2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #14b8a6);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">MultiCompra · Admin</span>
+  <span class="grow"></span>
+  <span class="breadcrumbs">
+    <a href="/admin/dashboard.html">Panel</a> &rsaquo;
+    <a href="/admin/dashboard.html">Reportes</a> &rsaquo;
+    <strong style="color:var(--text-strong);">Stock Muerto Evitado</strong>
+  </span>
+  <span class="grow"></span>
+  <span class="user-chip">
+    <span class="avatar" id="avatar">DG</span>
+    <span id="user-nombre">Hola Diego</span>
+  </span>
+</div>
+
+<main>
+
+  <h1 class="page-title">Stock Muerto Evitado</h1>
+  <p class="page-subtitle">
+    Dinero que <strong>NO gastaste</strong> al proveedor porque Shirley decidió reponer desde el
+    DEPOSITO en lugar de comprar (o porque la cajera ya tenía suficiente stock).
+    Calculado sobre todas las OCs cerradas.
+  </p>
+
+  <!-- Hero -->
+  <div class="hero-card">
+    <div>
+      <div class="hero-label">💰 Total ahorrado</div>
+      <div class="hero-value" id="hero-total">—</div>
+      <div class="hero-unit">Guaraníes en compras evitadas al proveedor</div>
+    </div>
+    <div class="hero-icon">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="2" x2="12" y2="22"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Sub KPIs -->
+  <div class="kpis-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">OCs analizadas</div>
+      <div class="kpi-value" id="kpi-ocs">—</div>
+      <div class="kpi-sub">cerradas / enviadas / recibidas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">OPs incluidas</div>
+      <div class="kpi-value" id="kpi-ops">—</div>
+      <div class="kpi-sub">de todas las cajeras</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Unidades evitadas</div>
+      <div class="kpi-value" id="kpi-unidades">—</div>
+      <div class="kpi-sub">no compradas al proveedor</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Productos distintos</div>
+      <div class="kpi-value" id="kpi-productos">—</div>
+      <div class="kpi-sub">con ahorro registrado</div>
+    </div>
+  </div>
+
+  <!-- Tabla detalle -->
+  <div class="section-card">
+    <div class="section-head">
+      <h2>Detalle por producto</h2>
+      <span class="text-muted">Top productos donde más ahorraste</span>
+    </div>
+    <div id="tabla-host">
+      <div class="state-box">
+        <div class="spinner"></div>
+        <h3>Calculando...</h3>
+        <p>Procesando OCs y OPs de Supabase para cruzar lo pedido vs comprado.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+  import { requireRol, getUserActual } from '/shared/auth-guard.js';
+  requireRol('admin');
+
+  import { listarOCs, obtenerOC, obtenerLineasOP } from '/shared/supabase.js';
+  import { getProductoPorId, isCargado, prefetchAll } from '/shared/data.js';
+
+  const u = getUserActual();
+  if (u) {
+    document.getElementById('avatar').textContent = u.iniciales || (u.nombre || 'DG').slice(0, 2).toUpperCase();
+    document.getElementById('user-nombre').textContent = 'Hola ' + (u.nombre || 'Admin');
+  }
+
+  // Asegurar cache de productos
+  if (!isCargado()) {
+    try { await prefetchAll(); } catch (e) { console.warn('[stock-muerto] prefetch fallo', e); }
+  }
+
+  // ─── Calcular ───────────────────────────────────────────────────────────
+  function fmtGs(n) {
+    return 'Gs. ' + Math.round(Number(n) || 0).toLocaleString('es-PY');
+  }
+  function fmtNum(n) {
+    return (Number(n) || 0).toLocaleString('es-PY');
+  }
+
+  async function calcular() {
+    const ESTADOS_CERRADOS = ['cerrada', 'enviada_a_proveedor', 'parcialmente_recibida', 'recibida', 'cerrada_con_faltante'];
+
+    // 1) Traer todas las OCs cerradas (puede ser un set grande, limit 500)
+    const ocsRes = await listarOCs({ limit: 500 });
+    if (!ocsRes.ok || !Array.isArray(ocsRes.data)) {
+      mostrarError('No pude consultar OCs en Supabase: ' + (ocsRes.error || 'desconocido'));
+      return;
+    }
+    const ocsCerradas = ocsRes.data.filter(oc => ESTADOS_CERRADOS.includes(oc.estado));
+
+    if (ocsCerradas.length === 0) {
+      mostrarVacio('Todavía no hay OCs cerradas. El reporte se llena cuando Shirley empiece a cerrar las primeras Órdenes de Compra.');
+      return;
+    }
+
+    // 2) Por cada OC, traer detalle (lineas + ops vinculadas + lineas de cada OP)
+    const porProducto = new Map(); // productoId → { nombre, codigo, pidio, compro, evitadas, costo, $ahorrado }
+    let totalOps = 0;
+    const opsVistas = new Set(); // dedupe por si una OP estuviera en varias OCs
+
+    for (const ocBase of ocsCerradas) {
+      const r = await obtenerOC(ocBase.numero || ocBase.id);
+      if (!r.ok || !r.data) continue;
+      const oc = r.data;
+      const lineasComprar = oc.lineas || [];
+
+      // Sumar lo COMPRADO al proveedor (lo que entró en la OC)
+      for (const ln of lineasComprar) {
+        const pid = String(ln.producto_id_erp ?? ln.productoId);
+        if (!porProducto.has(pid)) {
+          const prod = getProductoPorId(Number(pid)) || getProductoPorId(pid) || {};
+          porProducto.set(pid, {
+            productoId: pid,
+            nombre: ln.producto_nombre || prod.descripcion || prod.nombre || ('Producto #' + pid),
+            codigo: ln.producto_codigo || prod.codigo || '',
+            pidio: 0,
+            compro: 0,
+            costo: Number(ln.costo_unitario) || Number(prod.costo) || 0
+          });
+        }
+        const acc = porProducto.get(pid);
+        acc.compro += Number(ln.cantidad_pedida || ln.cantidad) || 0;
+        if (!acc.costo) acc.costo = Number(ln.costo_unitario) || 0;
+      }
+
+      // Sumar lo PEDIDO originalmente por las OPs vinculadas
+      const opsLinkadas = oc.ops || [];
+      for (const opRef of opsLinkadas) {
+        const opNumero = opRef.numero || opRef.id;
+        if (!opNumero || opsVistas.has(opNumero)) continue;
+        opsVistas.add(opNumero);
+        totalOps++;
+        const lr = await obtenerLineasOP(opNumero);
+        if (!lr.ok || !Array.isArray(lr.data)) continue;
+        for (const ln of lr.data) {
+          const pid = String(ln.producto_id_erp ?? ln.productoId);
+          if (!porProducto.has(pid)) {
+            const prod = getProductoPorId(Number(pid)) || getProductoPorId(pid) || {};
+            porProducto.set(pid, {
+              productoId: pid,
+              nombre: ln.producto_nombre || prod.descripcion || prod.nombre || ('Producto #' + pid),
+              codigo: ln.producto_codigo || prod.codigo || '',
+              pidio: 0,
+              compro: 0,
+              costo: Number(ln.producto_costo) || Number(prod.costo) || 0
+            });
+          }
+          const acc = porProducto.get(pid);
+          acc.pidio += Number(ln.cantidad) || 0;
+          if (!acc.costo) acc.costo = Number(ln.producto_costo) || 0;
+        }
+      }
+    }
+
+    // Calcular evitadas + $ ahorrado por producto
+    let totalEvitadas = 0;
+    let totalAhorrado = 0;
+    const filas = [];
+    for (const acc of porProducto.values()) {
+      const evitadas = Math.max(0, acc.pidio - acc.compro);
+      const ahorrado = evitadas * (acc.costo || 0);
+      acc.evitadas = evitadas;
+      acc.ahorrado = ahorrado;
+      totalEvitadas += evitadas;
+      totalAhorrado += ahorrado;
+      if (evitadas > 0) filas.push(acc);
+    }
+    filas.sort((a, b) => b.ahorrado - a.ahorrado);
+
+    // ─── Renderizar ───
+    document.getElementById('hero-total').textContent = fmtGs(totalAhorrado);
+    document.getElementById('kpi-ocs').textContent = fmtNum(ocsCerradas.length);
+    document.getElementById('kpi-ops').textContent = fmtNum(totalOps);
+    document.getElementById('kpi-unidades').textContent = fmtNum(totalEvitadas);
+    document.getElementById('kpi-productos').textContent = fmtNum(filas.length);
+
+    if (filas.length === 0) {
+      mostrarVacio('Hay OCs cerradas pero el cálculo dio cero — significa que se compró exactamente lo que pidieron las cajeras (sin reposición desde DEPOSITO).');
+      return;
+    }
+
+    // Render tabla
+    const max = filas[0].ahorrado;
+    const html = `
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="width:32px;">#</th>
+            <th>Producto</th>
+            <th class="col-num" style="width:90px;">Pidieron</th>
+            <th class="col-num" style="width:90px;">Compraron</th>
+            <th class="col-num" style="width:90px;">Evitadas</th>
+            <th class="col-num" style="width:110px;">Costo unit.</th>
+            <th class="col-num" style="width:140px;">$ Ahorrado</th>
+            <th style="width:140px;">Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas.map((f, i) => `
+            <tr>
+              <td class="col-num" style="color:var(--text-muted);">${i + 1}</td>
+              <td>
+                <div style="font-weight:500;color:var(--text-strong);">${escapeHTML(f.nombre)}</div>
+                ${f.codigo ? `<div style="font-size:var(--fs-xs);color:var(--text-muted);font-family:var(--font-mono);">${escapeHTML(f.codigo)}</div>` : ''}
+              </td>
+              <td class="col-num">${fmtNum(f.pidio)}</td>
+              <td class="col-num">${fmtNum(f.compro)}</td>
+              <td class="col-num"><strong>${fmtNum(f.evitadas)}</strong></td>
+              <td class="col-num">${fmtGs(f.costo)}</td>
+              <td class="col-num"><strong style="color:var(--primary);">${fmtGs(f.ahorrado)}</strong></td>
+              <td>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width:${(f.ahorrado / max * 100).toFixed(1)}%;"></div>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    document.getElementById('tabla-host').innerHTML = html;
+  }
+
+  function escapeHTML(s) {
+    return String(s || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+  function mostrarVacio(msg) {
+    document.getElementById('tabla-host').innerHTML = `
+      <div class="state-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <h3>Sin datos todavía</h3>
+        <p>${escapeHTML(msg)}</p>
+      </div>
+    `;
+  }
+  function mostrarError(msg) {
+    document.getElementById('tabla-host').innerHTML = `
+      <div class="state-box" style="color:var(--danger);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <h3 style="color:var(--danger);">Error al cargar</h3>
+        <p>${escapeHTML(msg)}</p>
+      </div>
+    `;
+  }
+
+  try {
+    await calcular();
+  } catch (e) {
+    console.error('[stock-muerto-evitado]', e);
+    mostrarError(e.message || String(e));
+  }
+</script>
+
+</body>
+</html>

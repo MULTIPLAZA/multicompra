@@ -327,7 +327,7 @@
 
 <script type="module">
   import { requireRol } from '../shared/auth-guard.js';
-  requireRol('supervisor', 'admin');
+  requireRol('supervisor');
 
   import { solicitudesAltaProducto, proveedores as proveedoresMock } from '../shared/mock-data.js';
   import { isCargado, getProveedores as _getProvReales } from '../shared/data.js';
