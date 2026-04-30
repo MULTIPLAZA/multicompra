@@ -1,157 +1,152 @@
-# Plan de prueba — Planilla OC (5 productos, 1 OP, todos los filtros)
+# Plan de prueba — Planilla OC con 2 locales
 
-> Usar este checklist para validar end-to-end el flujo:
-> cajera → supervisor → planilla → cerrar OC → detalle.
-
----
-
-## Setup inicial
-
-- **Local desde el cual hacer la OP**: **KIWI SHOP** (id local = 2)
-  - Carolina (cajera demo) — entrar con el botón "Demo Carolina" del login.
-  - Por el fix nuevo, el demo le reasigna automáticamente un local real
-    del ERP. Si por algún motivo no le tocó KIWI, abrí Console y pegá:
-    ```js
-    const u = JSON.parse(localStorage.getItem('multicompra:user'));
-    u.localId = 2; u.localNombre = 'KIWI SHOP';
-    localStorage.setItem('multicompra:user', JSON.stringify(u));
-    location.href = 'cajera/op-nueva.html';
-    ```
-- **Supervisor**: Shirley (botón "Demo Shirley")
-- **DEPOSITO central**: id 27 (lo detecta solo, no hace falta tocar nada)
+> Probar la consolidación cuando varias cajeras de distintos locales
+> piden los mismos productos. Cubre las 3 decisiones, los 4 filtros,
+> los 3 bulks y la alerta "⚠ Central insuficiente".
 
 ---
 
-## Productos a pedir (OP única, 5 líneas)
+## Setup
 
-Códigos REALES del catálogo del ERP de Diego, elegidos para cubrir las 3
-decisiones default + activar los 4 filtros chip + los 3 bulks.
+- **Local A**: **KIWI SHOP** (id 2)
+- **Local B**: **SAN LORENZO** (id 10)
+- **DEPOSITO central**: id 27 (detectado solo)
+- **Supervisor**: Shirley (botón "Demo Shirley" del login)
 
-| # | Código a escanear | Producto                       | Cantidad a pedir | Stk DEPOSITO | Stk KIWI |
-|---|-------------------|--------------------------------|------------------|--------------|----------|
-| 1 | `00006440`        | Glass samsung A20 A30 A50 5D   | **5**            | 416          | 2        |
-| 2 | `00014309`        | Glass Redmi Note 14 4g/5g      | **200**          | 178          | 0        |
-| 3 | `00001023`        | Pendrive Sandisk 32gb          | **10**           | 3            | 0        |
-| 4 | `00001000`        | Glass iPhone 6/6s              | **8**            | 0            | 0        |
-| 5 | `123`             | Cargador Samsung               | **3**            | 0            | 0        |
+### Antes de empezar
 
-> Nota: el código `123` es del cargador Samsung (sí, código de 3 dígitos —
-> no tiene leading zeros). Después del fix de "ceros a la izquierda", se
-> matchea aunque escribas `0000123`.
+Si tenés datos de pruebas anteriores, **limpialos** desde:
+`https://multicompra.pages.dev/admin/borrar-datos-prueba.html`
 
----
+### Cómo simular 2 locales con la demo
 
-## Decisiones por defecto que debería calcular la planilla
+La demo Carolina por defecto tiene un solo local asignado. Para hacer
+una OP desde KIWI y otra desde SAN LORENZO, vas a tener que cambiar el
+`localId` en localStorage entre OP y OP. Pegá esto en F12 → Console:
 
-| # | Producto         | Pidió | StkLocal | Sugerido (=pidió-stkLocal) | StkCentral | Decisión default        |
-|---|------------------|-------|----------|----------------------------|------------|-------------------------|
-| 1 | Glass samsung    | 5     | 2        | 3                          | 416        | **repone_central** ✓    |
-| 2 | Glass Redmi N14  | 200   | 0        | 200                        | 178        | **comprar** (178<200)   |
-| 3 | Pendrive 32GB    | 10    | 0        | 10                         | 3          | **comprar** (3<10)      |
-| 4 | Glass iPhone 6   | 8     | 0        | 8                          | 0          | **comprar** (0<8)       |
-| 5 | Cargador Samsung | 3     | 0        | 3                          | 0          | **comprar** (0<3)       |
+**Para KIWI SHOP (id 2):**
+```js
+const u = JSON.parse(localStorage.getItem('multicompra:user'));
+u.localId = 2; u.localNombre = 'KIWI SHOP';
+localStorage.setItem('multicompra:user', JSON.stringify(u));
+location.href = 'cajera/op-nueva.html';
+```
 
-Si alguno de estos no coincide → bug en la planilla, screenshot y avisame.
-
----
-
-## Cómo activar cada filtro chip (4 filtros)
-
-### 🟢 "Solo editados"
-- En cualquier fila cambiá la cantidad del input "Comprar" (ej. de 10 a 7
-  en el Pendrive) **o** cambiá la decisión.
-- Click en el chip **"Solo editados"** → debería mostrar SOLO esa fila.
-
-### 🟠 "No necesita"
-- En la fila del Cargador Samsung (#5) click en el botón "No necesita".
-- Click chip **"No necesita"** → muestra solo esa fila.
-
-### 🔵 "Comprar > 0"
-- Default: filas #2, #3, #4, #5 ya están en `comprar`.
-- Click chip **"Comprar > 0"** → muestra esas 4. Oculta el Glass samsung
-  (#1, que está en `repone_central`).
-
-### 🔴 "⚠ Central insuficiente"
-- En la fila del **Glass Redmi N14** (#2) click "Repone central".
-- Eso pone 200 en `repone_central`, pero el DEPOSITO solo tiene 178 →
-  aparece chip **"⚠ Central insuficiente"** en la cabecera del grupo.
-- Click chip **"⚠ Central insuficiente"** → muestra solo ese grupo.
+**Para SAN LORENZO (id 10):**
+```js
+const u = JSON.parse(localStorage.getItem('multicompra:user'));
+u.localId = 10; u.localNombre = 'SAN LORENZO';
+localStorage.setItem('multicompra:user', JSON.stringify(u));
+location.href = 'cajera/op-nueva.html';
+```
 
 ---
 
-## Cómo activar los 3 bulks
+## Productos elegidos (5 — los mismos en ambas OPs)
 
-1. Tildá los checkboxes de las filas #3, #4, #5 (Pendrive, iPhone 6, Cargador).
-2. Probá uno por uno:
-   - **"Ninguno compra"** → las 3 pasan a `no_necesita` (filas grises).
-   - **"Comprar todo lo pedido"** → vuelven a `comprar` con cantidad = pedido.
-   - **"Repone si alcanza"** → todas quedan en `comprar` (porque ningún
-     producto tiene stock central suficiente).
+| Código        | Producto                       | Stk DEPOSITO | Stk KIWI | Stk SAN |
+|---------------|--------------------------------|--------------|----------|---------|
+| `00006440`    | Glass samsung A20 A30 A50 5D   | 416          | 2        | 19      |
+| `00014309`    | Glass Redmi Note 14 4g/5g      | 178          | 0        | 5       |
+| `00001023`    | Pendrive Sandisk 32GB          | 3            | 0        | 15      |
+| `00001000`    | Glass iPhone 6/6s              | 0            | 0        | 7       |
+| `123`         | Cargador Samsung               | 0            | 0        | 0       |
 
 ---
 
-## Botón "Usar sug" (en cada fila de `comprar`)
+## OP 1 — Carolina desde KIWI SHOP
 
-- En la fila del Glass Redmi (#2), después de cambiar la cantidad
-  manualmente a otro número, debería aparecer el botón pequeño `sug 200`.
-- Click → vuelve la cantidad a 200.
+| # | Código     | Cantidad a pedir |
+|---|------------|------------------|
+| 1 | `00006440` | **200**          |
+| 2 | `00014309` | **100**          |
+| 3 | `00001023` | **5**            |
+| 4 | `00001000` | **8**            |
+| 5 | `123`      | **3**            |
+
+Cliquear "Enviar OP" → numero esperado: **`OP-KIW-00001`**
+
+## OP 2 — Carolina desde SAN LORENZO
+
+| # | Código     | Cantidad a pedir |
+|---|------------|------------------|
+| 1 | `00006440` | **250**          |
+| 2 | `00014309` | **100**          |
+| 3 | `00001023` | **10**           |
+| 4 | `00001000` | **4**            |
+| 5 | `123`      | **2**            |
+
+Cliquear "Enviar OP" → numero esperado: **`OP-SAN-00001`**
+
+---
+
+## Decisiones esperadas en la planilla (cuando consolida ambas)
+
+Loguear como **Shirley** → dashboard → tildar **AMBAS** OPs → "Armar OC con seleccionadas" → elegir proveedor (opcional) → "Armar OC y abrir planilla".
+
+Numero de OC esperado: **`OC-MIX-00001`** (porque mezcla 2 locales).
+
+### Lo que debería mostrar la planilla
+
+| Producto              | Local      | Pidió | Stk Local | Sugerido | Decisión default | Notas |
+|-----------------------|------------|-------|-----------|----------|------------------|-------|
+| Glass samsung A20     | KIWI       | 200   | 2         | 198      | repone_central   | StkCentral 416 ≥ 200 |
+|                       | SAN        | 250   | 19        | 231      | repone_central   | StkCentral 416 ≥ 250 |
+| → suma repone = **450 > 416** ⚠ | | | | | | **Activa "⚠ Central insuficiente"** |
+| Glass Redmi Note 14   | KIWI       | 100   | 0         | 100      | repone_central   | 178 ≥ 100 |
+|                       | SAN        | 100   | 5         | 95       | repone_central   | 178 ≥ 100 |
+| → suma repone = **200 > 178** ⚠ | | | | | | **Activa "⚠ Central insuficiente"** |
+| Pendrive 32GB         | KIWI       | 5     | 0         | 5        | comprar          | 3 < 5 |
+|                       | SAN        | 10    | 15        | 0 (sobra)| comprar          | 3 < 10 — sub-pedido (SAN ya tiene 15) |
+| Glass iPhone 6/6s     | KIWI       | 8     | 0         | 8        | comprar          | StkCentral 0 |
+|                       | SAN        | 4     | 7         | 0 (sobra)| comprar          | StkCentral 0 — sub-pedido |
+| Cargador Samsung      | KIWI       | 3     | 0         | 3        | comprar          | StkCentral 0 |
+|                       | SAN        | 2     | 0         | 2        | comprar          | StkCentral 0 |
+
+### Cosas que debería mostrar la UI
+
+- **2 chips ⚠** sobre los grupos Glass samsung A20 y Glass Redmi N14
+- Filas con icono de **sub-pedido** (chip color naranja claro) en SAN para Pendrive, iPhone 6
+- Total a comprar inicial: solo lo de las decisiones `comprar`
+  - 5 + 10 (Pendrive) = 15
+  - 8 + 4 (iPhone 6) = 12
+  - 3 + 2 (Cargador) = 5
+  - **Total inicial: 32 unidades** en estado "comprar"
+- Filas en `repone_central` no suman al total a comprar
+
+---
+
+## Probar cada filtro chip
+
+| Filtro                          | Cómo                                          | Resultado                                                                 |
+|---------------------------------|-----------------------------------------------|---------------------------------------------------------------------------|
+| **Solo editados**               | Cambiá la cantidad de cualquier fila          | Solo aparece esa fila                                                     |
+| **No necesita**                 | Cambiá manual una fila a "No necesita"        | Solo aparecen las marcadas como `no_necesita`                             |
+| **Comprar > 0**                 | Default                                       | 6 filas (Pendrive×2, iPhone 6×2, Cargador×2)                              |
+| **⚠ Central insuficiente**     | Default                                       | Glass samsung A20 + Glass Redmi N14 (los 2 grupos en alerta)              |
+
+## Probar bulks
+
+1. Tildá los checkboxes de las 4 filas de **Pendrive + iPhone 6** (4 pedidos seleccionados)
+2. **"Ninguno compra"** → las 4 pasan a `no_necesita` (filas grises)
+3. **"Comprar todo lo pedido"** → vuelven a `comprar` con cantidad = pedido
+4. **"Repone si alcanza"** → todas siguen en `comprar` (ningún producto tiene stock central suficiente)
+
+## Probar "Usar sug"
+
+En cualquier fila de KIWI con decisión `comprar`, después de cambiar la cantidad manualmente debería aparecer un botón pequeño `sug N`. Click → vuelve al sugerido del sistema.
 
 ---
 
 ## Cerrar OC
 
-1. Asegurate que al menos UN producto tenga decisión `comprar` con
-   cantidad > 0 (sino el botón "Cerrar OC" queda deshabilitado).
-2. Click **"Cerrar OC"** abajo a la derecha.
-3. Confirmá el modal.
-4. Debería redirigir a `oc-detalle.html?id=OC-loc-XXXX` con la OC cerrada.
-5. En el detalle: click **"Descargar PDF"** → diálogo de impresión del
-   browser → "Guardar como PDF".
+Click "Cerrar OC" abajo a la derecha. Debería:
+- Aparecer modal lindo (no el feo del browser) preguntando confirmación
+- Al confirmar: crear OC en Supabase con número `OC-MIX-00001`
+- Marcar OP-KIW-00001 y OP-SAN-00001 como `en_oc`
+- Redirigir a `oc-detalle.html?id=OC-MIX-00001`
 
----
-
-## Checklist visual (marcá ✓ a medida que pruebes)
-
-- [ ] OP creada en KIWI SHOP con los 5 códigos
-- [ ] Shirley ve la OP en el dashboard
-- [ ] "Armar OC con seleccionadas" → te lleva a oc-nueva
-- [ ] "Armar OC y abrir planilla" → llegás a oc-editar?fromNueva=1
-- [ ] La columna "Stk.Local" muestra valores reales (no 0 fijo)
-- [ ] La columna "Sugerido" muestra valores calculados
-- [ ] Decisión default coincide con la tabla de arriba
-- [ ] Filtro "Solo editados" funciona
-- [ ] Filtro "No necesita" funciona
-- [ ] Filtro "Comprar > 0" funciona
-- [ ] Filtro "⚠ Central insuficiente" funciona (después de cambiar Redmi a repone_central)
-- [ ] Bulk "Ninguno compra" funciona
-- [ ] Bulk "Comprar todo lo pedido" funciona
-- [ ] Bulk "Repone si alcanza" funciona
-- [ ] Botón "Usar sug" funciona
-- [ ] "Cerrar OC" crea la OC en Supabase y redirige a oc-detalle
-- [ ] oc-detalle muestra los datos correctos (no `undefined` ni `NaN`)
-- [ ] "Descargar PDF" abre el diálogo de impresión
-
----
-
-## Si algo falla
-
-Abrir F12 → Console y pegar:
-
-```js
-// Datos de la planilla
-const d = window.__debug;
-console.log('Productos cache:', d.getProductos().length);
-console.log('Depots stockMap:', Object.keys(d.getStockMap()));
-console.log('OC grupos:', d.oc?.grupos.length);
-d.oc?.grupos.forEach(g => {
-  console.log(`${g.nombre} | stkCentral=${g.stockCentral} | pedidos=${g.pedidos.length}`);
-  g.pedidos.forEach(p => {
-    console.log(`  ${p.localNombre} | pidio=${p.pidio} stkLocal=${p.stockLocal} sug=${p.sugerido} dec=${p.decision}`);
-  });
-});
-```
-
-Pegame ese output completo + screenshot del error.
+En el detalle: click **"Descargar PDF"** → diálogo de impresión → debería entrar todo en una hoja A4 (10 productos en la tabla, formato compacto).
 
 ---
 
