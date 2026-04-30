@@ -16,7 +16,6 @@
   </script>
   <link rel="stylesheet" href="/shared/styles.css" />
   <script src="/shared/pwa-register.js" defer></script>
-  <!-- Chart.js (lazy via CDN, ~70KB gzip) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
   <style>
     body {
@@ -89,14 +88,10 @@
     }
     .admin-hello {
       margin-bottom: var(--sp-5);
-      display: flex;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: var(--sp-3);
     }
     .admin-hello h1 {
       font-size: var(--fs-2xl);
-      margin: 0;
+      margin: 0 0 var(--sp-1);
       color: var(--text-strong);
       letter-spacing: -0.5px;
     }
@@ -110,11 +105,11 @@
       .admin-hello h1 { font-size: var(--fs-xl); }
     }
 
-    /* ─── Hero card grande (Stock Muerto Evitado) ────────────────────── */
+    /* ─── Hero (Stock Muerto Evitado) ─────────────────────────────────── */
     .hero {
       background: linear-gradient(135deg, var(--primary) 0%, #14b8a6 100%);
       color: #fff;
-      padding: var(--sp-5) var(--sp-6);
+      padding: var(--sp-5);
       border-radius: var(--radius-lg);
       margin-bottom: var(--sp-3);
       display: grid;
@@ -128,7 +123,7 @@
       transform: translateY(-2px);
       box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--primary) 40%, transparent);
     }
-    .hero .hero-label {
+    .hero-label {
       font-size: var(--fs-xs);
       text-transform: uppercase;
       letter-spacing: 1.4px;
@@ -136,21 +131,21 @@
       margin-bottom: var(--sp-1);
       font-weight: 600;
     }
-    .hero .hero-value {
-      font-size: 48px;
+    .hero-value {
+      font-size: clamp(28px, 5.5vw, 44px);
       font-weight: 800;
-      letter-spacing: -1.2px;
+      letter-spacing: -1px;
       font-family: var(--font-mono, ui-monospace, monospace);
-      line-height: 1;
+      line-height: 1.05;
       word-break: break-word;
     }
-    .hero .hero-sub {
+    .hero-sub {
       font-size: var(--fs-sm);
       opacity: 0.85;
       margin-top: var(--sp-2);
     }
-    .hero .hero-icon {
-      width: 88px; height: 88px;
+    .hero-icon {
+      width: 80px; height: 80px;
       background: rgba(255,255,255,0.18);
       border-radius: 50%;
       display: flex;
@@ -160,71 +155,66 @@
     }
     @media (max-width: 600px) {
       .hero { grid-template-columns: 1fr; padding: var(--sp-4); }
-      .hero .hero-icon { display: none; }
-      .hero .hero-value { font-size: 32px; }
+      .hero-icon { display: none; }
     }
 
-    /* ─── KPIs grid (8 cajitas) ───────────────────────────────────────── */
+    /* ─── KPIs grid ──────────────────────────────────────────────────── */
     .kpis-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: var(--sp-3);
       margin-bottom: var(--sp-5);
     }
-    @media (max-width: 900px) {
-      .kpis-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 480px) {
-      .kpis-grid { grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); }
-    }
+    @media (max-width: 900px) { .kpis-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .kpis-grid { gap: var(--sp-2); } }
 
     .kpi {
       background: var(--bg-elev);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: var(--sp-4);
+      padding: var(--sp-3) var(--sp-4);
       display: flex;
       flex-direction: column;
+      min-width: 0; /* permite que el contenido flexible se encoja */
     }
-    .kpi .kpi-label {
-      font-size: var(--fs-xs);
+    .kpi-label {
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .kpi .kpi-value {
-      font-size: 24px;
+    .kpi-value {
+      font-size: clamp(18px, 2.4vw, 24px);
       font-weight: 800;
       color: var(--text-strong);
       font-family: var(--font-mono, ui-monospace, monospace);
-      line-height: 1.1;
+      line-height: 1.15;
       margin-bottom: 2px;
+      word-break: break-word;
     }
-    .kpi .kpi-sub {
-      font-size: var(--fs-xs);
+    .kpi-sub {
+      font-size: 11px;
       color: var(--text-muted);
+      line-height: 1.3;
     }
     .kpi.accent-warn .kpi-value { color: var(--warning-text, var(--warning)); }
     .kpi.accent-info .kpi-value { color: var(--info); }
     .kpi.accent-success .kpi-value { color: var(--success-text, var(--success)); }
     .kpi.accent-danger .kpi-value { color: var(--danger); }
-    @media (max-width: 480px) {
-      .kpi { padding: var(--sp-3); }
-      .kpi .kpi-value { font-size: 20px; }
-    }
 
-    /* ─── Sección de gráficos ────────────────────────────────────────── */
+    /* ─── Gráficos ───────────────────────────────────────────────────── */
     .charts-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--sp-4);
       margin-bottom: var(--sp-5);
     }
-    @media (max-width: 900px) {
-      .charts-row { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
     .chart-card {
       background: var(--bg-elev);
       border: 1px solid var(--border);
@@ -234,7 +224,7 @@
       flex-direction: column;
       min-height: 320px;
     }
-    .chart-card .chart-head {
+    .chart-head {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
@@ -247,7 +237,7 @@
       font-size: var(--fs-md);
       color: var(--text-strong);
     }
-    .chart-card .chart-sub {
+    .chart-sub {
       color: var(--text-muted);
       font-size: var(--fs-xs);
     }
@@ -267,10 +257,209 @@
       padding: var(--sp-4);
     }
 
-    /* ─── Sección reportes / herramientas ────────────────────────────── */
-    .panel-section {
+    /* ─── Sección Disciplina del equipo ──────────────────────────────── */
+    .section {
       margin-bottom: var(--sp-6);
     }
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--sp-3);
+      margin-bottom: var(--sp-3);
+      flex-wrap: wrap;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: var(--fs-lg);
+      color: var(--text-strong);
+      letter-spacing: -0.2px;
+    }
+    .section-title .section-sub {
+      color: var(--text-muted);
+      font-size: var(--fs-sm);
+    }
+
+    .perf-table {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .perf-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+    }
+    .perf-table thead th {
+      background: var(--bg-elev-2);
+      text-align: left;
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .perf-table tbody td {
+      padding: var(--sp-2) var(--sp-3);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .perf-table tbody tr:last-child td { border-bottom: none; }
+    .perf-table tbody tr:hover { background: var(--bg-elev-2); }
+    .perf-table .col-num {
+      text-align: right;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-variant-numeric: tabular-nums;
+    }
+    .perf-cajera {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      min-width: 0;
+    }
+    .perf-cajera-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .perf-cajera-info {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .perf-cajera-nombre {
+      font-weight: 600;
+      color: var(--text-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .perf-cajera-local {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .pill-good {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .pill-ok {
+      background: var(--info-soft);
+      color: #1e40af;
+    }
+    .pill-warn {
+      background: var(--warning-soft);
+      color: var(--warning-text, #92400e);
+    }
+    .pill-bad {
+      background: var(--danger-soft);
+      color: var(--danger-text, #991b1b);
+    }
+    [data-theme="dark"] .pill-good { background: #064e3b; color: #6ee7b7; }
+    [data-theme="dark"] .pill-ok { background: #1e3a8a; color: #93c5fd; }
+    [data-theme="dark"] .pill-warn { background: #78350f; color: #fcd34d; }
+    [data-theme="dark"] .pill-bad { background: #7f1d1d; color: #fca5a5; }
+
+    /* Mobile-friendly tabla → cards */
+    @media (max-width: 720px) {
+      .perf-table table thead { display: none; }
+      .perf-table table, .perf-table tbody, .perf-table tr, .perf-table td { display: block; }
+      .perf-table tr {
+        padding: var(--sp-3) var(--sp-4);
+        border-bottom: 1px solid var(--border);
+      }
+      .perf-table td {
+        padding: 4px 0;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--sp-3);
+      }
+      .perf-table td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .perf-table td.col-cajera::before { display: none; }
+      .perf-table td.col-cajera { padding-bottom: var(--sp-2); }
+    }
+
+    /* ─── Performance Shirley card ───────────────────────────────────── */
+    .shirley-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--sp-5);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--sp-5);
+      align-items: center;
+    }
+    .shirley-avatar-big {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .shirley-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--sp-4);
+    }
+    @media (max-width: 720px) {
+      .shirley-card { grid-template-columns: 1fr; text-align: center; }
+      .shirley-avatar-big { margin: 0 auto; }
+      .shirley-stats { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+    }
+    .shirley-stat .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+      font-weight: 700;
+    }
+    .shirley-stat .val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-strong);
+      font-family: var(--font-mono, ui-monospace, monospace);
+      line-height: 1.1;
+    }
+    .shirley-stat.success .val { color: var(--success-text, var(--success)); }
+    .shirley-stat.warn .val { color: var(--warning-text, var(--warning)); }
+
+    /* ─── Reportes / Tools ────────────────────────────────────────────── */
     .panel-section h2 {
       font-size: var(--fs-md);
       text-transform: uppercase;
@@ -284,9 +473,7 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: var(--sp-3);
     }
-    @media (max-width: 480px) {
-      .card-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 480px) { .card-grid { grid-template-columns: 1fr; } }
     .admin-card {
       background: var(--bg-elev);
       border: 1px solid var(--border);
@@ -314,27 +501,15 @@
       align-items: center;
       justify-content: center;
     }
-    .admin-card.danger .admin-card-icon {
-      background: var(--danger-soft);
-      color: var(--danger);
-    }
-    .admin-card h3 {
-      margin: 0;
-      font-size: var(--fs-md);
-      color: var(--text-strong);
-    }
-    .admin-card p {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: var(--fs-sm);
-      line-height: 1.45;
-    }
+    .admin-card.danger .admin-card-icon { background: var(--danger-soft); color: var(--danger); }
+    .admin-card h3 { margin: 0; font-size: var(--fs-md); color: var(--text-strong); }
+    .admin-card p { margin: 0; color: var(--text-muted); font-size: var(--fs-sm); line-height: 1.45; }
 
-    /* Skeleton loading */
+    /* Skeleton */
     .skel {
       display: inline-block;
       width: 70%;
-      height: 20px;
+      height: 18px;
       background: linear-gradient(90deg, var(--bg-elev-2) 0%, var(--border) 50%, var(--bg-elev-2) 100%);
       background-size: 200% 100%;
       animation: skel 1.4s ease-in-out infinite;
@@ -344,7 +519,6 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-
     .err-banner {
       background: var(--danger-soft);
       color: var(--danger-text, var(--danger));
@@ -374,47 +548,44 @@
 
   <div class="admin-hello">
     <h1>Panel global</h1>
-    <p class="subtitle">Métricas en vivo de la operación de compras y pedidos.</p>
+    <p class="subtitle">Métricas y disciplina del equipo en vivo.</p>
   </div>
 
   <div class="err-banner" id="err-banner"></div>
 
-  <!-- ── Hero gigante ─────────────────────────────────────────────────── -->
+  <!-- Hero -->
   <a href="/admin/reportes/stock-muerto-evitado.html" class="hero">
     <div>
       <div class="hero-label">💰 Stock muerto evitado</div>
-      <div class="hero-value" id="hero-ahorrado"><span class="skel" style="width:70%;height:48px;"></span></div>
+      <div class="hero-value" id="hero-ahorrado"><span class="skel" style="height:42px;width:60%;"></span></div>
       <div class="hero-sub" id="hero-ahorrado-sub">Calculando sobre OCs cerradas…</div>
     </div>
     <div class="hero-icon">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="2" x2="12" y2="22"/>
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
       </svg>
     </div>
   </a>
 
-  <!-- ── KPIs (8 cajitas) ─────────────────────────────────────────────── -->
+  <!-- KPIs -->
   <div class="kpis-grid">
 
     <div class="kpi accent-info">
-      <span class="kpi-label">$ Comprado al proveedor</span>
+      <span class="kpi-label" title="Total comprado al proveedor">$ Comprado</span>
       <span class="kpi-value" id="k-comprado"><span class="skel"></span></span>
       <span class="kpi-sub" id="k-comprado-sub">Histórico OCs cerradas</span>
     </div>
-
     <div class="kpi">
-      <span class="kpi-label">Promedio Gs / OC</span>
+      <span class="kpi-label">Promedio / OC</span>
       <span class="kpi-value" id="k-promedio-oc"><span class="skel"></span></span>
       <span class="kpi-sub">Por orden cerrada</span>
     </div>
-
     <div class="kpi">
       <span class="kpi-label">OCs cerradas</span>
       <span class="kpi-value" id="k-ocs-cerr"><span class="skel"></span></span>
       <span class="kpi-sub">Histórico</span>
     </div>
-
     <div class="kpi accent-warn">
       <span class="kpi-label">OCs abiertas</span>
       <span class="kpi-value" id="k-ocs-abi"><span class="skel"></span></span>
@@ -424,84 +595,107 @@
     <div class="kpi accent-success">
       <span class="kpi-label">OPs procesadas</span>
       <span class="kpi-value" id="k-ops-proc"><span class="skel"></span></span>
-      <span class="kpi-sub">Aprobadas / devueltas / OC</span>
+      <span class="kpi-sub">Aprob/Devuelt/En OC</span>
     </div>
-
     <div class="kpi accent-warn">
       <span class="kpi-label">OPs pendientes</span>
       <span class="kpi-value" id="k-ops-pend"><span class="skel"></span></span>
       <span class="kpi-sub">Esperando supervisor</span>
     </div>
-
     <div class="kpi">
       <span class="kpi-label">Tasa aprobación</span>
       <span class="kpi-value" id="k-tasa"><span class="skel"></span></span>
-      <span class="kpi-sub">OPs aprobadas / total resueltas</span>
+      <span class="kpi-sub">Aprobadas / resueltas</span>
     </div>
-
     <div class="kpi accent-warn">
       <span class="kpi-label">Solicitudes alta</span>
       <span class="kpi-value" id="k-altas"><span class="skel"></span></span>
-      <span class="kpi-sub">Pendientes de aprobar</span>
+      <span class="kpi-sub">Pend. de aprobar</span>
     </div>
 
   </div>
 
-  <!-- ── Gráficos fila 1 ─────────────────────────────────────────────── -->
+  <!-- Gráficos -->
   <div class="charts-row">
-
     <div class="chart-card">
       <div class="chart-head">
         <h3>OPs por estado</h3>
         <span class="chart-sub" id="chart-1-sub">Distribución actual</span>
       </div>
-      <div class="chart-canvas-wrap" id="chart-1-wrap">
-        <canvas id="chart-ops-estado"></canvas>
-      </div>
+      <div class="chart-canvas-wrap" id="chart-1-wrap"><canvas id="chart-ops-estado"></canvas></div>
     </div>
-
     <div class="chart-card">
       <div class="chart-head">
-        <h3>Compras al proveedor por mes</h3>
-        <span class="chart-sub" id="chart-2-sub">Últimos 6 meses</span>
+        <h3>Compras por mes</h3>
+        <span class="chart-sub">Últimos 6 meses</span>
       </div>
-      <div class="chart-canvas-wrap" id="chart-2-wrap">
-        <canvas id="chart-compras-mes"></canvas>
-      </div>
+      <div class="chart-canvas-wrap" id="chart-2-wrap"><canvas id="chart-compras-mes"></canvas></div>
     </div>
-
   </div>
 
-  <!-- ── Gráficos fila 2 ─────────────────────────────────────────────── -->
   <div class="charts-row">
-
     <div class="chart-card">
       <div class="chart-head">
         <h3>Top 10 locales por OPs</h3>
-        <span class="chart-sub" id="chart-3-sub">Cantidad de OPs creadas</span>
+        <span class="chart-sub">Cantidad de OPs creadas</span>
       </div>
-      <div class="chart-canvas-wrap" id="chart-3-wrap">
-        <canvas id="chart-locales"></canvas>
-      </div>
+      <div class="chart-canvas-wrap" id="chart-3-wrap"><canvas id="chart-locales"></canvas></div>
     </div>
-
     <div class="chart-card">
       <div class="chart-head">
         <h3>Top 5 productos comprados</h3>
-        <span class="chart-sub" id="chart-4-sub">Por monto en Gs</span>
+        <span class="chart-sub">Por monto en Gs</span>
       </div>
-      <div class="chart-canvas-wrap" id="chart-4-wrap">
-        <canvas id="chart-productos"></canvas>
-      </div>
+      <div class="chart-canvas-wrap" id="chart-4-wrap"><canvas id="chart-productos"></canvas></div>
     </div>
-
   </div>
 
-  <!-- ── Reportes detallados ─────────────────────────────────────────── -->
-  <section class="panel-section">
+  <!-- ── Disciplina del equipo ────────────────────────────────────────── -->
+  <section class="section">
+    <div class="section-title">
+      <h2>👥 Disciplina del equipo</h2>
+      <span class="section-sub">¿Qué cajera pide bien y cuál pide de más? El status sale del cruce entre lo pedido y lo que terminó comprándose.</span>
+    </div>
+    <div class="perf-table" id="cajeras-table-host">
+      <div style="padding: var(--sp-6); text-align: center; color: var(--text-muted);">
+        <span class="skel" style="height:20px;width:50%;"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Performance del supervisor ──────────────────────────────────── -->
+  <section class="section">
+    <div class="section-title">
+      <h2>🎯 Performance del supervisor</h2>
+      <span class="section-sub">¿Está atacando los excesos? ¿Cuántas OPs corrige?</span>
+    </div>
+    <div class="shirley-card" id="shirley-card-host">
+      <div class="shirley-avatar-big" id="shirley-ini">SH</div>
+      <div class="shirley-stats">
+        <div class="shirley-stat">
+          <div class="label">Procesadas</div>
+          <div class="val" id="sh-proc"><span class="skel"></span></div>
+        </div>
+        <div class="shirley-stat warn">
+          <div class="label">Tasa devolución</div>
+          <div class="val" id="sh-tasa-dev"><span class="skel"></span></div>
+        </div>
+        <div class="shirley-stat success">
+          <div class="label">$ Ahorrado por su acción</div>
+          <div class="val" id="sh-ahorrado"><span class="skel"></span></div>
+        </div>
+        <div class="shirley-stat">
+          <div class="label">OPs en revisión</div>
+          <div class="val" id="sh-pend"><span class="skel"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Reportes detallados ──────────────────────────────────────────── -->
+  <section class="panel-section section">
     <h2>Reportes detallados</h2>
     <div class="card-grid">
-
       <a href="/admin/reportes/stock-muerto-evitado.html" class="admin-card">
         <div class="admin-card-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -509,7 +703,6 @@
         <h3>Stock Muerto Evitado</h3>
         <p>Detalle por producto del ahorro al reponer desde DEPOSITO en lugar de comprar al proveedor.</p>
       </a>
-
       <a href="/admin/borrar-datos-prueba.html" class="admin-card danger">
         <div class="admin-card-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -517,7 +710,6 @@
         <h3>Borrar datos de prueba</h3>
         <p>Limpia OPs/OCs/compras de testeos. Útil al arrancar de cero.</p>
       </a>
-
     </div>
   </section>
 
@@ -548,27 +740,28 @@
   }
   function fmtNum(n) { return (Number(n) || 0).toLocaleString('es-PY'); }
   function setVal(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-
+  function escapeHTML(s) {
+    return String(s || '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  }
   function showError(msg) {
     const banner = document.getElementById('err-banner');
     banner.textContent = '⚠ ' + msg;
     banner.classList.add('visible');
   }
 
-  // Esperar a que Chart.js cargue (lo importamos con defer)
   async function waitChartJs() {
     let n = 0;
-    while (!window.Chart && n < 50) {
-      await new Promise(r => setTimeout(r, 100));
-      n++;
-    }
+    while (!window.Chart && n < 50) { await new Promise(r => setTimeout(r, 100)); n++; }
     return !!window.Chart;
   }
 
-  // Defaults visuales para Chart.js (paleta + tipografía)
+  function emptyChart(wrapId, mensaje) {
+    const wrap = document.getElementById(wrapId);
+    if (wrap) wrap.innerHTML = `<div class="chart-empty">${mensaje}</div>`;
+  }
+
   const COLORS = {
     primary: '#0e9488',
-    primarySoft: '#5eead4',
     info: '#2563eb',
     warn: '#f59e0b',
     danger: '#dc2626',
@@ -577,16 +770,10 @@
     palette: ['#0e9488', '#2563eb', '#f59e0b', '#dc2626', '#16a34a', '#94a3b8', '#a855f7', '#ec4899', '#14b8a6', '#f97316']
   };
 
-  function emptyChart(wrapId, mensaje) {
-    const wrap = document.getElementById(wrapId);
-    if (wrap) wrap.innerHTML = `<div class="chart-empty">${mensaje}</div>`;
-  }
-
   // ─── Cargar todo ────────────────────────────────────────────────────
   async function cargar() {
     const ESTADOS_CERRADOS = ['cerrada', 'enviada_a_proveedor', 'parcialmente_recibida', 'recibida', 'cerrada_con_faltante'];
 
-    // Traer datos
     let ocs = [], ops = [];
     try {
       const [rOCs, rOPs] = await Promise.all([
@@ -602,92 +789,266 @@
     const ocsCerradas = ocs.filter(o => ESTADOS_CERRADOS.includes(o.estado));
     const ocsAbiertas = ocs.filter(o => ['abierta', 'en_edicion'].includes(o.estado));
 
-    // ─── KPIs ──────
+    // ─── KPIs principales ──────
     const totalComprado = ocsCerradas.reduce((s, o) => s + (Number(o.total_gs) || 0), 0);
-    setVal('k-comprado', fmtGs(totalComprado));
-    setVal('k-comprado-sub', `Sobre ${fmtNum(ocsCerradas.length)} OCs`);
-    setVal('k-promedio-oc', ocsCerradas.length > 0 ? fmtGs(totalComprado / ocsCerradas.length) : 'Gs. 0');
+    setVal('k-comprado', fmtGsCorto(totalComprado));
+    setVal('k-comprado-sub', `Sobre ${fmtNum(ocsCerradas.length)} OCs · ${fmtGs(totalComprado)}`);
+    setVal('k-promedio-oc', ocsCerradas.length > 0 ? fmtGsCorto(totalComprado / ocsCerradas.length) : 'Gs. 0');
     setVal('k-ocs-cerr', fmtNum(ocsCerradas.length));
     setVal('k-ocs-abi', fmtNum(ocsAbiertas.length));
 
     const opsProcesadas = ops.filter(o => ['aprobada', 'devuelta', 'en_oc'].includes(o.estado_resolucion));
     const opsPendientes = ops.filter(o => !o.estado_resolucion);
-    const opsAprobadas = ops.filter(o => o.estado_resolucion === 'aprobada' || o.estado_resolucion === 'en_oc').length;
+    const opsAprobadas = ops.filter(o => o.estado_resolucion === 'aprobada' || o.estado_resolucion === 'en_oc');
+    const opsDevueltas = ops.filter(o => o.estado_resolucion === 'devuelta');
     const opsResueltas = opsProcesadas.length;
-    const tasaApr = opsResueltas > 0 ? Math.round((opsAprobadas / opsResueltas) * 100) : 0;
+    const tasaApr = opsResueltas > 0 ? Math.round((opsAprobadas.length / opsResueltas) * 100) : 0;
     setVal('k-ops-proc', fmtNum(opsProcesadas.length));
     setVal('k-ops-pend', fmtNum(opsPendientes.length));
     setVal('k-tasa', tasaApr + '%');
 
+    let altasPend = 0;
     try {
       const sa = await listarSolicitudesAlta({ estado: 'pendiente', limit: 200 });
-      if (sa.ok && Array.isArray(sa.data)) setVal('k-altas', fmtNum(sa.data.length));
-      else setVal('k-altas', '0');
-    } catch (e) {
-      setVal('k-altas', '0');
-    }
+      if (sa.ok && Array.isArray(sa.data)) altasPend = sa.data.length;
+    } catch (_) {}
+    setVal('k-altas', fmtNum(altasPend));
 
-    // ─── Stock Muerto Evitado (cálculo igual que el reporte) ──────
-    let totalAhorrado = 0, unidadesEvitadas = 0;
-    const opsVistas = new Set();
-    const productoMontos = new Map(); // productoId → { nombre, codigo, montoComprado }
-
+    // ─── Cargar detalle de cada OC cerrada (para Stock Muerto + atribución por cajera) ──────
+    // Per OC cargamos: lineasComprar, opsVinculadas (con cajera_nombre + lineas)
+    const ocsDetalle = [];
     for (const ocBase of ocsCerradas) {
       try {
         const r = await obtenerOC(ocBase.numero || ocBase.id);
         if (!r.ok || !r.data) continue;
-        const oc = r.data;
-        const lineasC = oc.lineas || [];
-        const porProd = new Map();
-        for (const ln of lineasC) {
-          const pid = String(ln.producto_id_erp ?? ln.productoId);
-          const costo = Number(ln.costo_unitario) || 0;
-          const cant = Number(ln.cantidad_pedida || ln.cantidad) || 0;
-          if (!porProd.has(pid)) porProd.set(pid, { compro: 0, pidio: 0, costo, nombre: ln.producto_nombre });
-          porProd.get(pid).compro += cant;
-          // Acumular monto comprado por producto
-          if (!productoMontos.has(pid)) {
-            productoMontos.set(pid, { nombre: ln.producto_nombre || ('Producto #' + pid), codigo: ln.producto_codigo || '', monto: 0, cant: 0 });
-          }
-          const pm = productoMontos.get(pid);
-          pm.monto += cant * costo;
-          pm.cant += cant;
-        }
-        for (const opRef of (oc.ops || [])) {
-          const opNumero = opRef.numero || opRef.id;
-          if (!opNumero || opsVistas.has(opNumero)) continue;
-          opsVistas.add(opNumero);
+        ocsDetalle.push(r.data);
+      } catch (_) {}
+    }
+
+    // ─── Stock Muerto Evitado total + atribución por OP ──────
+    // estructura: opAhorroById[opNumero] = { cajera_nombre, $ahorrado }
+    const opAhorroById = new Map();
+    let totalAhorrado = 0, unidadesEvitadas = 0;
+    const productoMontos = new Map(); // para chart top productos
+
+    for (const oc of ocsDetalle) {
+      const lineasC = oc.lineas || [];
+      const compradoPorProd = new Map(); // pid → { cantidad, costo, nombre }
+      for (const ln of lineasC) {
+        const pid = String(ln.producto_id_erp ?? ln.productoId);
+        const cant = Number(ln.cantidad_pedida || ln.cantidad) || 0;
+        const costo = Number(ln.costo_unitario) || 0;
+        compradoPorProd.set(pid, { cantidad: cant, costo, nombre: ln.producto_nombre });
+        // chart top productos
+        if (!productoMontos.has(pid)) productoMontos.set(pid, { nombre: ln.producto_nombre || 'Producto #' + pid, monto: 0, cant: 0 });
+        const pm = productoMontos.get(pid);
+        pm.monto += cant * costo;
+        pm.cant += cant;
+      }
+
+      // Por cada OP de la OC, traer sus líneas — primero el TOTAL pedido por producto entre todas las OPs
+      const pedidoPorOp = new Map(); // opNumero → { cajera_nombre, lineasMap (pid→cantidad), totalCantidad }
+      for (const opRef of (oc.ops || [])) {
+        const opNumero = opRef.numero || opRef.id;
+        if (!opNumero) continue;
+        try {
           const lr = await obtenerLineasOP(opNumero);
-          if (!lr.ok || !Array.isArray(lr.data)) continue;
-          for (const ln of lr.data) {
+          const lineas = (lr.ok && Array.isArray(lr.data)) ? lr.data : [];
+          const lineasMap = new Map();
+          for (const ln of lineas) {
             const pid = String(ln.producto_id_erp ?? ln.productoId);
-            if (!porProd.has(pid)) porProd.set(pid, { compro: 0, pidio: 0, costo: Number(ln.producto_costo) || 0 });
-            porProd.get(pid).pidio += Number(ln.cantidad) || 0;
+            const cant = Number(ln.cantidad) || 0;
+            lineasMap.set(pid, (lineasMap.get(pid) || 0) + cant);
           }
+          pedidoPorOp.set(opNumero, {
+            cajera_nombre: opRef.cajera_nombre || 'Cajera',
+            local_nombre: opRef.local_nombre || '',
+            lineasMap
+          });
+        } catch (_) {}
+      }
+
+      // Para cada producto: total pedido entre todas las OPs - total comprado = evitado del producto.
+      // Atribución a cada OP por su weight (cantidad pedida / total pedido del producto).
+      const totPedidoProd = new Map();
+      for (const op of pedidoPorOp.values()) {
+        for (const [pid, c] of op.lineasMap.entries()) {
+          totPedidoProd.set(pid, (totPedidoProd.get(pid) || 0) + c);
         }
-        for (const acc of porProd.values()) {
-          const ev = Math.max(0, acc.pidio - acc.compro);
-          unidadesEvitadas += ev;
-          totalAhorrado += ev * (acc.costo || 0);
+      }
+      for (const [pid, totPedido] of totPedidoProd.entries()) {
+        const c = compradoPorProd.get(pid) || { cantidad: 0, costo: 0 };
+        const evitado = Math.max(0, totPedido - c.cantidad);
+        if (evitado <= 0) continue;
+        unidadesEvitadas += evitado;
+        const $ahorradoProd = evitado * (c.costo || 0);
+        totalAhorrado += $ahorradoProd;
+        // Atribuir proporcionalmente a cada OP
+        for (const [opNumero, op] of pedidoPorOp.entries()) {
+          const pidio = op.lineasMap.get(pid) || 0;
+          if (pidio === 0) continue;
+          const peso = pidio / totPedido;
+          const $aOp = $ahorradoProd * peso;
+          if (!opAhorroById.has(opNumero)) opAhorroById.set(opNumero, { cajera: op.cajera_nombre, ahorrado: 0 });
+          opAhorroById.get(opNumero).ahorrado += $aOp;
         }
-      } catch (e) {
-        console.warn('[admin] err OC:', e);
       }
     }
+
     setVal('hero-ahorrado', fmtGs(totalAhorrado));
     setVal('hero-ahorrado-sub',
       ocsCerradas.length > 0
         ? `Sobre ${fmtNum(ocsCerradas.length)} OCs · ${fmtNum(unidadesEvitadas)} unidades evitadas`
         : 'Aún no hay OCs cerradas para calcular');
 
-    // ─── Esperar Chart.js y dibujar ──────
-    const ok = await waitChartJs();
-    if (!ok) {
-      ['chart-1-wrap', 'chart-2-wrap', 'chart-3-wrap', 'chart-4-wrap'].forEach(w => emptyChart(w, 'No pude cargar Chart.js (sin conexión a CDN).'));
-      return;
+    // ─── Tabla "Disciplina del equipo" — agrupar por cajera ──────
+    // Para cada cajera: total OPs, devueltas, $ pedido en OPs, $ sobrepedido (suma del ahorrado atribuido)
+    const cajerasMap = new Map(); // nombre → { total, devueltas, aprobadas, en_oc, pendientes, $pedido, $sobrepedido, locales:Set }
+    for (const op of ops) {
+      const nombre = op.cajera_nombre || 'Sin cajera';
+      const local = op.local_nombre || '—';
+      if (!cajerasMap.has(nombre)) {
+        cajerasMap.set(nombre, {
+          nombre, total: 0, devueltas: 0, aprobadas: 0, en_oc: 0, pendientes: 0,
+          gsPedido: 0, gsSobrepedido: 0, locales: new Set()
+        });
+      }
+      const c = cajerasMap.get(nombre);
+      c.total++;
+      c.locales.add(local);
+      const er = op.estado_resolucion;
+      if (!er) c.pendientes++;
+      else if (er === 'devuelta') c.devueltas++;
+      else if (er === 'aprobada') c.aprobadas++;
+      else if (er === 'en_oc') c.en_oc++;
     }
 
-    // Colores de texto según tema
+    // $ Pedido por cajera (suma cantidad * producto_costo de las líneas de cada OP)
+    // Esto es expensive si hay muchas OPs, lo hacemos en lazy-batch
+    const opLineasCache = new Map();
+    async function getLineas(opNum) {
+      if (opLineasCache.has(opNum)) return opLineasCache.get(opNum);
+      try {
+        const lr = await obtenerLineasOP(opNum);
+        const lineas = (lr.ok && Array.isArray(lr.data)) ? lr.data : [];
+        opLineasCache.set(opNum, lineas);
+        return lineas;
+      } catch (_) { return []; }
+    }
+
+    for (const op of ops) {
+      const num = op.numero || op.id;
+      const lineas = await getLineas(num);
+      let gs = 0;
+      for (const ln of lineas) {
+        gs += (Number(ln.cantidad) || 0) * (Number(ln.producto_costo) || 0);
+      }
+      const c = cajerasMap.get(op.cajera_nombre || 'Sin cajera');
+      if (c) c.gsPedido += gs;
+    }
+
+    // $ Sobrepedido atribuido (de las OPs en_oc)
+    for (const [opNumero, info] of opAhorroById.entries()) {
+      const c = cajerasMap.get(info.cajera);
+      if (c) c.gsSobrepedido += info.ahorrado;
+    }
+
+    // Para OPs DEVUELTAS, contamos como "sobrepedido" el TOTAL pedido de esa OP
+    // (porque Shirley las rechazó completamente — así de mal pidieron)
+    const opsDev = ops.filter(o => o.estado_resolucion === 'devuelta');
+    for (const op of opsDev) {
+      const num = op.numero || op.id;
+      const lineas = await getLineas(num);
+      let gs = 0;
+      for (const ln of lineas) gs += (Number(ln.cantidad) || 0) * (Number(ln.producto_costo) || 0);
+      const c = cajerasMap.get(op.cajera_nombre || 'Sin cajera');
+      if (c) c.gsSobrepedido += gs;
+    }
+
+    // Calcular % devolución y status
+    const cajeras = [...cajerasMap.values()].map(c => {
+      const resueltas = c.aprobadas + c.devueltas + c.en_oc;
+      const tasaDev = resueltas > 0 ? (c.devueltas / resueltas * 100) : 0;
+      const ratioSobre = c.gsPedido > 0 ? (c.gsSobrepedido / c.gsPedido * 100) : 0;
+      // Status: si pide mucho de más O Shirley devuelve mucho → mal
+      let status = 'good', statusLabel = 'Disciplinada';
+      if (tasaDev > 30 || ratioSobre > 40) { status = 'bad'; statusLabel = 'Pide de más'; }
+      else if (tasaDev > 15 || ratioSobre > 20) { status = 'warn'; statusLabel = 'A vigilar'; }
+      else if (c.total === 0) { status = 'ok'; statusLabel = 'Sin actividad'; }
+      else if (resueltas === 0) { status = 'ok'; statusLabel = 'En cola'; }
+      return { ...c, locales: [...c.locales], tasaDev, ratioSobre, status, statusLabel };
+    }).sort((a, b) => b.gsSobrepedido - a.gsSobrepedido);
+
+    // Render tabla cajeras
+    const host = document.getElementById('cajeras-table-host');
+    if (cajeras.length === 0) {
+      host.innerHTML = `<div style="padding:var(--sp-6);text-align:center;color:var(--text-muted);">Sin cajeras todavía. Cuando empiecen a crear OPs van a aparecer acá.</div>`;
+    } else {
+      host.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Cajera</th>
+              <th class="col-num">OPs</th>
+              <th class="col-num">Devueltas</th>
+              <th class="col-num">% devolución</th>
+              <th class="col-num">$ Pedido</th>
+              <th class="col-num">$ Sobrepedido</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cajeras.map(c => {
+              const ini = (c.nombre || 'XX').split(/\s+/).map(s => s[0]).join('').slice(0,2).toUpperCase();
+              const localesTxt = c.locales.length === 1 ? c.locales[0] : c.locales.length + ' locales';
+              return `
+                <tr>
+                  <td class="col-cajera" data-label="">
+                    <div class="perf-cajera">
+                      <div class="perf-cajera-avatar">${ini}</div>
+                      <div class="perf-cajera-info">
+                        <div class="perf-cajera-nombre">${escapeHTML(c.nombre)}</div>
+                        <div class="perf-cajera-local">${escapeHTML(localesTxt)}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="col-num" data-label="OPs">${fmtNum(c.total)}</td>
+                  <td class="col-num" data-label="Devueltas">${fmtNum(c.devueltas)}</td>
+                  <td class="col-num" data-label="% devolución">${c.tasaDev.toFixed(0)}%</td>
+                  <td class="col-num" data-label="$ Pedido">${fmtGsCorto(c.gsPedido)}</td>
+                  <td class="col-num" data-label="$ Sobrepedido">${fmtGsCorto(c.gsSobrepedido)}</td>
+                  <td data-label="Status"><span class="pill pill-${c.status}">${c.statusLabel}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // ─── Performance Shirley ──────
+    // Agrupar resoluciones por supervisor
+    let shirleyProc = 0, shirleyDev = 0;
+    for (const op of ops) {
+      const er = op.estado_resolucion;
+      if (er === 'aprobada' || er === 'devuelta' || er === 'en_oc') {
+        shirleyProc++;
+        if (er === 'devuelta') shirleyDev++;
+      }
+    }
+    const tasaDev = shirleyProc > 0 ? (shirleyDev / shirleyProc * 100) : 0;
+    const ahorradoTotal = totalAhorrado + cajeras.reduce((s, c) => s + (c.gsSobrepedido - 0), 0); // en realidad totalAhorrado ya incluye atribución; uso solo totalAhorrado para no doblar
+    setVal('sh-proc', fmtNum(shirleyProc));
+    setVal('sh-tasa-dev', tasaDev.toFixed(0) + '%');
+    setVal('sh-ahorrado', fmtGsCorto(totalAhorrado));
+    setVal('sh-pend', fmtNum(opsPendientes.length));
+
+    // ─── Charts ──────
+    const ok = await waitChartJs();
+    if (!ok) {
+      ['chart-1-wrap','chart-2-wrap','chart-3-wrap','chart-4-wrap'].forEach(w => emptyChart(w, 'No pude cargar Chart.js (sin conexión a CDN).'));
+      return;
+    }
     const tema = document.documentElement.getAttribute('data-theme');
     const textColor = tema === 'dark' ? '#cbd5e1' : '#374151';
     const gridColor = tema === 'dark' ? 'rgba(203,213,225,0.08)' : 'rgba(15,23,42,0.06)';
@@ -695,19 +1056,11 @@
     Chart.defaults.borderColor = gridColor;
     Chart.defaults.font.family = "'Helvetica Neue', Arial, sans-serif";
 
-    // ─── Chart 1: OPs por estado (donut) ──────
-    const estadoCount = { 'Pendientes': 0, 'Aprobadas': 0, 'Devueltas': 0, 'En OC': 0 };
-    for (const o of ops) {
-      const est = o.estado_resolucion;
-      if (!est) estadoCount['Pendientes']++;
-      else if (est === 'aprobada') estadoCount['Aprobadas']++;
-      else if (est === 'devuelta') estadoCount['Devueltas']++;
-      else if (est === 'en_oc') estadoCount['En OC']++;
-    }
-    const totalOps = ops.length;
-    if (totalOps === 0) {
-      emptyChart('chart-1-wrap', 'Aún no hay OPs cargadas.');
-    } else {
+    // Chart 1: OPs por estado
+    const estadoCount = { 'Pendientes': opsPendientes.length, 'Aprobadas': opsAprobadas.length, 'Devueltas': opsDevueltas.length, 'En OC': ops.filter(o => o.estado_resolucion === 'en_oc').length };
+    const totalOpsAll = ops.length;
+    if (totalOpsAll === 0) emptyChart('chart-1-wrap', 'Aún no hay OPs cargadas.');
+    else {
       new Chart(document.getElementById('chart-ops-estado'), {
         type: 'doughnut',
         data: {
@@ -723,25 +1076,24 @@
           responsive: true, maintainAspectRatio: false, cutout: '60%',
           plugins: {
             legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true } },
-            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} (${(ctx.raw / totalOps * 100).toFixed(0)}%)` } }
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} (${(ctx.raw / totalOpsAll * 100).toFixed(0)}%)` } }
           }
         }
       });
-      setVal('chart-1-sub', `${fmtNum(totalOps)} OPs en total`);
+      setVal('chart-1-sub', `${fmtNum(totalOpsAll)} OPs en total`);
     }
 
-    // ─── Chart 2: Compras por mes (línea) ──────
-    const mesesMap = new Map(); // 'YYYY-MM' → monto
+    // Chart 2: Compras por mes
+    const mesesMap = new Map();
     for (const oc of ocsCerradas) {
       const f = oc.fecha_creacion;
       if (!f) continue;
-      const key = String(f).slice(0, 7); // YYYY-MM
+      const key = String(f).slice(0, 7);
       mesesMap.set(key, (mesesMap.get(key) || 0) + (Number(oc.total_gs) || 0));
     }
     const meses = [...mesesMap.entries()].sort((a,b) => a[0].localeCompare(b[0])).slice(-6);
-    if (meses.length === 0) {
-      emptyChart('chart-2-wrap', 'Aún no hay OCs cerradas con fecha.');
-    } else {
+    if (meses.length === 0) emptyChart('chart-2-wrap', 'Aún no hay OCs cerradas con fecha.');
+    else {
       const labelsMes = meses.map(([k]) => {
         const [y, m] = k.split('-');
         const nombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -752,92 +1104,70 @@
         data: {
           labels: labelsMes,
           datasets: [{
-            label: 'Compras al proveedor',
             data: meses.map(([_, v]) => v),
             borderColor: COLORS.primary,
             backgroundColor: 'rgba(14,148,136,0.15)',
-            fill: true,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: 4,
-            pointBackgroundColor: COLORS.primary,
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2
+            fill: true, tension: 0.35, borderWidth: 2.5,
+            pointRadius: 4, pointBackgroundColor: COLORS.primary,
+            pointBorderColor: '#fff', pointBorderWidth: 2
           }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: (ctx) => fmtGs(ctx.raw) } }
-          },
-          scales: {
-            y: { ticks: { callback: (v) => fmtGsCorto(v) } }
-          }
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtGs(ctx.raw) } } },
+          scales: { y: { ticks: { callback: (v) => fmtGsCorto(v) } } }
         }
       });
     }
 
-    // ─── Chart 3: Top 10 locales por cantidad de OPs (bar horizontal) ──────
-    const localesMap = new Map(); // local_nombre → count
+    // Chart 3: Top locales
+    const localesMap = new Map();
     for (const o of ops) {
       const ln = o.local_nombre || 'Sin local';
       localesMap.set(ln, (localesMap.get(ln) || 0) + 1);
     }
     const topLoc = [...localesMap.entries()].sort((a,b) => b[1]-a[1]).slice(0, 10);
-    if (topLoc.length === 0) {
-      emptyChart('chart-3-wrap', 'Aún no hay OPs.');
-    } else {
+    if (topLoc.length === 0) emptyChart('chart-3-wrap', 'Aún no hay OPs.');
+    else {
       new Chart(document.getElementById('chart-locales'), {
         type: 'bar',
         data: {
           labels: topLoc.map(([n]) => n),
           datasets: [{
-            label: 'OPs',
             data: topLoc.map(([_, c]) => c),
             backgroundColor: COLORS.primary,
-            borderRadius: 6,
-            barThickness: 'flex',
-            maxBarThickness: 26
+            borderRadius: 6, maxBarThickness: 26
           }]
         },
         options: {
-          indexAxis: 'y',
-          responsive: true, maintainAspectRatio: false,
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
         }
       });
     }
 
-    // ─── Chart 4: Top 5 productos por monto comprado ──────
+    // Chart 4: Top productos
     const topProd = [...productoMontos.values()].sort((a,b) => b.monto - a.monto).slice(0, 5);
-    if (topProd.length === 0) {
-      emptyChart('chart-4-wrap', 'Aún no hay productos comprados.');
-    } else {
+    if (topProd.length === 0) emptyChart('chart-4-wrap', 'Aún no hay productos comprados.');
+    else {
       new Chart(document.getElementById('chart-productos'), {
         type: 'bar',
         data: {
-          labels: topProd.map(p => p.nombre.length > 30 ? p.nombre.slice(0,28) + '…' : p.nombre),
+          labels: topProd.map(p => p.nombre.length > 28 ? p.nombre.slice(0,26) + '…' : p.nombre),
           datasets: [{
-            label: 'Monto comprado',
             data: topProd.map(p => p.monto),
             backgroundColor: COLORS.palette,
-            borderRadius: 6,
-            barThickness: 'flex',
-            maxBarThickness: 28
+            borderRadius: 6, maxBarThickness: 28
           }]
         },
         options: {
-          indexAxis: 'y',
-          responsive: true, maintainAspectRatio: false,
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: (ctx) => fmtGs(ctx.raw) + ' · ' + fmtNum(topProd[ctx.dataIndex].cant) + ' unid.' } }
           },
-          scales: {
-            x: { beginAtZero: true, ticks: { callback: (v) => fmtGsCorto(v) } }
-          }
+          scales: { x: { beginAtZero: true, ticks: { callback: (v) => fmtGsCorto(v) } } }
         }
       });
     }
