@@ -1,8 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64">
+  <!-- Fondo teal para contexto app (se ve cuando el logo no carga) -->
   <rect width="64" height="64" rx="14" fill="#0f766e"/>
-  <g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 14h6l1.6 8M22.6 30h27l4-15h-29.4"/>
-    <circle cx="26" cy="48" r="3.5" fill="#fff"/>
-    <circle cx="46" cy="48" r="3.5" fill="#fff"/>
-  </g>
+  <!-- Logo Multitech circular embebido -->
+  <image href="/MultitechLogo.jpg" x="2" y="2" width="60" height="60" clip-path="url(#clip-circle)"/>
+  <defs>
+    <clipPath id="clip-circle">
+      <rect x="2" y="2" width="60" height="60" rx="30"/>
+    </clipPath>
+  </defs>
 </svg>

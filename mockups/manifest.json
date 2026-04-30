@@ -1,7 +1,7 @@
 {
   "name": "MultiCompra",
   "short_name": "MultiCompra",
-  "description": "Sistema de Órdenes de Pedido y Compra para cadena de locales",
+  "description": "Sistema de Órdenes de Pedido y Compra — Multitech PY S.A.",
   "start_url": "/login.html",
   "scope": "/",
   "display": "standalone",
