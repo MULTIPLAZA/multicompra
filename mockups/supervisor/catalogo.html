@@ -580,6 +580,7 @@
 
   function renderProducto(p) {
     const totalLocales = locales.reduce((s, l) => s + (p.stockPorLocal[l.id] || 0), 0);
+    const grandTotal = totalLocales; // total real = suma de todos los locales (incluido DEPOSITO)
     const tsAhora = nowTs();
 
     // Identificar el local "DEPOSITO" (el central real del ERP de Diego).
