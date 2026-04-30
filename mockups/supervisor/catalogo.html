@@ -369,7 +369,7 @@
 
     <div class="screen-subheader">
       <h1 class="screen-title">Consulta de stock</h1>
-      <span class="text-sm text-muted">Buscá un producto para ver su stock en central y por local.</span>
+      <span class="text-sm text-muted">Buscá un producto para ver su stock en el DEPOSITO central y en cada local.</span>
     </div>
 
     <!-- Buscador grande -->
@@ -485,19 +485,31 @@
     }).slice(0, 12);
   }
 
+  // Identificar local DEPOSITO una sola vez para usar en el dropdown
+  const _normCat = s => String(s || '').toLowerCase();
+  const _localDepoCat = locales.find(l =>
+    _normCat(l.nombre).includes('deposito') ||
+    _normCat(l.nombre).includes('depósito') ||
+    _normCat(l.Sucursal).includes('deposito') ||
+    _normCat(l.Sucursal).includes('depósito')
+  );
+
   function renderResults() {
     if (currentResults.length === 0) {
       resultsEl.innerHTML = `<div style="padding: var(--sp-3); color: var(--text-muted); font-size: var(--fs-sm);">Sin coincidencias</div>`;
       resultsEl.classList.add('visible');
       return;
     }
-    resultsEl.innerHTML = currentResults.map((p, i) => `
-      <div class="search-result-item ${i === currentIdx ? 'active' : ''}" data-idx="${i}" role="option" aria-selected="${i === currentIdx}">
-        <span class="search-result-barras">${p.barras}</span>
-        <span class="search-result-nombre">${p.nombre}</span>
-        <span class="search-result-stock">Central: <strong>${p.stockCentral}</strong></span>
-      </div>
-    `).join('');
+    resultsEl.innerHTML = currentResults.map((p, i) => {
+      const stkDepo = _localDepoCat ? (p.stockPorLocal[_localDepoCat.id] ?? 0) : 0;
+      return `
+        <div class="search-result-item ${i === currentIdx ? 'active' : ''}" data-idx="${i}" role="option" aria-selected="${i === currentIdx}">
+          <span class="search-result-barras">${p.barras}</span>
+          <span class="search-result-nombre">${p.nombre}</span>
+          <span class="search-result-stock">DEPOSITO: <strong>${stkDepo}</strong></span>
+        </div>
+      `;
+    }).join('');
     resultsEl.classList.add('visible');
   }
 
@@ -562,27 +574,41 @@
 
   function renderProducto(p) {
     const totalLocales = locales.reduce((s, l) => s + (p.stockPorLocal[l.id] || 0), 0);
-    const grandTotal = totalLocales + Math.max(0, p.stockCentral);
     const tsAhora = nowTs();
 
-    // Filas: central primero, después los 10 locales
+    // Identificar el local "DEPOSITO" (el central real del ERP de Diego).
+    // Lo mostramos primero con resaltado; los demás locales después.
+    const _norm = s => String(s || '').toLowerCase();
+    const esDepo = l =>
+      _norm(l.nombre) === 'deposito' || _norm(l.Sucursal) === 'deposito' ||
+      _norm(l.nombre) === 'depósito' || _norm(l.Sucursal) === 'depósito' ||
+      _norm(l.nombre).includes('deposito') || _norm(l.Sucursal).includes('deposito') ||
+      _norm(l.nombre).includes('depósito') || _norm(l.Sucursal).includes('depósito');
+
+    const localDepo = locales.find(esDepo);
+    const otrosLocales = locales.filter(l => l !== localDepo);
+
     const filas = [];
-    filas.push(`
-      <tr class="row-central">
-        <td class="col-nombre">
-          <div class="local-chip">
-            <span class="local-chip-icon" style="background: var(--primary); color: var(--primary-on);">CE</span>
-            <strong>Depósito Central</strong>
-          </div>
-        </td>
-        <td class="col-num">
-          ${p.stockCentral < 0
-            ? `<span class="stock-cell-neg">${p.stockCentral}</span>`
-            : `<strong>${p.stockCentral}</strong>`}
-        </td>
-      </tr>
-    `);
-    locales.forEach(l => {
+    if (localDepo) {
+      const q = p.stockPorLocal[localDepo.id];
+      const qTxt = q == null ? '—' : q;
+      const cls = q === 0 ? 'stock-cell-zero' : (q < 0 ? 'stock-cell-neg' : '');
+      filas.push(`
+        <tr class="row-central">
+          <td class="col-nombre">
+            <div class="local-chip">
+              <span class="local-chip-icon" style="background: var(--primary); color: var(--primary-on);">${localDepo.codigo || 'DP'}</span>
+              <strong>${localDepo.nombre}</strong>
+              <span class="text-xs text-muted" style="margin-left:6px;">(central — desde donde se compra)</span>
+            </div>
+          </td>
+          <td class="col-num">
+            <span class="${cls}">${q == null ? '—' : (q < 0 ? `<span class="stock-cell-neg">${q}</span>` : `<strong>${q}</strong>`)}</span>
+          </td>
+        </tr>
+      `);
+    }
+    otrosLocales.forEach(l => {
       const q = p.stockPorLocal[l.id];
       const qTxt = q == null ? '—' : q;
       const cls = q === 0 ? 'stock-cell-zero' : (q < 0 ? 'stock-cell-neg' : '');
@@ -598,6 +624,13 @@
         </tr>
       `);
     });
+    // Total final (suma de todos los locales)
+    filas.push(`
+      <tr style="border-top:2px solid var(--border-strong);background:var(--bg-elev-2);">
+        <td class="col-nombre" style="font-weight:600;">Total en todos los locales</td>
+        <td class="col-num"><strong>${totalLocales.toLocaleString('es-PY')}</strong></td>
+      </tr>
+    `);
 
     contentWrap.innerHTML = `
       <section class="card" aria-label="Información del producto">
